@@ -1,0 +1,1 @@
+console.log('Hair Management System');
