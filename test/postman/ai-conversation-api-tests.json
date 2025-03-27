@@ -1,0 +1,482 @@
+{
+	"info": {
+		"_postman_id": "f62af783-3a5c-4b9b-981c-0e4586cf76d3",
+		"name": "AI対話システム APIテスト",
+		"description": "AI対話システムの各エンドポイントをテストするためのコレクション",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "認証",
+			"item": [
+				{
+					"name": "ログイン",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"pm.environment.set(\"access_token\", jsonData.data.token);",
+									"pm.environment.set(\"user_id\", jsonData.data.user.id);",
+									"",
+									"pm.test(\"ステータスコードが200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"トークンが存在する\", function() {",
+									"    pm.expect(jsonData.data.token).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{test_user_email}}\",\n    \"password\": \"{{test_user_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "テストユーザーでログインしてトークンを取得します"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI対話",
+			"item": [
+				{
+					"name": "呼び水質問生成",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"ステータスコードが200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"質問コンテンツが存在する\", function() {",
+									"    pm.expect(jsonData.data.content).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"category\": \"growth\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/conversation/generate-prompt",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"conversation",
+								"generate-prompt"
+							]
+						},
+						"description": "運勢に基づく呼び水質問を生成します"
+					},
+					"response": []
+				},
+				{
+					"name": "メッセージ送信（新規会話）",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"// 会話IDを保存",
+									"if (jsonData.data && jsonData.data.conversation && jsonData.data.conversation.id) {",
+									"    pm.environment.set(\"conversation_id\", jsonData.data.conversation.id);",
+									"}",
+									"",
+									"// メッセージIDを保存",
+									"if (jsonData.data && jsonData.data.lastMessage && jsonData.data.lastMessage.id) {",
+									"    pm.environment.set(\"message_id\", jsonData.data.lastMessage.id);",
+									"}",
+									"",
+									"pm.test(\"ステータスコードが200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"会話オブジェクトが存在する\", function() {",
+									"    pm.expect(jsonData.data.conversation).to.exist;",
+									"});",
+									"",
+									"pm.test(\"最新メッセージが存在する\", function() {",
+									"    pm.expect(jsonData.data.lastMessage).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"こんにちは、今日の運勢を教えてください\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/conversation/message",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"conversation",
+								"message"
+							]
+						},
+						"description": "新しい会話を開始し、最初のメッセージを送信します"
+					},
+					"response": []
+				},
+				{
+					"name": "会話一覧取得",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"ステータスコードが200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"会話配列が存在する\", function() {",
+									"    pm.expect(jsonData.data.conversations).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"ページネーション情報が存在する\", function() {",
+									"    pm.expect(jsonData.data.pagination).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/conversation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"conversation"
+							]
+						},
+						"description": "ユーザーの全会話履歴を取得します"
+					},
+					"response": []
+				},
+				{
+					"name": "会話詳細取得",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"ステータスコードが200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"会話オブジェクトが存在する\", function() {",
+									"    pm.expect(jsonData.data).to.exist;",
+									"});",
+									"",
+									"pm.test(\"メッセージ配列が存在する\", function() {",
+									"    pm.expect(jsonData.data.messages).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/conversation/{{conversation_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"conversation",
+								"{{conversation_id}}"
+							]
+						},
+						"description": "特定の会話の詳細（メッセージ履歴など）を取得します"
+					},
+					"response": []
+				},
+				{
+					"name": "メッセージ送信（既存会話）",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"ステータスコードが200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"会話オブジェクトが存在する\", function() {",
+									"    pm.expect(jsonData.data.conversation).to.exist;",
+									"});",
+									"",
+									"pm.test(\"最新メッセージが存在する\", function() {",
+									"    pm.expect(jsonData.data.lastMessage).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"conversationId\": \"{{conversation_id}}\",\n    \"content\": \"今日の運勢に合わせて、どんなヘアスタイルにすると良いですか？\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/conversation/message",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"conversation",
+								"message"
+							]
+						},
+						"description": "既存の会話に新しいメッセージを送信します"
+					},
+					"response": []
+				},
+				{
+					"name": "メッセージをお気に入り登録",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"ステータスコードが200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"お気に入り状態が返される\", function() {",
+									"    pm.expect(jsonData.data.isFavorite).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"messageId\": \"{{message_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/conversation/{{conversation_id}}/favorite",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"conversation",
+								"{{conversation_id}}",
+								"favorite"
+							]
+						},
+						"description": "特定のメッセージをお気に入りに登録します"
+					},
+					"response": []
+				},
+				{
+					"name": "会話をアーカイブ",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"ステータスコードが200\", function() {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"アーカイブ状態が正しい\", function() {",
+									"    pm.expect(jsonData.data.isArchived).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/conversation/{{conversation_id}}/archive",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"conversation",
+								"{{conversation_id}}",
+								"archive"
+							]
+						},
+						"description": "会話をアーカイブします"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "test_user_email",
+			"value": "test@example.com",
+			"type": "string"
+		},
+		{
+			"key": "test_user_password",
+			"value": "password123",
+			"type": "string"
+		}
+	]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "patrolmanagement",
+  "version": "1.0.0",
+  "description": "陰陽五行AIケアコンパニオン - 統合テスト用スクリプト",
+  "type": "commonjs",
+  "scripts": {
+    "test:auth": "node test-login.js",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && npm run dev",
+    "start:frontend": "cd frontend && npm start",
+    "start:dev": "node start-dev.sh"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.1",
+    "mongoose": "^8.1.1",
+    "node-fetch": "^3.3.2",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

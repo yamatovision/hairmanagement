@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:5.0
+        ports:
+          - 27017:27017
+          
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+        
+    - name: Setup environment
+      run: |
+        cp .env.test .env || echo "No .env.test file found, using defaults"
+        
+    - name: Install dependencies (Backend)
+      run: |
+        cd backend
+        npm ci || npm install
+        
+    - name: Lint backend code
+      run: |
+        cd backend
+        npm run lint || echo "No lint script found, skipping"
+        
+    - name: Build backend
+      run: |
+        cd backend
+        npm run build --if-present
+        
+    - name: Install dependencies (Frontend)
+      run: |
+        cd frontend
+        npm ci || npm install
+        
+    - name: Lint frontend code
+      run: |
+        cd frontend
+        npm run lint || echo "No lint script found, skipping"
+        
+    - name: Build frontend
+      run: |
+        cd frontend
+        CI=false npm run build

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チームバリュー画面 - 陰陽五行AIケアコンパニオン</title>
+  <!-- Material UI CDN -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.5/dist/css/material.min.css" />
+  <!-- アニメーション用 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
+  <style>
+    :root {
+      --primary-color: #9c27b0;
+      --secondary-color: #f50057;
+      --bg-light: #f5f5f5;
+      --yin-color: #2c3e50;
+      --yang-color: #f1c40f;
+      --wood-color: #a5d6a7;
+      --fire-color: #ffab91;
+      --earth-color: #d7ccc8;
+      --metal-color: #e0e0e0;
+      --water-color: #81d4fa;
+      --wood-text: #1b5e20;
+      --fire-text: #bf360c;
+      --earth-text: #4e342e;
+      --metal-text: #424242;
+      --water-text: #01579b;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-light);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .tab-container {
+      display: flex;
+      background-color: white;
+      border-bottom: 1px solid #e0e0e0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    
+    .tab.active {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .content-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .card-header {
+      padding: 12px 16px;
+      background-color: #f5f5f5;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: #424242;
+    }
+    
+    .card-content {
+      padding: 16px;
+    }
+    
+    .team-member {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .team-member:last-child {
+      border-bottom: none;
+    }
+    
+    .team-member-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+    }
+    
+    .team-member-info {
+      flex: 1;
+    }
+    
+    .team-member-name {
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .team-member-role {
+      font-size: 0.8rem;
+      color: #757575;
+      margin: 2px 0 0 0;
+    }
+    
+    .compatibility-meter {
+      display: flex;
+      align-items: center;
+      margin-top: 4px;
+    }
+    
+    .meter-level {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 2px;
+      background-color: #e0e0e0;
+    }
+    
+    .meter-level.active {
+      background-color: var(--primary-color);
+    }
+    
+    .element-indicator {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-left: 8px;
+      position: relative;
+      top: 2px;
+    }
+    
+    .contribution-record {
+      margin-bottom: 16px;
+    }
+    
+    .contribution-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .contribution-title {
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .contribution-date {
+      font-size: 0.8rem;
+      color: #757575;
+    }
+    
+    .contribution-content {
+      padding: 12px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    
+    .mentorship-card {
+      background-color: #fff8e1;
+      border-left: 3px solid var(--yang-color);
+    }
+    
+    .mission-card {
+      background-color: #e8f5e9;
+      border-left: 3px solid #4caf50;
+    }
+    
+    .event-card {
+      background-color: #e3f2fd;
+      border-left: 3px solid #2196f3;
+    }
+    
+    .floating-button {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background-color: var(--primary-color);
+      color: white;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      z-index: 100;
+    }
+    
+    .bottom-navigation {
+      display: flex;
+      justify-content: space-around;
+      background-color: white;
+      border-top: 1px solid #e0e0e0;
+      padding: 8px 0;
+      position: sticky;
+      bottom: 0;
+    }
+    
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #757575;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    
+    .bottom-nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .five-elements-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      margin-right: 4px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    
+    .element-wood { background-color: var(--wood-color); color: var(--wood-text); }
+    .element-fire { background-color: var(--fire-color); color: var(--fire-text); }
+    .element-earth { background-color: var(--earth-color); color: var(--earth-text); }
+    .element-metal { background-color: var(--metal-color); color: var(--metal-text); }
+    .element-water { background-color: var(--water-color); color: var(--water-text); }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      background-color: #f0f0f0;
+      color: #424242;
+      margin-right: 4px;
+    }
+    
+    .badge-icon {
+      font-size: 0.9rem;
+      margin-right: 2px;
+    }
+    
+    .progress-container {
+      margin-top: 8px;
+    }
+    
+    .progress-bar {
+      height: 6px;
+      border-radius: 3px;
+      background-color: #e0e0e0;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary-color);
+    }
+    
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #757575;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div style="display: flex; align-items: center;">
+        <span class="material-icons" style="margin-right: 12px;">groups</span>
+        <div>
+          <h2 style="margin: 0; font-size: 1.2rem;">チームバリュー</h2>
+          <span style="font-size: 0.7rem;">陰陽五行AIケアコンパニオン</span>
+        </div>
+      </div>
+      <span class="material-icons">more_vert</span>
+    </header>
+    
+    <div class="tab-container">
+      <div class="tab active" onclick="changeTab('contribution')">チーム貢献</div>
+      <div class="tab" onclick="changeTab('mentorship')">メンター関係</div>
+      <div class="tab" onclick="changeTab('mission')">共有ミッション</div>
+    </div>
+    
+    <!-- チーム貢献タブ -->
+    <div class="content-container" id="contribution-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>あなたの貢献記録</h3>
+          <span class="material-icons">insights</span>
+        </div>
+        <div class="card-content">
+          <div class="contribution-record">
+            <div class="contribution-header">
+              <h4 class="contribution-title">新人スタイリストの技術指導</h4>
+              <span class="contribution-date">2025/3/20</span>
+            </div>
+            <div class="contribution-content">
+              <span class="five-elements-tag element-wood">木</span>
+              山田さんにグラデーションカラーの基本技術を教えました。初めての試みでしたが、とても喜んでくれました。
+            </div>
+          </div>
+          
+          <div class="contribution-record">
+            <div class="contribution-header">
+              <h4 class="contribution-title">新規集客アイデアの提案</h4>
+              <span class="contribution-date">2025/3/15</span>
+            </div>
+            <div class="contribution-content">
+              <span class="five-elements-tag element-fire">火</span>
+              インスタグラムを活用した新しい集客方法を会議で提案し、採用されました。来月から試験的に実施予定です。
+            </div>
+          </div>
+          
+          <div class="contribution-record">
+            <div class="contribution-header">
+              <h4 class="contribution-title">サロン環境整備</h4>
+              <span class="contribution-date">2025/3/10</span>
+            </div>
+            <div class="contribution-content">
+              <span class="five-elements-tag element-earth">土</span>
+              待合スペースの雑誌コーナーを整理し、最新の美容雑誌を追加しました。お客様からも好評です。
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>組織理念との共鳴ポイント</h3>
+          <span class="material-icons">stars</span>
+        </div>
+        <div class="card-content">
+          <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h4 style="margin: 0;">お客様中心の価値提供</h4>
+              <span class="badge">
+                <span class="material-icons badge-icon">favorite</span>共鳴度高
+              </span>
+            </div>
+            <p style="margin: 0; font-size: 0.9rem; color: #424242;">お客様一人ひとりに寄り添い、最高の美容体験を提供するという理念に深く共感しています。</p>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 85%"></div>
+              </div>
+              <div class="progress-info">
+                <span>共鳴度</span>
+                <span>85%</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h4 style="margin: 0;">チーム全体の成長</h4>
+              <span class="badge">
+                <span class="material-icons badge-icon">trending_up</span>上昇中
+              </span>
+            </div>
+            <p style="margin: 0; font-size: 0.9rem; color: #424242;">個人の成長だけでなく、サロン全体の技術力とサービス向上に貢献することの重要性を理解しています。</p>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 70%"></div>
+              </div>
+              <div class="progress-info">
+                <span>共鳴度</span>
+                <span>70%</span>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h4 style="margin: 0;">持続可能な美容文化</h4>
+              <span class="badge">
+                <span class="material-icons badge-icon">eco</span>可能性あり
+              </span>
+            </div>
+            <p style="margin: 0; font-size: 0.9rem; color: #424242;">環境に配慮した製品選びやサステナブルな美容実践の理念について、もっと学びたいと考えています。</p>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 45%"></div>
+              </div>
+              <div class="progress-info">
+                <span>共鳴度</span>
+                <span>45%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- メンター関係タブ -->
+    <div class="content-container" id="mentorship-content" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <h3>あなたのメンター</h3>
+          <span class="material-icons">school</span>
+        </div>
+        <div class="card-content">
+          <div class="team-member">
+            <div class="team-member-avatar">
+              <span class="material-icons">person</span>
+            </div>
+            <div class="team-member-info">
+              <h4 class="team-member-name">高橋 雅人</h4>
+              <p class="team-member-role">シニアスタイリスト</p>
+              <div class="compatibility-meter">
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level"></div>
+                <span style="font-size: 0.7rem; margin-left: 4px;">相性: 良好</span>
+                <div class="element-indicator" style="background-color: var(--fire-color);"></div>
+              </div>
+            </div>
+            <span class="material-icons" style="color: #757575;">chevron_right</span>
+          </div>
+          
+          <div class="mentorship-card" style="padding: 12px; margin-top: 8px; border-radius: 8px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <span class="material-icons" style="margin-right: 8px; color: var(--yang-color);">lightbulb</span>
+              <h4 style="margin: 0; font-size: 0.9rem;">最近の学び</h4>
+            </div>
+            <p style="margin: 0; font-size: 0.8rem;">先週のカット技術セッションでは、高橋さんからレイヤーカットの新しいアプローチを学びました。手首の角度が重要なポイントでした。</p>
+          </div>
+          
+          <div style="margin-top: 16px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 0.9rem;">次回のセッション予定</h4>
+            <div style="display: flex; align-items: center; font-size: 0.8rem;">
+              <span class="material-icons" style="font-size: 1rem; margin-right: 4px; color: #757575;">event</span>
+              <span>2025年3月30日 (木) 10:30 - 12:00</span>
+            </div>
+            <div style="display: flex; align-items: center; font-size: 0.8rem; margin-top: 4px;">
+              <span class="material-icons" style="font-size: 1rem; margin-right: 4px; color: #757575;">subject</span>
+              <span>テーマ: グラデーションカラーテクニック</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>あなたがメンターする相手</h3>
+          <span class="material-icons">psychology</span>
+        </div>
+        <div class="card-content">
+          <div class="team-member">
+            <div class="team-member-avatar">
+              <span class="material-icons">person</span>
+            </div>
+            <div class="team-member-info">
+              <h4 class="team-member-name">山田 花子</h4>
+              <p class="team-member-role">ジュニアスタイリスト</p>
+              <div class="compatibility-meter">
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <span style="font-size: 0.7rem; margin-left: 4px;">相性: 最高</span>
+                <div class="element-indicator" style="background-color: var(--wood-color);"></div>
+              </div>
+            </div>
+            <span class="material-icons" style="color: #757575;">chevron_right</span>
+          </div>
+          
+          <div class="mentorship-card" style="padding: 12px; margin-top: 8px; border-radius: 8px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <span class="material-icons" style="margin-right: 8px; color: var(--yang-color);">assignment</span>
+              <h4 style="margin: 0; font-size: 0.9rem;">成長の記録</h4>
+            </div>
+            <p style="margin: 0; font-size: 0.8rem;">山田さんはグラデーションカラーの基本技術を速く習得しました。顧客に合わせたカラー選びについて、次回指導する予定です。</p>
+          </div>
+          
+          <div style="margin-top: 16px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 0.9rem;">次回のセッション予定</h4>
+            <div style="display: flex; align-items: center; font-size: 0.8rem;">
+              <span class="material-icons" style="font-size: 1rem; margin-right: 4px; color: #757575;">event</span>
+              <span>2025年3月28日 (火) 14:00 - 15:30</span>
+            </div>
+            <div style="display: flex; align-items: center; font-size: 0.8rem; margin-top: 4px;">
+              <span class="material-icons" style="font-size: 1rem; margin-right: 4px; color: #757575;">subject</span>
+              <span>テーマ: カスタマイズカラーコンサルティング</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>メンター候補</h3>
+          <span class="material-icons">person_search</span>
+        </div>
+        <div class="card-content">
+          <div class="team-member">
+            <div class="team-member-avatar">
+              <span class="material-icons">person</span>
+            </div>
+            <div class="team-member-info">
+              <h4 class="team-member-name">田中 誠</h4>
+              <p class="team-member-role">カラースペシャリスト</p>
+              <div class="compatibility-meter">
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level"></div>
+                <div class="meter-level"></div>
+                <span style="font-size: 0.7rem; margin-left: 4px;">相性: 良い</span>
+                <div class="element-indicator" style="background-color: var(--fire-color);"></div>
+              </div>
+            </div>
+            <button style="border: none; background-color: var(--primary-color); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">申請する</button>
+          </div>
+          
+          <div class="team-member">
+            <div class="team-member-avatar">
+              <span class="material-icons">person</span>
+            </div>
+            <div class="team-member-info">
+              <h4 class="team-member-name">佐藤 千尋</h4>
+              <p class="team-member-role">アートディレクター</p>
+              <div class="compatibility-meter">
+                <div class="meter-level active"></div>
+                <div class="meter-level active"></div>
+                <div class="meter-level"></div>
+                <div class="meter-level"></div>
+                <div class="meter-level"></div>
+                <span style="font-size: 0.7rem; margin-left: 4px;">相性: 普通</span>
+                <div class="element-indicator" style="background-color: var(--metal-color);"></div>
+              </div>
+            </div>
+            <button style="border: none; background-color: var(--primary-color); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">申請する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 共有ミッションタブ -->
+    <div class="content-container" id="mission-content" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <h3>現在のチームミッション</h3>
+          <span class="material-icons">flag</span>
+        </div>
+        <div class="card-content">
+          <div class="mission-card" style="padding: 12px; margin-bottom: 16px; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h4 style="margin: 0; font-size: 0.9rem;">春の新メニュー開発</h4>
+              <span style="font-size: 0.7rem; color: #757575;">期限: 2025/4/15</span>
+            </div>
+            <p style="margin: 0 0 8px 0; font-size: 0.8rem;">サロン全体で取り組む春の新メニュー開発プロジェクト。あなたはカラーリングチームの一員です。</p>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 60%"></div>
+              </div>
+              <div class="progress-info">
+                <span>進捗状況</span>
+                <span>60%</span>
+              </div>
+            </div>
+            <div style="margin-top: 8px; font-size: 0.8rem;">
+              <span class="material-icons" style="font-size: 0.9rem; vertical-align: middle; color: #4caf50;">people</span>
+              <span>参加者: 8名</span>
+            </div>
+          </div>
+          
+          <div class="mission-card" style="padding: 12px; margin-bottom: 16px; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h4 style="margin: 0; font-size: 0.9rem;">SNSプロモーション強化</h4>
+              <span style="font-size: 0.7rem; color: #757575;">期限: 2025/5/30</span>
+            </div>
+            <p style="margin: 0 0 8px 0; font-size: 0.8rem;">Instagram、TikTokを活用した新規顧客獲得プロジェクト。各スタイリストの個性を活かした投稿戦略を構築中。</p>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 25%"></div>
+              </div>
+              <div class="progress-info">
+                <span>進捗状況</span>
+                <span>25%</span>
+              </div>
+            </div>
+            <div style="margin-top: 8px; font-size: 0.8rem;">
+              <span class="material-icons" style="font-size: 0.9rem; vertical-align: middle; color: #4caf50;">people</span>
+              <span>参加者: 5名</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>今後のチームイベント</h3>
+          <span class="material-icons">event</span>
+        </div>
+        <div class="card-content">
+          <div class="event-card" style="padding: 12px; margin-bottom: 16px; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h4 style="margin: 0; font-size: 0.9rem;">カラーリングワークショップ</h4>
+              <span style="font-size: 0.7rem; color: #757575;">2025/4/5 (土)</span>
+            </div>
+            <p style="margin: 0; font-size: 0.8rem;">外部講師を招いた特別ワークショップ。最新のカラーリング技術とトレンドについて学びます。</p>
+            <div style="margin-top: 8px; display: flex; align-items: center;">
+              <span class="material-icons" style="font-size: 0.9rem; margin-right: 4px; color: #2196f3;">location_on</span>
+              <span style="font-size: 0.8rem;">サロン2階 研修室</span>
+            </div>
+            <div style="margin-top: 4px; display: flex; align-items: center;">
+              <span class="material-icons" style="font-size: 0.9rem; margin-right: 4px; color: #2196f3;">schedule</span>
+              <span style="font-size: 0.8rem;">10:00 - 16:00</span>
+            </div>
+            <button style="margin-top: 8px; border: none; background-color: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; width: 100%;">参加登録する</button>
+          </div>
+          
+          <div class="event-card" style="padding: 12px; margin-bottom: 16px; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h4 style="margin: 0; font-size: 0.9rem;">チームビルディング研修</h4>
+              <span style="font-size: 0.7rem; color: #757575;">2025/4/20 (日)</span>
+            </div>
+            <p style="margin: 0; font-size: 0.8rem;">チーム全体の結束力を高めるためのアクティビティ。ゲーム形式のワークショップと交流会があります。</p>
+            <div style="margin-top: 8px; display: flex; align-items: center;">
+              <span class="material-icons" style="font-size: 0.9rem; margin-right: 4px; color: #2196f3;">location_on</span>
+              <span style="font-size: 0.8rem;">市内レンタルスペース</span>
+            </div>
+            <div style="margin-top: 4px; display: flex; align-items: center;">
+              <span class="material-icons" style="font-size: 0.9rem; margin-right: 4px; color: #2196f3;">schedule</span>
+              <span style="font-size: 0.8rem;">13:00 - 17:00</span>
+            </div>
+            <button style="margin-top: 8px; border: none; background-color: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; width: 100%;">参加登録する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="floating-button">
+      <span class="material-icons">add</span>
+    </div>
+    
+    <div class="bottom-navigation">
+      <div class="bottom-nav-item">
+        <span class="material-icons">today</span>
+        <span>運勢</span>
+      </div>
+      <div class="bottom-nav-item">
+        <span class="material-icons">chat</span>
+        <span>対話</span>
+      </div>
+      <div class="bottom-nav-item">
+        <span class="material-icons">explore</span>
+        <span>コンパス</span>
+      </div>
+      <div class="bottom-nav-item active">
+        <span class="material-icons">groups</span>
+        <span>チーム</span>
+      </div>
+      <div class="bottom-nav-item">
+        <span class="material-icons">person</span>
+        <span>プロフィール</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // タブの切り替え
+    function changeTab(tabName) {
+      // すべてのタブコンテンツを非表示
+      document.getElementById('contribution-content').style.display = 'none';
+      document.getElementById('mentorship-content').style.display = 'none';
+      document.getElementById('mission-content').style.display = 'none';
+      
+      // すべてのタブの選択状態を解除
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // 選択されたタブのコンテンツを表示
+      document.getElementById(tabName + '-content').style.display = 'block';
+      
+      // 選択されたタブをアクティブに
+      const activeTab = Array.from(tabs).find(tab => tab.innerText.toLowerCase().includes(tabName.toLowerCase()));
+      if (activeTab) {
+        activeTab.classList.add('active');
+      }
+    }
+    
+    // フローティングボタンクリック時のモーダル表示（実際の実装では別途モーダルが必要）
+    document.querySelector('.floating-button').addEventListener('click', function() {
+      alert('新しい記録を追加するモーダルがここに表示されます。');
+    });
+  </script>
+</body>
+</html>

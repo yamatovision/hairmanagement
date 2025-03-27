@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マイプロフィール設定 - 陰陽五行AIケアコンパニオン</title>
+  
+  <!-- Material UI CDN -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.5/dist/mui.min.css" />
+  
+  <style>
+    :root {
+      --primary-color: #9c27b0;
+      --secondary-color: #f48fb1;
+      --tertiary-color: #7b1fa2;
+      --light-bg: #f5f5f5;
+      --dark-text: #333;
+      --light-text: #fff;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      --border-radius: 12px;
+      --wood-color: #4CAF50;
+      --fire-color: #F44336;
+      --earth-color: #FFC107;
+      --metal-color: #9E9E9E;
+      --water-color: #2196F3;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--light-bg);
+      color: var(--dark-text);
+    }
+    
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 16px;
+      padding-bottom: 80px; /* 下部ナビの高さ分空ける */
+    }
+    
+    .header {
+      background-color: var(--primary-color);
+      color: var(--light-text);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    
+    .content {
+      margin-top: 24px;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .card-title {
+      color: var(--primary-color);
+      margin-top: 0;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+    }
+    
+    .card-title .material-icons {
+      margin-right: 8px;
+    }
+    
+    .form-group {
+      margin-bottom: 24px;
+    }
+    
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 500;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      font-family: 'Roboto', sans-serif;
+      box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    
+    .form-select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      font-family: 'Roboto', sans-serif;
+      box-sizing: border-box;
+      background-color: white;
+    }
+    
+    .form-select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    
+    .toggle-switch {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .toggle-switch:last-child {
+      margin-bottom: 0;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    
+    input:focus + .slider {
+      box-shadow: 0 0 1px var(--primary-color);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .avatar-section {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 24px;
+      overflow: hidden;
+    }
+    
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .avatar-buttons {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: 'Roboto', sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+      margin-bottom: 8px;
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+    }
+    
+    .btn .material-icons {
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    
+    .element-select {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    
+    .element-option {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      background-color: #f0f0f0;
+      transition: all 0.3s;
+    }
+    
+    .element-option.selected {
+      color: white;
+    }
+    
+    .element-option.wood.selected {
+      background-color: var(--wood-color);
+    }
+    
+    .element-option.fire.selected {
+      background-color: var(--fire-color);
+    }
+    
+    .element-option.earth.selected {
+      background-color: var(--earth-color);
+    }
+    
+    .element-option.metal.selected {
+      background-color: var(--metal-color);
+    }
+    
+    .element-option.water.selected {
+      background-color: var(--water-color);
+    }
+    
+    .element-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .element-icon.wood {
+      background-color: var(--wood-color);
+    }
+    
+    .element-icon.fire {
+      background-color: var(--fire-color);
+    }
+    
+    .element-icon.earth {
+      background-color: var(--earth-color);
+    }
+    
+    .element-icon.metal {
+      background-color: var(--metal-color);
+    }
+    
+    .element-icon.water {
+      background-color: var(--water-color);
+    }
+    
+    .slider-container {
+      margin-top: 8px;
+    }
+    
+    .slider-control {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 5px;  
+      background: #d3d3d3;
+      outline: none;
+    }
+    
+    .slider-control::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%; 
+      background: var(--primary-color);
+      cursor: pointer;
+    }
+    
+    .slider-control::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      cursor: pointer;
+    }
+    
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      color: #777;
+      font-size: 14px;
+    }
+    
+    .color-theme {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    
+    .color-option {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .color-option.selected::after {
+      content: "✓";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 20px;
+      text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    }
+    
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: #757575;
+    }
+    
+    .nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .nav-item i {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    .nav-label {
+      font-size: 12px;
+    }
+    
+    .save-button {
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    
+    .save-button .btn {
+      padding: 12px 24px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <h1>マイプロフィール設定</h1>
+      <div class="user-info">
+        <i class="material-icons">account_circle</i>
+      </div>
+    </header>
+    
+    <div class="content">
+      <!-- 基本情報セクション -->
+      <div class="card">
+        <h2 class="card-title">
+          <i class="material-icons">person</i>
+          基本情報
+        </h2>
+        
+        <div class="avatar-section">
+          <div class="avatar">
+            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="プロフィール画像">
+          </div>
+          <div class="avatar-buttons">
+            <button class="btn btn-primary">
+              <i class="material-icons">add_photo_alternate</i>
+              画像を変更
+            </button>
+            <button class="btn btn-outline">
+              <i class="material-icons">delete</i>
+              削除
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="name" class="form-label">お名前</label>
+          <input type="text" id="name" class="form-input" value="佐藤 美咲">
+        </div>
+        
+        <div class="form-group">
+          <label for="email" class="form-label">メールアドレス</label>
+          <input type="email" id="email" class="form-input" value="misaki.sato@example.com">
+        </div>
+        
+        <div class="form-group">
+          <label for="position" class="form-label">役職</label>
+          <input type="text" id="position" class="form-input" value="スタイリスト">
+        </div>
+        
+        <div class="form-group">
+          <label for="birth-date" class="form-label">生年月日</label>
+          <input type="date" id="birth-date" class="form-input" value="1992-05-15">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">陰陽五行属性</label>
+          <div class="element-select">
+            <div class="element-option wood selected">
+              <span class="element-icon wood"></span>
+              <span>木</span>
+            </div>
+            <div class="element-option fire">
+              <span class="element-icon fire"></span>
+              <span>火</span>
+            </div>
+            <div class="element-option earth">
+              <span class="element-icon earth"></span>
+              <span>土</span>
+            </div>
+            <div class="element-option metal">
+              <span class="element-icon metal"></span>
+              <span>金</span>
+            </div>
+            <div class="element-option water">
+              <span class="element-icon water"></span>
+              <span>水</span>
+            </div>
+          </div>
+          <p style="color: #777; font-size: 14px; margin-top: 8px;">※生年月日から自動計算されます。手動で変更することもできます。</p>
+        </div>
+      </div>
+      
+      <!-- 通知設定セクション -->
+      <div class="card">
+        <h2 class="card-title">
+          <i class="material-icons">notifications</i>
+          通知設定
+        </h2>
+        
+        <div class="toggle-switch">
+          <span>デイリー運勢の通知</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="toggle-switch">
+          <span>チーム相性のアラート</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="toggle-switch">
+          <span>AI対話のリマインダー</span>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="toggle-switch">
+          <span>メンター活動の通知</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">通知頻度</label>
+          <div class="slider-container">
+            <input type="range" min="1" max="5" value="3" class="slider-control" id="frequency-slider">
+            <div class="slider-labels">
+              <span>少なめ</span>
+              <span>標準</span>
+              <span>多め</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- プライバシー設定セクション -->
+      <div class="card">
+        <h2 class="card-title">
+          <i class="material-icons">security</i>
+          プライバシー設定
+        </h2>
+        
+        <div class="toggle-switch">
+          <span>対話内容を組織と共有</span>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="toggle-switch">
+          <span>匿名データとして分析に利用</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="toggle-switch">
+          <span>プロフィールを同僚に表示</span>
+          <label class="switch">
+            <input type="checkbox" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <label for="data-retention" class="form-label">対話履歴の保持期間</label>
+          <select id="data-retention" class="form-select">
+            <option>1週間</option>
+            <option>1ヶ月</option>
+            <option selected>3ヶ月</option>
+            <option>6ヶ月</option>
+            <option>1年</option>
+            <option>無期限</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- AIパーソナライズ設定セクション -->
+      <div class="card">
+        <h2 class="card-title">
+          <i class="material-icons">psychology</i>
+          AIパーソナライズ設定
+        </h2>
+        
+        <div class="form-group">
+          <label for="ai-tone" class="form-label">AIの話し方</label>
+          <select id="ai-tone" class="form-select">
+            <option>フォーマル（丁寧）</option>
+            <option selected>スタンダード（標準）</option>
+            <option>カジュアル（親しみやすい）</option>
+            <option>コーチング風（励まし）</option>
+            <option>占い師風（神秘的）</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">AIのサポート領域</label>
+          <div class="toggle-switch">
+            <span>技術スキル向上</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-switch">
+            <span>接客・コミュニケーション</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-switch">
+            <span>キャリア発展</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-switch">
+            <span>メンタルヘルス</span>
+            <label class="switch">
+              <input type="checkbox">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">対話の深さ</label>
+          <div class="slider-container">
+            <input type="range" min="1" max="5" value="4" class="slider-control" id="depth-slider">
+            <div class="slider-labels">
+              <span>簡潔</span>
+              <span>標準</span>
+              <span>深掘り</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 表示カスタマイズセクション -->
+      <div class="card">
+        <h2 class="card-title">
+          <i class="material-icons">palette</i>
+          表示カスタマイズ
+        </h2>
+        
+        <div class="form-group">
+          <label class="form-label">カラーテーマ</label>
+          <div class="color-theme">
+            <div class="color-option selected" style="background-color: #9c27b0;"></div>
+            <div class="color-option" style="background-color: #2196F3;"></div>
+            <div class="color-option" style="background-color: #4CAF50;"></div>
+            <div class="color-option" style="background-color: #F44336;"></div>
+            <div class="color-option" style="background-color: #FF9800;"></div>
+            <div class="color-option" style="background-color: #795548;"></div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="text-size" class="form-label">文字サイズ</label>
+          <select id="text-size" class="form-select">
+            <option>小</option>
+            <option selected>標準</option>
+            <option>大</option>
+            <option>特大</option>
+          </select>
+        </div>
+        
+        <div class="toggle-switch">
+          <span>ダークモード</span>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <div class="toggle-switch">
+          <span>視覚エフェクトを削減</span>
+          <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="save-button">
+        <button class="btn btn-primary">
+          <i class="material-icons">save</i>
+          設定を保存
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 下部ナビゲーション -->
+  <nav class="bottom-nav">
+    <a href="#" class="nav-item">
+      <i class="material-icons">dashboard</i>
+      <span class="nav-label">運勢</span>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="material-icons">chat</i>
+      <span class="nav-label">AI対話</span>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="material-icons">groups</i>
+      <span class="nav-label">チーム</span>
+    </a>
+    <a href="#" class="nav-item active">
+      <i class="material-icons">person</i>
+      <span class="nav-label">プロフィール</span>
+    </a>
+  </nav>
+  
+  <script>
+    // 陰陽五行属性の選択
+    document.querySelectorAll('.element-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.element-option').forEach(el => {
+          el.classList.remove('selected');
+        });
+        this.classList.add('selected');
+      });
+    });
+    
+    // カラーテーマの選択
+    document.querySelectorAll('.color-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.color-option').forEach(el => {
+          el.classList.remove('selected');
+        });
+        this.classList.add('selected');
+      });
+    });
+  </script>
+</body>
+</html>

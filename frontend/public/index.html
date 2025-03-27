@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#9c27b0" />
+    <meta
+      name="description"
+      content="美容師向け陰陽五行AIケアコンパニオン"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>陰陽五行AIケアコンパニオン</title>
+    <style>
+      :root {
+        --primary-color: #9c27b0;
+        --secondary-color: #f50057;
+        --bg-light: #f5f5f5;
+        --element-wood: #a5d6a7;
+        --element-fire: #ffab91;
+        --element-earth: #d7ccc8;
+        --element-metal: #e0e0e0;
+        --element-water: #81d4fa;
+        --element-wood-text: #1b5e20;
+        --element-fire-text: #bf360c;
+        --element-earth-text: #4e342e;
+        --element-metal-text: #424242;
+        --element-water-text: #01579b;
+      }
+      
+      body {
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-light);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      .card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .login-form {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .form-group {
+        margin-bottom: 15px;
+      }
+      
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+      
+      .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      
+      .btn {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      
+      .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+      }
+      
+      .btn-primary:hover {
+        background-color: #7b1fa2;
+      }
+      
+      .element-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 16px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      
+      .element-wood {
+        background-color: var(--element-wood);
+        color: var(--element-wood-text);
+      }
+      
+      .element-fire {
+        background-color: var(--element-fire);
+        color: var(--element-fire-text);
+      }
+      
+      .element-earth {
+        background-color: var(--element-earth);
+        color: var(--element-earth-text);
+      }
+      
+      .element-metal {
+        background-color: var(--element-metal);
+        color: var(--element-metal-text);
+      }
+      
+      .element-water {
+        background-color: var(--element-water);
+        color: var(--element-water-text);
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

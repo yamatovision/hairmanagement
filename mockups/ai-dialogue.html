@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI対話画面 - 陰陽五行AIケアコンパニオン</title>
+  <!-- Material UI CDN -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.5/dist/css/material.min.css" />
+  <!-- アニメーション用 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
+  <style>
+    :root {
+      --primary-color: #9c27b0;
+      --secondary-color: #f50057;
+      --bg-light: #f5f5f5;
+      --yin-color: #2c3e50;
+      --yang-color: #f1c40f;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-light);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .avatar-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIxIiBmaWxsPSJyZ2JhKDE1NiwgMzksIDE3NiwgMC4wMykiLz48L3N2Zz4=');
+    }
+    
+    .message {
+      margin-bottom: 16px;
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      animation-duration: 0.3s;
+    }
+    
+    .ai-message {
+      align-self: flex-start;
+      background-color: #f0f0f0;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    .ai-message::before {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background-color: #f0f0f0;
+      bottom: -6px;
+      left: 8px;
+      transform: rotate(45deg);
+      border-radius: 2px;
+      z-index: -1;
+    }
+    
+    .user-message {
+      align-self: flex-end;
+      background-color: var(--primary-color);
+      color: white;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .message-time {
+      font-size: 0.7rem;
+      opacity: 0.7;
+      margin-top: 4px;
+      display: block;
+    }
+    
+    .feature-hint {
+      background-color: #fff8e1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border-left: 3px solid var(--yang-color);
+      margin: 12px 0;
+      font-size: 0.9rem;
+      color: #5d4037;
+      align-self: center;
+      max-width: 90%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .five-elements-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      margin-right: 4px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    
+    .element-wood { background-color: #a5d6a7; color: #1b5e20; }
+    .element-fire { background-color: #ffab91; color: #bf360c; }
+    .element-earth { background-color: #d7ccc8; color: #4e342e; }
+    .element-metal { background-color: #e0e0e0; color: #424242; }
+    .element-water { background-color: #81d4fa; color: #01579b; }
+    
+    .input-area {
+      padding: 12px;
+      background-color: white;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .input-box {
+      flex: 1;
+      border: 1px solid #e0e0e0;
+      border-radius: 24px;
+      padding: 8px 16px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    
+    .input-box:focus {
+      border-color: var(--primary-color);
+    }
+    
+    .send-button {
+      background-color: var(--primary-color);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 8px;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: background-color 0.3s;
+    }
+    
+    .send-button:hover {
+      background-color: var(--secondary-color);
+    }
+    
+    .quick-reply {
+      display: inline-block;
+      margin: 4px;
+      padding: 6px 12px;
+      background-color: #f5f5f5;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .quick-reply:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .bottom-navigation {
+      display: flex;
+      justify-content: space-around;
+      background-color: white;
+      border-top: 1px solid #e0e0e0;
+      padding: 8px 0;
+    }
+    
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #757575;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    
+    .bottom-nav-item.active {
+      color: var(--primary-color);
+    }
+    
+    .favorite-message {
+      position: relative;
+    }
+    
+    .favorite-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+    }
+    
+    .yin-yang-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 8px 0;
+      align-self: center;
+    }
+    
+    .yin-yang-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(to right, var(--yin-color) 0%, var(--yin-color) 50%, var(--yang-color) 50%, var(--yang-color) 100%);
+      position: relative;
+      margin: 0 8px;
+    }
+    
+    .yin-yang-icon::before,
+    .yin-yang-icon::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .yin-yang-icon::before {
+      top: 2px;
+      left: 6px;
+      background-color: var(--yang-color);
+    }
+    
+    .yin-yang-icon::after {
+      bottom: 2px;
+      right: 6px;
+      background-color: var(--yin-color);
+    }
+    
+    @media (max-width: 480px) {
+      .message {
+        max-width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div style="display: flex; align-items: center;">
+        <div class="avatar">
+          <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM5YzI3YjAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTIgMkM2LjUgMiAyIDYuNSAyIDEycy40LjUgMTAgMTAgMTAtNC41IDEwLTEwUzE3LjUgMiAxMiAyem0wIDE4Yy00LjQgMC04LTMuNi04LThzMy42LTggOC04IDggMy42IDggOC0zLjYgOC04IDh6Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iNCIvPjxwYXRoIGQ9Ik0xMiA2djEyIi8+PC9zdmc+" class="avatar-img" alt="AI Assistant">
+        </div>
+        <div style="margin-left: 12px;">
+          <h2 style="margin: 0; font-size: 1.2rem;">五行アシスタント</h2>
+          <span style="font-size: 0.7rem;">陰陽五行AIケアコンパニオン</span>
+        </div>
+      </div>
+      <span class="material-icons">more_vert</span>
+    </header>
+    
+    <div class="chat-container" id="chatContainer">
+      <div class="yin-yang-indicator">
+        <span style="font-size: 0.8rem; color: #757575;">今日の調和</span>
+        <div class="yin-yang-icon"></div>
+        <span style="font-size: 0.8rem; color: #757575;">木の日</span>
+      </div>
+      
+      <div class="message ai-message animate__animated animate__fadeIn">
+        <span class="five-elements-tag element-wood">木</span>
+        <p>こんにちは、美咲さん。今日は「木」の気が強まる日です。創造力と成長のエネルギーが高まっています。</p>
+        <p>今日は技術向上の運気が高まる日ですね。このサロンで習得したい次の技術は何かありますか？</p>
+        <span class="message-time">10:05</span>
+      </div>
+      
+      <div class="message user-message animate__animated animate__fadeIn">
+        <p>こんにちは！最近カラーリングの新しい技術に興味があります。特にグラデーションカラーをもっと習得したいです。</p>
+        <span class="message-time">10:06</span>
+      </div>
+      
+      <div class="message ai-message animate__animated animate__fadeIn favorite-message">
+        <div class="favorite-badge">★</div>
+        <span class="five-elements-tag element-wood">木</span>
+        <p>グラデーションカラーに興味があるのですね！木のエネルギーが強い今日は、新しい技術を学ぶのに最適な日です。</p>
+        <p>サロン内でグラデーションカラーを得意とする先輩はいますか？「木」の日は人間関係も強化される日なので、メンターを見つけるチャンスかもしれませんね。</p>
+        <span class="message-time">10:07</span>
+      </div>
+      
+      <div class="feature-hint">
+        <span class="material-icons" style="font-size: 0.9rem; vertical-align: middle; margin-right: 4px;">tips_and_updates</span>
+        メンターとの関係を「チームバリュー画面」で記録できます
+      </div>
+      
+      <div class="message user-message animate__animated animate__fadeIn">
+        <p>そうですね！田中さんがグラデーションテクニックに詳しいと思います。今度、教えてもらえるか聞いてみます。</p>
+        <span class="message-time">10:09</span>
+      </div>
+      
+      <div class="message ai-message animate__animated animate__fadeIn">
+        <span class="five-elements-tag element-fire">火</span>
+        <span class="five-elements-tag element-wood">木</span>
+        <p>素晴らしいですね！田中さんは「火」のエネルギーを持つタイプの方かもしれません。木は火を育てるので、あなたと田中さんは相性が良いでしょう。</p>
+        <p>この技術を習得することで、あなたのキャリアにどのような変化を期待していますか？</p>
+        <span class="message-time">10:10</span>
+      </div>
+      
+      <div class="quick-reply" onclick="addUserMessage('スタイリストとしてのレパートリーを増やしたいです')">スタイリストとしてのレパートリーを増やしたいです</div>
+      <div class="quick-reply" onclick="addUserMessage('将来、カラーリスト専門になりたいと考えています')">将来、カラーリスト専門になりたいと考えています</div>
+      <div class="quick-reply" onclick="addUserMessage('お客様により多くの選択肢を提供したいです')">お客様により多くの選択肢を提供したいです</div>
+    </div>
+    
+    <div class="input-area">
+      <input type="text" class="input-box" placeholder="メッセージを入力..." id="messageInput">
+      <button class="send-button" onclick="sendMessage()">
+        <span class="material-icons">send</span>
+      </button>
+    </div>
+    
+    <div class="bottom-navigation">
+      <div class="bottom-nav-item">
+        <span class="material-icons">today</span>
+        <span>運勢</span>
+      </div>
+      <div class="bottom-nav-item active">
+        <span class="material-icons">chat</span>
+        <span>対話</span>
+      </div>
+      <div class="bottom-nav-item">
+        <span class="material-icons">explore</span>
+        <span>コンパス</span>
+      </div>
+      <div class="bottom-nav-item">
+        <span class="material-icons">groups</span>
+        <span>チーム</span>
+      </div>
+      <div class="bottom-nav-item">
+        <span class="material-icons">person</span>
+        <span>プロフィール</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 送信ボタンクリック時のメッセージ追加処理
+    function sendMessage() {
+      const messageInput = document.getElementById('messageInput');
+      const message = messageInput.value.trim();
+      
+      if (message) {
+        addUserMessage(message);
+        messageInput.value = '';
+        
+        // AIの応答をシミュレート（実際の実装ではAPIコールになります）
+        setTimeout(() => {
+          addAIMessage("なるほど、それは素晴らしい目標ですね。陰陽五行の観点から見ると、あなたの「木」のエネルギーは成長と創造性に向いています。新しい技術の習得は、あなたの強みをさらに伸ばすことになるでしょう。サロンでの次のステップについても一緒に考えていきましょうか？", ["wood", "earth"]);
+        }, 1000);
+      }
+    }
+    
+    // ユーザーメッセージを追加する関数
+    function addUserMessage(message) {
+      const chatContainer = document.getElementById('chatContainer');
+      const currentTime = getCurrentTime();
+      
+      const messageElement = document.createElement('div');
+      messageElement.className = 'message user-message animate__animated animate__fadeIn';
+      messageElement.innerHTML = `
+        <p>${message}</p>
+        <span class="message-time">${currentTime}</span>
+      `;
+      
+      chatContainer.appendChild(messageElement);
+      scrollToBottom();
+      
+      // クイックリプライがあれば削除
+      const quickReplies = document.querySelectorAll('.quick-reply');
+      quickReplies.forEach(reply => {
+        reply.remove();
+      });
+    }
+    
+    // AIメッセージを追加する関数
+    function addAIMessage(message, elements = ["wood"]) {
+      const chatContainer = document.getElementById('chatContainer');
+      const currentTime = getCurrentTime();
+      
+      const elementTags = elements.map(element => {
+        const elementName = getElementName(element);
+        return `<span class="five-elements-tag element-${element}">${elementName}</span>`;
+      }).join('');
+      
+      const messageElement = document.createElement('div');
+      messageElement.className = 'message ai-message animate__animated animate__fadeIn';
+      messageElement.innerHTML = `
+        ${elementTags}
+        <p>${message}</p>
+        <span class="message-time">${currentTime}</span>
+      `;
+      
+      chatContainer.appendChild(messageElement);
+      scrollToBottom();
+    }
+    
+    // 五行要素の日本語名を取得
+    function getElementName(element) {
+      const elements = {
+        'wood': '木',
+        'fire': '火',
+        'earth': '土',
+        'metal': '金',
+        'water': '水'
+      };
+      return elements[element] || '木';
+    }
+    
+    // 現在時刻を取得する関数
+    function getCurrentTime() {
+      const now = new Date();
+      return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+    }
+    
+    // チャットの一番下にスクロールする関数
+    function scrollToBottom() {
+      const chatContainer = document.getElementById('chatContainer');
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Enter キーでメッセージを送信
+    document.getElementById('messageInput').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    // 初期ロード時に最下部にスクロール
+    document.addEventListener('DOMContentLoaded', function() {
+      scrollToBottom();
+    });
+  </script>
+</body>
+</html>

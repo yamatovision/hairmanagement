@@ -1,0 +1,117 @@
+[
+  {
+    "name": "田中 健太",
+    "email": "tanaka.kenta@example.com",
+    "password": "$2a$10$XOPbrlUPQdwdJUpSrIF6X.LbE14qsMmKGG6..juGdLu6icC1WhxmS",
+    "birthDate": "1985-06-12",
+    "role": "manager",
+    "elementalType": {
+      "mainElement": "木",
+      "secondaryElement": "火",
+      "yin": true
+    },
+    "notificationSettings": {
+      "dailyFortune": true,
+      "promptQuestions": true,
+      "teamEvents": true,
+      "goalReminders": true,
+      "systemUpdates": true
+    },
+    "isActive": true,
+    "lastLoginAt": "2025-03-27T00:00:00.000Z",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2025-03-27T00:00:00.000Z"
+  },
+  {
+    "name": "佐藤 優子",
+    "email": "sato.yuko@example.com",
+    "password": "$2a$10$XOPbrlUPQdwdJUpSrIF6X.LbE14qsMmKGG6..juGdLu6icC1WhxmS",
+    "birthDate": "1990-03-24",
+    "role": "employee",
+    "elementalType": {
+      "mainElement": "水",
+      "secondaryElement": "木",
+      "yin": false
+    },
+    "notificationSettings": {
+      "dailyFortune": true,
+      "promptQuestions": true,
+      "teamEvents": true,
+      "goalReminders": false,
+      "systemUpdates": false
+    },
+    "isActive": true,
+    "lastLoginAt": "2025-03-26T00:00:00.000Z",
+    "createdAt": "2024-01-10T00:00:00.000Z",
+    "updatedAt": "2025-03-26T00:00:00.000Z"
+  },
+  {
+    "name": "鈴木 大輔",
+    "email": "suzuki.daisuke@example.com",
+    "password": "$2a$10$XOPbrlUPQdwdJUpSrIF6X.LbE14qsMmKGG6..juGdLu6icC1WhxmS",
+    "birthDate": "1988-11-05",
+    "role": "employee",
+    "elementalType": {
+      "mainElement": "金",
+      "secondaryElement": null,
+      "yin": true
+    },
+    "notificationSettings": {
+      "dailyFortune": true,
+      "promptQuestions": false,
+      "teamEvents": true,
+      "goalReminders": false,
+      "systemUpdates": false
+    },
+    "isActive": true,
+    "lastLoginAt": "2025-03-25T00:00:00.000Z",
+    "createdAt": "2024-02-01T00:00:00.000Z",
+    "updatedAt": "2025-03-25T00:00:00.000Z"
+  },
+  {
+    "name": "高橋 美咲",
+    "email": "takahashi.misaki@example.com",
+    "password": "$2a$10$XOPbrlUPQdwdJUpSrIF6X.LbE14qsMmKGG6..juGdLu6icC1WhxmS",
+    "birthDate": "1992-08-17",
+    "role": "employee",
+    "elementalType": {
+      "mainElement": "火",
+      "secondaryElement": "土",
+      "yin": false
+    },
+    "notificationSettings": {
+      "dailyFortune": true,
+      "promptQuestions": true,
+      "teamEvents": true,
+      "goalReminders": false,
+      "systemUpdates": false
+    },
+    "isActive": true,
+    "lastLoginAt": "2025-03-26T00:00:00.000Z",
+    "createdAt": "2024-02-15T00:00:00.000Z",
+    "updatedAt": "2025-03-26T00:00:00.000Z"
+  },
+  {
+    "name": "渡辺 隆",
+    "email": "watanabe.takashi@example.com",
+    "password": "$2a$10$XOPbrlUPQdwdJUpSrIF6X.LbE14qsMmKGG6..juGdLu6icC1WhxmS",
+    "birthDate": "1983-04-30",
+    "role": "admin",
+    "elementalType": {
+      "mainElement": "土",
+      "secondaryElement": "金",
+      "yin": true
+    },
+    "notificationSettings": {
+      "dailyFortune": true,
+      "promptQuestions": true,
+      "teamEvents": true,
+      "goalReminders": true,
+      "systemUpdates": true
+    },
+    "isActive": true,
+    "lastLoginAt": "2025-03-27T00:00:00.000Z",
+    "createdAt": "2024-01-05T00:00:00.000Z",
+    "updatedAt": "2025-03-27T00:00:00.000Z"
+  }
+]

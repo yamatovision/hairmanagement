@@ -1,0 +1,97 @@
+.claude_data/
+temp/
+
+# 環境変数ファイル
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# 依存関係
+node_modules/
+*/node_modules/
+
+# ビルド出力
+dist/
+build/
+*/dist/
+*/build/
+
+# ログ
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+backend-log.txt
+*-log.txt
+
+# データベース
+*.db
+*.sqlite
+*.sqlite3
+
+# OS生成ファイル
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# エディタ設定
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# テスト関連
+test-*.*
+*-test.*
+*.test.*
+*/test-*.*
+*/test/
+backend/test-*.js
+backend/*-test.js
+backend/test-claude-api.js
+backend/test-conversation-service.js
+backend/api-test*.js
+backend/db-test.js
+
+# キャッシュ
+.cache/
+.next/
+.nuxt/
+.npm/
+.yarn/
+*/cache/
+*/.cache/
+
+# バックアップファイル
+*.bak
+*.backup
+*.old
+*.pid
+backend.pid
+backend/*.pid
+**/backup/
+**/backup_files/
+
+# その他の一時ファイル
+coverage/
+.nyc_output/
+.eslintcache
+.stylelintcache
+.vercel
+.netlify
+*.tsbuildinfo
+out/
+.next/
+fresh_repo/
+tmp_repo/

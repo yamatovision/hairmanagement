@@ -1,0 +1,52 @@
+[
+  {
+    "period": {
+      "startDate": "2025-02-27T00:00:00.000Z",
+      "endDate": "2025-03-27T00:00:00.000Z"
+    },
+    "overallEngagement": 85,
+    "responseRate": 92,
+    "sentimentDistribution": {
+      "positive": 62,
+      "neutral": 28,
+      "negative": 10
+    },
+    "topConcerns": [
+      {
+        "topic": "業務量と時間管理",
+        "frequency": 18,
+        "averageSentiment": -0.6
+      },
+      {
+        "topic": "キャリア成長の機会",
+        "frequency": 15,
+        "averageSentiment": -0.4
+      },
+      {
+        "topic": "技術向上のサポート",
+        "frequency": 12,
+        "averageSentiment": -0.3
+      }
+    ],
+    "topStrengths": [
+      {
+        "topic": "チームの雰囲気",
+        "frequency": 24,
+        "averageSentiment": 0.8
+      },
+      {
+        "topic": "顧客満足度",
+        "frequency": 22,
+        "averageSentiment": 0.75
+      },
+      {
+        "topic": "サロン環境",
+        "frequency": 20,
+        "averageSentiment": 0.7
+      }
+    ],
+    "followUpRecommendations": [],
+    "createdAt": "2025-03-27T00:00:00.000Z",
+    "updatedAt": "2025-03-27T00:00:00.000Z"
+  }
+]

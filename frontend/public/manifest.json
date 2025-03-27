@@ -1,0 +1,31 @@
+{
+  "short_name": "陰陽五行AI",
+  "name": "美容師向け陰陽五行AIケアコンパニオン",
+  "icons": [
+    {
+      "src": "img/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "img/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "img/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#9c27b0",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "categories": ["business", "productivity", "personalization"],
+  "description": "陰陽五行の原理に基づいた運勢分析と組織マネジメントを統合するパトロールマネジメントアプリケーション"
+}
