@@ -45,12 +45,12 @@ const AppRoutes = () => {
         element={isAuthenticated ? <Navigate to="/" /> : <AuthPage />} 
       />
       
-      {/* 認証が必要なページ */}
+      {/* 認証が必要なページ - ルートパスは fortune にリダイレクト */}
       <Route 
         path="/" 
         element={
           <ProtectedRoute>
-            <HomePage />
+            <Navigate to="/fortune" replace />
           </ProtectedRoute>
         } 
       />

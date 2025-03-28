@@ -29,8 +29,8 @@ const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // ログイン後のリダイレクト先（URLパラメータから取得）
-  const from = location.state?.from?.pathname || '/';
+  // ログイン後のリダイレクト先を常にfortune ページに設定
+  const from = '/fortune';
   
   // ログインフォームの送信ハンドラ
   const handleLoginSubmit = async (e: React.FormEvent) => {
