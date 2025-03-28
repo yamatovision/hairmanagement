@@ -2,7 +2,7 @@ import { AUTH } from '../types';
 
 // APIのBase URL
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-const API_BASE_PATH = '/api/v1';
+const API_BASE_PATH = process.env.API_BASE_PATH || '/api/v1';
 
 /**
  * 認証サービス

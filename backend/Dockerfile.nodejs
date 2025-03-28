@@ -1,0 +1,22 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# package.jsonを作成
+COPY package.json .
+
+# Express依存関係をインストール
+RUN npm install express cors
+
+# アプリコードをコピー
+COPY app.js .
+
+# 環境変数の設定
+ENV PORT=8080
+ENV NODE_ENV=production
+
+# ポートの公開
+EXPOSE ${PORT}
+
+# アプリケーションの実行
+CMD ["node", "app.js"]

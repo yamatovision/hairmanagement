@@ -1,0 +1,21 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Node.jsアプリケーションを実行するシンプルなDockerfile
+# パッケージのインストール
+COPY package*.json ./
+RUN npm install
+
+# ソースコードのコピー
+COPY src/ ./src/
+
+# 環境変数の設定
+ENV PORT=8080
+ENV NODE_ENV=production
+
+# ポートの公開
+EXPOSE ${PORT}
+
+# 開発モードで実行
+CMD ["npx", "nodemon", "--exec", "ts-node", "src/index.ts"]

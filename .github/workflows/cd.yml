@@ -55,7 +55,8 @@ jobs:
     - name: Build frontend
       run: |
         cd frontend
-        echo "REACT_APP_API_URL=${{ steps.backend-url.outputs.url }}/api" > .env.production
+        echo "REACT_APP_API_URL=${{ steps.backend-url.outputs.url }}" > .env.production
+        echo "API_BASE_PATH=/api/v1" >> .env.production
         npm run build
         
     - name: Install Firebase CLI

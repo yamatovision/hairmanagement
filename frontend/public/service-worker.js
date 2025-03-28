@@ -82,6 +82,11 @@ self.addEventListener('fetch', (event) => {
 
 // キャッシュファースト戦略（キャッシュにあればそれを使用、なければネットワークから取得してキャッシュ）
 async function cacheFirstStrategy(request) {
+  // chrome-extension URLsはスキップする
+  if (request.url.startsWith('chrome-extension://')) {
+    return fetch(request).catch(() => new Response('chrome extension request failed'));
+  }
+  
   const cachedResponse = await caches.match(request);
   
   if (cachedResponse) {

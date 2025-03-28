@@ -12,8 +12,8 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "baseUrl": ".",
     "paths": {
-      "@shared": ["../shared"],
-      "@shared/*": ["../shared/*"]
+      "@shared": ["./shared"],
+      "@shared/*": ["./shared/*"]
     },
     "moduleResolution": "node"
   },
@@ -21,6 +21,6 @@
   "exclude": ["node_modules", "dist"],
   "files": ["src/types/express/index.d.ts"],
   "references": [
-    { "path": "../shared" }
+    { "path": "./shared" }
   ]
 }
