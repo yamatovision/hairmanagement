@@ -19,12 +19,11 @@ import teamRoutes from './api/routes/team.routes';
 import team2Routes from './api/routes/team2.routes';
 import conversationRoutes from './api/routes/conversation.routes';
 import { userRoutes } from './api/routes/user.routes';
-import testAnalyticsRoutes from './api/routes/test-analytics.routes';
-import { testModeMiddleware } from './api/middlewares/test-mode.middleware';
+// 本番環境用の設定 - テストルートやモックは使用しない
 
 // アプリケーションの初期化
 const app = express();
-const PORT = process.env.PORT || 5001; // 5001に戻す
+const PORT = parseInt(process.env.PORT || '8080', 10); // 数値型に変換
 
 // ミドルウェアの設定
 app.use(express.json());
@@ -37,8 +36,7 @@ app.use(cors({
   credentials: true
 }));
 
-// テストモードミドルウェアを追加
-app.use(testModeMiddleware);
+// 本番環境ではモックは使用しない
 
 // APIルートの設定
 const apiPrefix = process.env.API_PREFIX || '/api';
@@ -50,8 +48,7 @@ app.use(`${baseApiPath}/analytics`, analyticsRoutes);
 app.use(`${baseApiPath}/fortune`, fortuneRoutes);
 app.use(`${baseApiPath}/team`, teamRoutes);
 app.use(`${baseApiPath}/teams`, team2Routes); // 新しいチーム管理APIを追加
-// テスト用ルート（認証なし）
-app.use(`${baseApiPath}/test`, testAnalyticsRoutes);
+// 本番環境ではテストルートを無効化
 // すべてのルートを有効化
 app.use(`${baseApiPath}/conversation`, conversationRoutes);
 app.use(`${baseApiPath}/users`, userRoutes); // ユーザー情報APIを有効化
@@ -59,6 +56,18 @@ app.use(`${baseApiPath}/users`, userRoutes); // ユーザー情報APIを有効�
 // ルートレスポンス
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: '美容師向け陰陽五行AIケアコンパニオン API' });
+});
+
+// 健康チェックエンドポイント（Cloud Run用）
+app.get('/_ah/health', (req: Request, res: Response) => {
+  console.log('健康チェックリクエスト受信');
+  res.status(200).send('OK');
+});
+
+// もう一つの健康チェックエンドポイント
+app.get('/healthz', (req: Request, res: Response) => {
+  console.log('健康チェックリクエスト受信 (/healthz)');
+  res.status(200).send('OK');
 });
 
 // 404ハンドラー
@@ -121,11 +130,17 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // データベース接続
 const connectDB = async () => {
   try {
-    const dbUri = process.env.DB_URI || 'mongodb://localhost:27017/patrolmanagement';
+    // MONGODB_URIかDB_URIを試し、両方なければデフォルト値を使用
+    const dbUri = process.env.MONGODB_URI || process.env.DB_URI || 'mongodb://localhost:27017/patrolmanagement';
+    
+    // 本番環境では必ずDBに接続
+    
     await mongoose.connect(dbUri);
     console.log('MongoDB接続成功！');
   } catch (error) {
     console.error('MongoDB接続エラー:', error);
+    
+    // データベース接続エラーの場合は終了
     process.exit(1);
   }
 };
@@ -134,12 +149,30 @@ const connectDB = async () => {
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
-      console.log(`サーバーが起動しました: http://localhost:${PORT}`);
-      console.log(`APIエンドポイント: http://localhost:${PORT}${baseApiPath}`);
+    
+    // Cloud Run対応のために0.0.0.0にバインド
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`サーバーが起動しました: http://0.0.0.0:${PORT}`);
+      console.log(`APIエンドポイント: http://0.0.0.0:${PORT}${baseApiPath}`);
+      console.log(`環境変数PORT: ${process.env.PORT}`);
+      console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+    });
+    
+    // 適切なシャットダウン処理
+    const signals = ['SIGTERM', 'SIGINT'];
+    signals.forEach(signal => {
+      process.on(signal, () => {
+        console.log(`${signal}を受信しました。サーバーをシャットダウンします...`);
+        server.close(() => {
+          console.log('サーバーを正常にシャットダウンしました');
+          process.exit(0);
+        });
+      });
     });
   } catch (error) {
     console.error('サーバー起動エラー:', error);
+    // エラーステータスで終了
+    process.exit(1);
   }
 };
 

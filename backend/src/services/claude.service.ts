@@ -4,7 +4,7 @@ import User from '../models/user.model';
 import { CustomError } from '../utils/error.util';
 import { logger } from '../utils/logger.util';
 import { promptTemplates } from '../utils/prompt-templates';
-import { getRandomResponse, getRandomPromptQuestion } from '../utils/mock-claude-responses';
+// 本番環境では実際のAI応答のみ使用
 
 // Anthropic Claude APIのインポート
 import Anthropic from '@anthropic-ai/sdk';
@@ -46,8 +46,8 @@ export const claudeService = {
 
       // APIキーの存在チェック
       if (!CLAUDE_API_KEY) {
-        logger.warn('Claude APIキーが設定されていません。モック呼び水質問を返します。');
-        return fallbackToMockResponse(content);
+        logger.error('Claude APIキーが設定されていません。');
+        throw new CustomError('AIサービスが利用できません', 503);
       }
 
       // 陰陽五行コンテキストを取得（ユーザー属性など）
@@ -105,12 +105,14 @@ export const claudeService = {
       // エラーの種類によって異なる対応
       if (error.status === 401) {
         logger.error('API認証エラー: APIキーが無効です');
+        throw new CustomError('AIサービスの認証エラー', 503);
       } else if (error.status === 429) {
         logger.error('APIレート制限エラー: リクエスト数が多すぎます');
+        throw new CustomError('AIサービスのレート制限エラー', 429);
       }
       
-      // フォールバックとしてモックレスポンスを使用
-      return fallbackToMockResponse(content);
+      // その他のエラー
+      throw new CustomError('AIサービスの内部エラー', 500);
     }
   },
 
@@ -130,8 +132,8 @@ export const claudeService = {
     try {
       // APIキーの確認
       if (!CLAUDE_API_KEY) {
-        logger.warn('Claude APIキーが設定されていません。モック呼び水質問を返します。');
-        return fallbackToMockPromptQuestion(template);
+        logger.error('Claude APIキーが設定されていません。');
+        throw new CustomError('AIサービスが利用できません', 503);
       }
 
       // テンプレート内のプレースホルダーを置換
@@ -160,11 +162,17 @@ export const claudeService = {
       logger.debug(`呼び水質問生成完了: ${question}`);
       
       return documentToInterface<any>(question);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('呼び水質問生成エラー:', error);
       
-      // エラー時はモックの呼び水質問を返す
-      return fallbackToMockPromptQuestion(template);
+      // エラーの種類によって異なる対応
+      if (error.status === 401) {
+        throw new CustomError('AIサービスの認証エラー', 503);
+      } else if (error.status === 429) {
+        throw new CustomError('AIサービスのレート制限エラー', 429);
+      }
+      
+      throw new CustomError('AIサービスの内部エラー', 500);
     }
   },
 
@@ -217,54 +225,7 @@ function convertConversationHistoryToAnthropicFormat(conversationHistory: IMessa
   });
 }
 
-/**
- * モックレスポンスにフォールバックする関数
- */
-function fallbackToMockResponse(content: string) {
-  // コンテンツの内容に基づいて応答カテゴリを決定
-  let responseCategory: 'fortune' | 'growth' | 'team' | 'career' = 'fortune';
-  
-  if (content.includes('カラー') || content.includes('技術') || content.includes('スタイル') || 
-      content.includes('カット') || content.includes('パーマ')) {
-    responseCategory = 'growth';
-  } else if (content.includes('チーム') || content.includes('同僚') || content.includes('一緒に')) {
-    responseCategory = 'team';
-  } else if (content.includes('キャリア') || content.includes('将来') || content.includes('目標')) {
-    responseCategory = 'career';
-  }
-  
-  // ランダムなモックレスポンスを取得
-  const responseContent = getRandomResponse(responseCategory);
-  
-  // 簡易的な感情分析
-  const sentimentScore = analyzeSimpleSentiment(responseContent);
-  
-  logger.debug('モックAIレスポンスにフォールバック');
-
-  return {
-    content: responseContent,
-    sentimentScore
-  };
-}
-
-/**
- * モックの呼び水質問にフォールバックする関数
- */
-function fallbackToMockPromptQuestion(template: string) {
-  // テンプレートからカテゴリを判断
-  let category: 'growth' | 'team' | 'career' | 'organization' = 'growth';
-  
-  if (template.includes('チーム') || template.includes('人間関係')) {
-    category = 'team';
-  } else if (template.includes('キャリア')) {
-    category = 'career';
-  } else if (template.includes('組織') || template.includes('サロン全体')) {
-    category = 'organization';
-  }
-  
-  // ランダムな呼び水質問を取得
-  return getRandomPromptQuestion(category);
-}
+// モック関数は本番環境では使用しないため削除
 
 /**
  * シンプルな感情分析（本番環境では実際のNLPサービスを使用）

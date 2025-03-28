@@ -15,7 +15,7 @@ import { ElementalCompatibility } from '../utils/elemental/compatibility';
 import { ElementalForecast } from '../utils/elemental/forecast';
 import { ElementType, YinYangType } from '@shared';
 // モンゴDBモックをインポート
-import { MongoMock } from '../utils/mongo-mock';
+// MongoDB接続は実際の接続を使用
 
 export class FortuneService {
   /**
@@ -34,11 +34,7 @@ export class FortuneService {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     
-    // テスト環境の場合、モックデータを返す
-    if (process.env.NODE_ENV === 'test' || process.env.FORCE_TEST === 'true') {
-      console.log('テスト環境: モック運勢データを生成します');
-      return MongoMock.generateMockFortune(userId, todayStr) as unknown as IFortuneDocument;
-    }
+    // 本番環境では実際のデータベースを使用
     
     try {
       // データベースからユーザーの今日の運勢を検索
@@ -92,11 +88,7 @@ export class FortuneService {
     birthDate: string, 
     targetDate: string
   ): Promise<IFortuneDocument> {
-    // テスト環境の場合、モックデータを返す
-    if (process.env.NODE_ENV === 'test' || process.env.FORCE_TEST === 'true') {
-      console.log('テスト環境: モック運勢データを生成します');
-      return MongoMock.generateMockFortune(userId, targetDate) as unknown as IFortuneDocument;
-    }
+    // 本番環境では実際のデータベースを使用
     
     try {
       // データベースからユーザーの指定日の運勢を検索
@@ -151,11 +143,7 @@ export class FortuneService {
     startDate: string, 
     endDate: string
   ): Promise<IFortuneDocument[]> {
-    // テスト環境の場合、モックデータを返す
-    if (process.env.NODE_ENV === 'test' || process.env.FORCE_TEST === 'true') {
-      console.log('テスト環境: モック運勢範囲データを生成します');
-      return MongoMock.generateMockFortuneRange(userId, startDate, endDate) as unknown as IFortuneDocument[];
-    }
+    // 本番環境では実際のデータベースを使用
     
     try {
       // 既存のデータを取得
