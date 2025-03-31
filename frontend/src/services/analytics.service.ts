@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { ANALYTICS } from '../types';
 
+// APIのベースURLを設定
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+
 // 分析データ型定義
 interface IEngagementAnalytics {
   id: string;

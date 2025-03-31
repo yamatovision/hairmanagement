@@ -13,11 +13,13 @@ import { isOnline, addToOfflineQueue, getOfflineData, cacheOfflineData } from '.
 // import { getStorageItem } from './storage.utils'; // Removed unused import
 
 // APIの基本URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 // オフラインフォールバックが有効なエンドポイント
 const OFFLINE_ENABLED_ENDPOINTS = [
   '/api/v1/fortune/daily',
+  '/api/v1/fortune/range',
+  '/api/v1/fortune/date/',
   '/api/v1/users/me',
   '/api/v1/conversation'
 ];

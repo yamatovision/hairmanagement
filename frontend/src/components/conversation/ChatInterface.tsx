@@ -166,7 +166,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Avatar
             alt="五行アシスタント"
-            src="/assets/avatar.png"
+            src="/img/logo192.png"
             sx={{ 
               width: 40, 
               height: 40,
@@ -462,7 +462,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </Box>
       
       {/* スタイル定義 */}
-      <style jsx global>{`
+      <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }

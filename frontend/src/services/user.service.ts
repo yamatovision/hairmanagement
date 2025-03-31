@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { IUser, NotificationSettingsType, USER } from '../types';
 
+// APIのベースURLを設定
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+
 // UserUpdateRequest型定義
 type UserUpdateRequest = Partial<Omit<IUser, 'id' | 'createdAt' | 'updatedAt' | 'password'>>;
 
