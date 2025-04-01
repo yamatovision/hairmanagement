@@ -73,22 +73,6 @@ const DAY_STEM_TO_HOUR_STEM_BASE: Record<string, number> = {
 };
 
 /**
- * calender.mdからの時柱サンプルデータ
- * キー: "YYYY-MM-DD-HH" 形式
- */
-const HOUR_PILLAR_REFERENCE = {
-  // 2023年10月15日（日干: 丙）の各時間帯
-  "2023-10-15": {
-    1: "戊子",  // 子の刻 (1:00)
-    5: "庚寅",  // 寅の刻 (5:00)
-    9: "壬辰",  // 辰の刻 (9:00)
-    13: "甲午", // 午の刻 (13:00)
-    17: "丙申", // 申の刻 (17:00)
-    21: "戊戌"  // 戌の刻 (21:00)
-  }
-};
-
-/**
  * 時辰（地支）のインデックスを取得
  * @param hour 時間（0-23）
  * @returns 地支のインデックス（0-11）
@@ -115,20 +99,6 @@ export function calculateKoreanHourPillar(hour: number, dayStem: string): Pillar
   // 子の刻から始まり、各時辰ごとに天干が1つずつ進む
   const stemIndex = (hourStemBase + branchIndex) % 10;
   const stem = STEMS[stemIndex];
-  
-  // サンプルデータとの整合性のための特別処理
-  // 13時のサンプルデータには甲午とあるが、実際には13時は未の刻
-  // この特殊処理はテストケースのため維持する
-  if (dayStem === "丙" && hour === 13) {
-    // 13時は未の刻だが、サンプルデータでは午の刻として特別処理
-    const specialBranch = "午"; // 午の刻として処理
-    return {
-      stem: "甲", // 丙の日の13時は甲午
-      branch: specialBranch,
-      fullStemBranch: "甲午",
-      hiddenStems: getHiddenStems(specialBranch)
-    };
-  }
   
   return {
     stem,
@@ -183,7 +153,7 @@ export function verifyHourPillarCalculation(): boolean {
     { hour: 1, dayStem: "丙", expected: "戊子" },  // 子の刻 (1:00)
     { hour: 5, dayStem: "丙", expected: "庚寅" },  // 寅の刻 (5:00)
     { hour: 9, dayStem: "丙", expected: "壬辰" },  // 辰の刻 (9:00)
-    { hour: 13, dayStem: "丙", expected: "甲午" }, // 午の刻 (13:00)
+    { hour: 13, dayStem: "丙", expected: "甲未" }, // 未の刻 (13:00)
     { hour: 17, dayStem: "丙", expected: "丙申" }, // 申の刻 (17:00)
     { hour: 21, dayStem: "丙", expected: "戊戌" }  // 戌の刻 (21:00)
   ];
@@ -206,19 +176,6 @@ export function verifyHourPillarCalculation(): boolean {
   }
   
   console.log(`検証結果: ${passCount}/${testCases.length} テスト成功`);
-  
-  // 全ての日干と時刻の組み合わせをテストするオプション
-  const shouldTestAllCombinations = false;
-  if (shouldTestAllCombinations) {
-    console.log('\n全ての日干と時刻の組み合わせをテスト:');
-    const dayStems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-    for (const dayStem of dayStems) {
-      for (let hour = 0; hour < 24; hour++) {
-        const result = calculateKoreanHourPillar(hour, dayStem);
-        console.log(`日干:${dayStem}, ${hour}時 => ${result.fullStemBranch}`);
-      }
-    }
-  }
   
   return allPassed;
 }

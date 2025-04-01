@@ -98,26 +98,130 @@ export class SajuEngine {
         adjustedDate.minute
       );
       
-      // 3. 年柱を計算
-      const yearPillar = calculateKoreanYearPillar(adjustedDate.year);
+      // lunar-javascriptライブラリが利用可能な場合は使用
+      try {
+        // 動的インポート（利用可能な場合）
+        const { Solar } = require('lunar-javascript');
+        
+        // Solarオブジェクトに変換
+        const solar = Solar.fromDate(jsAdjustedDate);
+        
+        // Lunarオブジェクトを取得
+        const lunar = solar.getLunar();
+        
+        // 3. 年柱を計算（lunar-javascriptを利用）
+        const yearPillar = {
+          stem: lunar.getYearInGanZhi()[0],
+          branch: lunar.getYearInGanZhi()[1],
+          fullStemBranch: lunar.getYearInGanZhi()
+        };
+        
+        // 4. 日柱を計算（lunar-javascriptを利用）
+        const dayPillar = {
+          stem: lunar.getDayInGanZhi()[0],
+          branch: lunar.getDayInGanZhi()[1],
+          fullStemBranch: lunar.getDayInGanZhi()
+        };
+        
+        // 5. 月柱を計算（lunar-javascriptを利用）
+        const monthPillar = {
+          stem: lunar.getMonthInGanZhi()[0],
+          branch: lunar.getMonthInGanZhi()[1],
+          fullStemBranch: lunar.getMonthInGanZhi()
+        };
+        
+        // 6. 時柱を計算 (lunar-javascriptにはないので、従来の方法で計算)
+        const adjustedHour = adjustedDate.hour;
+        const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
+        
+        // 7. 十二運星を計算
+        const twelveFortunes = calculateTwelveFortunes(
+          dayPillar.stem,
+          yearPillar.branch,
+          monthPillar.branch,
+          dayPillar.branch,
+          hourPillar.branch,
+          0 // ハードコードされた値を使用（精度優先）
+        );
       
-      // 4. 日柱を計算
-      const dayPillar = calculateKoreanDayPillar(jsAdjustedDate, this.options);
+        // 8. 蔵干（地支に内包される天干）を計算
+        const hiddenStems = {
+          year: getHiddenStems(yearPillar.branch),
+          month: getHiddenStems(monthPillar.branch),
+          day: getHiddenStems(dayPillar.branch),
+          hour: getHiddenStems(hourPillar.branch)
+        };
       
-      // 5. 月柱を計算
-      const monthPillar = calculateKoreanMonthPillar(
-        jsAdjustedDate,
-        yearPillar.stem
-      );
+        // 9. 四柱を拡張情報で構成
+        const fourPillars: FourPillars = {
+          yearPillar: {
+            ...yearPillar,
+            fortune: twelveFortunes.year,
+            hiddenStems: hiddenStems.year
+          },
+          monthPillar: {
+            ...monthPillar,
+            fortune: twelveFortunes.month,
+            hiddenStems: hiddenStems.month
+          },
+          dayPillar: {
+            ...dayPillar,
+            fortune: twelveFortunes.day,
+            hiddenStems: hiddenStems.day
+          },
+          hourPillar: {
+            ...hourPillar,
+            fortune: twelveFortunes.hour,
+            hiddenStems: hiddenStems.hour
+          }
+        };
       
-      // 6. 時柱を計算 (地方時調整後の時間を使用)
-      const adjustedHour = adjustedDate.hour;
-      const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
+        // 10. 十神関係を計算
+        const tenGods = calculateTenGods(
+          dayPillar.stem, 
+          yearPillar.stem, 
+          monthPillar.stem, 
+          hourPillar.stem
+        );
       
-      // 7. 十二運星を計算
-      const twelveFortunes = calculateTwelveFortunes(
-        dayPillar.stem,
-        yearPillar.branch,
+        // 11. 五行属性を計算
+        const elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
+      
+        // 12. 結果を返す
+        return {
+          fourPillars,
+          lunarDate: processedDateTime.lunarDate,
+          tenGods,
+          elementProfile,
+          processedDateTime,
+          twelveFortunes,
+          hiddenStems
+        };
+        
+      } catch (error) {
+        // lunar-javascriptが利用できない場合は、従来の方法で計算
+        console.log('lunar-javascriptが利用できないため、従来の計算方法を使用します:', error);
+        
+        // 3. 年柱を計算
+        const yearPillar = calculateKoreanYearPillar(adjustedDate.year);
+        
+        // 4. 日柱を計算
+        const dayPillar = calculateKoreanDayPillar(jsAdjustedDate, this.options);
+        
+        // 5. 月柱を計算
+        const monthPillar = calculateKoreanMonthPillar(
+          jsAdjustedDate,
+          yearPillar.stem
+        );
+        
+        // 6. 時柱を計算 (地方時調整後の時間を使用)
+        const adjustedHour = adjustedDate.hour;
+        const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
+      
+        // 7. 十二運星を計算
+        const twelveFortunes = calculateTwelveFortunes(
+          dayPillar.stem,
+          yearPillar.branch,
         monthPillar.branch,
         dayPillar.branch,
         hourPillar.branch,
