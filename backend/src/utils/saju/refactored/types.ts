@@ -32,7 +32,13 @@ export const TWELVE_FORTUNES = [
   "病", "死", "墓", "絶", "胎", "養"
 ];
 
-// 十二神殺は機能対象外となりました (2025年4月)
+/**
+ * 十二神殺
+ */
+export const TWELVE_SPIRIT_KILLERS = [
+  "年殺", "月殺", "日殺", "劫殺", "望神殺", "天殺", 
+  "地殺", "六害殺", "長生殺", "反安殺", "火開殺", "逆馬殺"
+];
 
 /**
  * 四柱の柱
@@ -43,6 +49,7 @@ export interface Pillar {
   fullStemBranch: string; // 天干地支の組み合わせ
   hiddenStems?: string[]; // 蔵干（地支に内包される天干）
   fortune?: string; // 十二運星
+  spiritKiller?: string; // 十二神殺
 }
 
 /**

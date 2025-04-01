@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import mongoose, { Model } from 'mongoose';
-import ISubscriptionRepository from '../../domain/repositories/ISubscriptionRepository';
+import { ISubscriptionRepository } from '../../domain/repositories/ISubscriptionRepository';
 import { Subscription, PlanType, SubscriptionStatus, PlanInfo, AiModelType } from '../../domain/entities/Subscription';
 import SubscriptionModel, { ISubscriptionDocument } from '../../domain/models/subscription.model';
 import { BaseRepository } from './base/BaseRepository';
@@ -88,7 +88,7 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
     
     // userIdが存在する場合のみ追加
     if (entity.userId) {
-      modelData.userId = entity.userId;
+      (modelData as any).userId = entity.userId;
     }
     
     return modelData;
@@ -206,4 +206,4 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
   }
 }
 
-export default MongoSubscriptionRepository;
+export { MongoSubscriptionRepository };

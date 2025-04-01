@@ -15,6 +15,7 @@ import {
   getHiddenStems
 } from './tenGodCalculator';
 import { calculateTwelveFortunes } from './twelveFortuneSpiritCalculator';
+import { calculateTwelveSpirits } from './twelveSpiritKillerCalculator';
 
 /**
  * 四柱推命計算結果の型
@@ -35,6 +36,7 @@ export interface SajuResult {
   };
   processedDateTime: ProcessedDateTime;
   twelveFortunes?: Record<string, string>; // 十二運星
+  twelveSpiritKillers?: Record<string, string>; // 十二神殺
   hiddenStems?: {      // 蔵干
     year: string[];
     month: string[];
@@ -98,6 +100,13 @@ export class SajuEngine {
         adjustedDate.minute
       );
       
+      let fourPillars: FourPillars;
+      let tenGods: Record<string, string>;
+      let elementProfile: { mainElement: string; secondaryElement: string; yinYang: string };
+      let twelveFortunes: Record<string, string>;
+      let twelveSpiritKillers: Record<string, string>;
+      let hiddenStems: { year: string[]; month: string[]; day: string[]; hour: string[] };
+      
       // lunar-javascriptライブラリが利用可能な場合は使用
       try {
         // 動的インポート（利用可能な場合）
@@ -135,7 +144,7 @@ export class SajuEngine {
         const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
         
         // 7. 十二運星を計算
-        const twelveFortunes = calculateTwelveFortunes(
+        twelveFortunes = calculateTwelveFortunes(
           dayPillar.stem,
           yearPillar.branch,
           monthPillar.branch,
@@ -143,9 +152,21 @@ export class SajuEngine {
           hourPillar.branch,
           0 // ハードコードされた値を使用（精度優先）
         );
+        
+        // 7.5. 十二神殺を計算
+        twelveSpiritKillers = calculateTwelveSpirits(
+          yearPillar.stem,
+          monthPillar.stem,
+          dayPillar.stem,
+          hourPillar.stem,
+          yearPillar.branch,
+          monthPillar.branch,
+          dayPillar.branch,
+          hourPillar.branch
+        );
       
         // 8. 蔵干（地支に内包される天干）を計算
-        const hiddenStems = {
+        hiddenStems = {
           year: getHiddenStems(yearPillar.branch),
           month: getHiddenStems(monthPillar.branch),
           day: getHiddenStems(dayPillar.branch),
@@ -153,51 +174,47 @@ export class SajuEngine {
         };
       
         // 9. 四柱を拡張情報で構成
-        const fourPillars: FourPillars = {
+        fourPillars = {
           yearPillar: {
             ...yearPillar,
             fortune: twelveFortunes.year,
+            spiritKiller: twelveSpiritKillers.year,
             hiddenStems: hiddenStems.year
           },
           monthPillar: {
             ...monthPillar,
             fortune: twelveFortunes.month,
+            spiritKiller: twelveSpiritKillers.month,
             hiddenStems: hiddenStems.month
           },
           dayPillar: {
             ...dayPillar,
             fortune: twelveFortunes.day,
+            spiritKiller: twelveSpiritKillers.day,
             hiddenStems: hiddenStems.day
           },
           hourPillar: {
             ...hourPillar,
             fortune: twelveFortunes.hour,
+            spiritKiller: twelveSpiritKillers.hour,
             hiddenStems: hiddenStems.hour
           }
         };
       
-        // 10. 十神関係を計算
-        const tenGods = calculateTenGods(
+        // 10. 十神関係を計算（天干と地支の両方）
+        tenGods = calculateTenGods(
           dayPillar.stem, 
           yearPillar.stem, 
           monthPillar.stem, 
-          hourPillar.stem
+          hourPillar.stem,
+          yearPillar.branch,
+          monthPillar.branch,
+          dayPillar.branch,
+          hourPillar.branch
         );
       
         // 11. 五行属性を計算
-        const elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
-      
-        // 12. 結果を返す
-        return {
-          fourPillars,
-          lunarDate: processedDateTime.lunarDate,
-          tenGods,
-          elementProfile,
-          processedDateTime,
-          twelveFortunes,
-          hiddenStems
-        };
-        
+        elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
       } catch (error) {
         // lunar-javascriptが利用できない場合は、従来の方法で計算
         console.log('lunar-javascriptが利用できないため、従来の計算方法を使用します:', error);
@@ -219,57 +236,78 @@ export class SajuEngine {
         const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
       
         // 7. 十二運星を計算
-        const twelveFortunes = calculateTwelveFortunes(
+        twelveFortunes = calculateTwelveFortunes(
           dayPillar.stem,
           yearPillar.branch,
-        monthPillar.branch,
-        dayPillar.branch,
-        hourPillar.branch,
-        0 // ハードコードされた値を使用（精度優先）
-      );
+          monthPillar.branch,
+          dayPillar.branch,
+          hourPillar.branch,
+          0 // ハードコードされた値を使用（精度優先）
+        );
+        
+        // 7.5. 十二神殺を計算
+        twelveSpiritKillers = calculateTwelveSpirits(
+          yearPillar.stem,
+          monthPillar.stem,
+          dayPillar.stem,
+          hourPillar.stem,
+          yearPillar.branch,
+          monthPillar.branch,
+          dayPillar.branch,
+          hourPillar.branch
+        );
       
-      // 8. 蔵干（地支に内包される天干）を計算
-      const hiddenStems = {
-        year: getHiddenStems(yearPillar.branch),
-        month: getHiddenStems(monthPillar.branch),
-        day: getHiddenStems(dayPillar.branch),
-        hour: getHiddenStems(hourPillar.branch)
-      };
+        // 8. 蔵干（地支に内包される天干）を計算
+        hiddenStems = {
+          year: getHiddenStems(yearPillar.branch),
+          month: getHiddenStems(monthPillar.branch),
+          day: getHiddenStems(dayPillar.branch),
+          hour: getHiddenStems(hourPillar.branch)
+        };
       
-      // 9. 四柱を拡張情報で構成
-      const fourPillars: FourPillars = {
-        yearPillar: {
-          ...yearPillar,
-          fortune: twelveFortunes.year,
-          hiddenStems: hiddenStems.year
-        },
-        monthPillar: {
-          ...monthPillar,
-          fortune: twelveFortunes.month,
-          hiddenStems: hiddenStems.month
-        },
-        dayPillar: {
-          ...dayPillar,
-          fortune: twelveFortunes.day,
-          hiddenStems: hiddenStems.day
-        },
-        hourPillar: {
-          ...hourPillar,
-          fortune: twelveFortunes.hour,
-          hiddenStems: hiddenStems.hour
-        }
-      };
+        // 9. 四柱を拡張情報で構成
+        fourPillars = {
+          yearPillar: {
+            ...yearPillar,
+            fortune: twelveFortunes.year,
+            spiritKiller: twelveSpiritKillers.year,
+            hiddenStems: hiddenStems.year
+          },
+          monthPillar: {
+            ...monthPillar,
+            fortune: twelveFortunes.month,
+            spiritKiller: twelveSpiritKillers.month,
+            hiddenStems: hiddenStems.month
+          },
+          dayPillar: {
+            ...dayPillar,
+            fortune: twelveFortunes.day,
+            spiritKiller: twelveSpiritKillers.day,
+            hiddenStems: hiddenStems.day
+          },
+          hourPillar: {
+            ...hourPillar,
+            fortune: twelveFortunes.hour,
+            spiritKiller: twelveSpiritKillers.hour,
+            hiddenStems: hiddenStems.hour
+          }
+        };
       
-      // 10. 十神関係を計算
-      const tenGods = calculateTenGods(
-        dayPillar.stem, 
-        yearPillar.stem, 
-        monthPillar.stem, 
-        hourPillar.stem
-      );
+        // 10. 十神関係を計算（天干と地支の両方）
+        tenGods = calculateTenGods(
+          dayPillar.stem, 
+          yearPillar.stem, 
+          monthPillar.stem, 
+          hourPillar.stem,
+          yearPillar.branch,
+          monthPillar.branch,
+          dayPillar.branch,
+          hourPillar.branch
+        );
       
-      // 11. 五行属性を計算
-      const elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
+        // 11. 五行属性を計算
+        elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
+      }
       
       // 12. 結果を返す
       return {
@@ -279,6 +317,7 @@ export class SajuEngine {
         elementProfile,
         processedDateTime,
         twelveFortunes,
+        twelveSpiritKillers,
         hiddenStems
       };
     } catch (error) {

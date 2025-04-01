@@ -1,9 +1,6 @@
 import { IUser, NotificationSettingsType, USER, ISajuProfile } from '../types';
 import { apiRequest } from '../utils/api.utils';
 
-// API設定をインポート
-import { getApiUrl } from '../api/apiConfig';
-
 // UserUpdateRequest型定義
 type UserUpdateRequest = Partial<Omit<IUser, 'id' | 'createdAt' | 'updatedAt' | 'password'>>;
 
@@ -53,9 +50,18 @@ class UserService {
         method: 'GET',
         offlineTtl: 60 * 60 * 1000 // 1時間キャッシュ
       });
+      
+      // 応答が空の場合やフォーマットが正しくない場合のチェック
+      if (!response || !response.fourPillars) {
+        console.warn('四柱推命プロファイルのフォーマットが不正:', response);
+        return null;
+      }
+      
+      console.log('四柱推命プロファイル取得成功:', response);
       return response;
     } catch (error) {
       console.error('四柱推命プロファイル取得エラー:', error);
+      // エラーの場合でも処理を続行できるようnullを返す
       return null;
     }
   }

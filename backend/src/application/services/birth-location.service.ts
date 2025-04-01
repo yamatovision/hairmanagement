@@ -35,13 +35,34 @@ export class BirthLocationService {
   async getCoordinates(locationStr: string): Promise<{ longitude: number, latitude: number } | null> {
     // 都市名で経度・緯度を探す
     for (const city in this.cityMap) {
-      if (locationStr.includes(city)) {
+      if (locationStr?.includes(city)) {
         return this.cityMap[city];
       }
     }
     
     // 見つからない場合は東京の座標を返す
     return this.cityMap['東京'];
+  }
+  
+  /**
+   * 出生地から経度・緯度情報を取得する
+   * @param location 出生地（文字列または座標オブジェクト）
+   * @returns 経度・緯度情報
+   */
+  async getLocationCoordinates(location: string | { longitude: number, latitude: number }): Promise<{ longitude: number, latitude: number }> {
+    if (!location) {
+      // 出生地が未指定の場合はデフォルト（東京）の座標を返す
+      return this.cityMap['東京'];
+    }
+    
+    if (typeof location === 'string') {
+      // 文字列の場合、都市名から座標を取得
+      const coordinates = await this.getCoordinates(location);
+      return coordinates || this.cityMap['東京'];
+    } else {
+      // すでに座標オブジェクトの場合はそのまま返す
+      return location;
+    }
   }
   
   /**

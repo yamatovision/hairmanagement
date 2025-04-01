@@ -10,7 +10,7 @@ const path = require('path');
 dotenv.config();
 
 // APIのベースURL
-const API_BASE_URL = process.env.API_URL || 'http://localhost:5001/api/v1';
+const API_BASE_URL = process.env.API_URL || 'http://0.0.0.0:8080/api';
 
 // 成功したテストと失敗したテストをカウント
 let successCount = 0;
@@ -19,6 +19,10 @@ let startTime;
 
 // APIトークン
 let authToken = null;
+
+// テスト用データ
+let testTeamId = null;
+let testMemberId = null;
 
 /**
  * テスト結果をログに記録
@@ -134,109 +138,118 @@ async function runTests() {
     console.log(`${'\x1b[33m'}認証なしでテストを続行します（失敗する可能性あり）${'\x1b[0m'}\n`);
   }
   
-  // テスト1: チーム貢献の一覧を取得
+  // テスト1: チーム一覧を取得
   await testEndpoint(
-    'チーム貢献の一覧取得',
-    '/team/contributions'
+    'チーム一覧の取得',
+    '/teams'
   );
   
-  // テスト2: メンターシップの一覧を取得
-  await testEndpoint(
-    'メンターシップの一覧取得',
-    '/team/mentorships'
-  );
-  
-  // テスト3: チーム相性を取得
-  await testEndpoint(
-    'チーム相性取得',
-    '/team/compatibility'
-  );
-  
-  // テスト4: 新しいチーム貢献を追加
-  const contributionData = {
-    title: 'テスト貢献',
-    description: 'これはテスト用の貢献です',
-    category: 'knowledge',
-    date: new Date().toISOString()
+  // テスト2: 新しいチームを作成
+  const createTeamData = {
+    name: 'テストチーム',
+    description: 'これはテスト用のチームです',
+    department: 'システム開発部'
   };
   
-  const contributionResult = await testEndpoint(
-    '新しいチーム貢献の追加',
-    '/team/contributions',
+  const createTeamResult = await testEndpoint(
+    '新規チーム作成',
+    '/teams',
     'POST',
-    contributionData
+    createTeamData
   );
   
-  // テスト5: 特定のチーム貢献を取得（テスト4で作成したもの）
-  let contributionId = null;
-  if (contributionResult.success && contributionResult.data && contributionResult.data.data) {
-    contributionId = contributionResult.data.data.id;
+  // チームIDを保存
+  if (createTeamResult.success && createTeamResult.data && createTeamResult.data.data) {
+    testTeamId = createTeamResult.data.data.id || createTeamResult.data.data._id;
+    console.log(`作成されたチームID: ${testTeamId}`);
     
+    // テスト3: 特定のチーム詳細を取得
     await testEndpoint(
-      '特定のチーム貢献取得',
-      `/team/contributions/${contributionId}`
+      'チーム詳細の取得',
+      `/teams/${testTeamId}`
     );
     
-    // テスト6: チーム貢献を更新
-    const updateData = {
-      title: '更新されたテスト貢献',
-      description: 'これは更新されたテスト用の貢献です'
+    // テスト4: チーム情報を更新
+    const updateTeamData = {
+      name: '更新されたテストチーム',
+      description: 'これは更新されたテスト用のチームです'
     };
     
     await testEndpoint(
-      'チーム貢献の更新',
-      `/team/contributions/${contributionId}`,
+      'チーム情報の更新',
+      `/teams/${testTeamId}`,
       'PUT',
-      updateData
+      updateTeamData
     );
     
-    // テスト7: チーム貢献を削除
+    // テスト5: チームにメンバーを追加
+    const addMemberData = {
+      userId: 'self', // テスト用に自分自身をメンバーとして追加
+      role: 'member'
+    };
+    
+    const addMemberResult = await testEndpoint(
+      'チームメンバーの追加',
+      `/teams/${testTeamId}/members`,
+      'POST',
+      addMemberData
+    );
+    
+    // メンバーIDを保存
+    if (addMemberResult.success && addMemberResult.data && addMemberResult.data.data) {
+      testMemberId = addMemberResult.data.data.id || addMemberResult.data.data.userId || 'self';
+      console.log(`追加されたメンバーID: ${testMemberId}`);
+      
+      // テスト6: メンバーの役割を更新
+      const updateRoleData = {
+        role: 'admin'
+      };
+      
+      await testEndpoint(
+        'メンバー役割の更新',
+        `/teams/${testTeamId}/members/${testMemberId}/role`,
+        'PUT',
+        updateRoleData
+      );
+      
+      // テスト7: チームの相性分析
+      await testEndpoint(
+        'チーム相性分析',
+        `/teams/${testTeamId}/compatibility`
+      );
+      
+      // テスト8: メンバー招待を送信
+      const inviteData = {
+        email: 'test-invite@example.com',
+        role: 'member',
+        message: 'チームに参加してください'
+      };
+      
+      await testEndpoint(
+        'メンバー招待の送信',
+        `/teams/${testTeamId}/invite`,
+        'POST',
+        inviteData
+      );
+      
+      // テスト9: チームからメンバーを削除
+      await testEndpoint(
+        'チームメンバーの削除',
+        `/teams/${testTeamId}/members/${testMemberId}`,
+        'DELETE'
+      );
+    } else {
+      console.log(`${'\x1b[33m'}警告: チームメンバーの追加に失敗したため、関連テストをスキップします${'\x1b[0m'}\n`);
+    }
+    
+    // テスト10: チームを削除
     await testEndpoint(
-      'チーム貢献の削除',
-      `/team/contributions/${contributionId}`,
+      'チームの削除',
+      `/teams/${testTeamId}`,
       'DELETE'
     );
   } else {
-    console.log(`${'\x1b[33m'}警告: チーム貢献の作成に失敗したため、関連テストをスキップします${'\x1b[0m'}\n`);
-  }
-  
-  // テスト8: 新しいメンターシップを作成
-  const mentorshipData = {
-    mentorId: 'self', // 自分自身をメンターとして指定
-    menteeId: 'self', // テスト用に自分自身をメンティーとして指定
-    startDate: new Date().toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30日後
-    focus: 'テスト目標', // `goal`ではなく`focus`が必要
-    status: 'active'
-  };
-  
-  const mentorshipResult = await testEndpoint(
-    '新しいメンターシップの作成',
-    '/team/mentorships',
-    'POST',
-    mentorshipData
-  );
-  
-  // テスト9: メンターシップにセッションを追加
-  let mentorshipId = null;
-  if (mentorshipResult.success && mentorshipResult.data && mentorshipResult.data.data) {
-    mentorshipId = mentorshipResult.data.data.id;
-    
-    const sessionData = {
-      date: new Date().toISOString(),
-      notes: 'これはテストセッションです',
-      duration: 60,
-      topics: ['テスト']
-    };
-    
-    await testEndpoint(
-      'メンターシップセッションの追加',
-      `/team/mentorships/${mentorshipId}/sessions`,
-      'POST',
-      sessionData
-    );
-  } else {
-    console.log(`${'\x1b[33m'}警告: メンターシップの作成に失敗したため、関連テストをスキップします${'\x1b[0m'}\n`);
+    console.log(`${'\x1b[33m'}警告: チームの作成に失敗したため、関連テストをスキップします${'\x1b[0m'}\n`);
   }
   
   // 結果の集計

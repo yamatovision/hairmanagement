@@ -4,7 +4,7 @@
  */
 
 // FourPillarsの型定義
-interface Pillar {
+export interface Pillar {
   stem: string;
   branch: string;
   fullStemBranch: string;
@@ -12,7 +12,7 @@ interface Pillar {
   fortune?: string; // 十二運星
 }
 
-interface FourPillars {
+export interface FourPillars {
   yearPillar: Pillar;
   monthPillar: Pillar;
   dayPillar: Pillar;
@@ -29,6 +29,7 @@ export class SajuProfile {
    * @param tenGods 十神関係
    * @param twelveFortunes 十二運星情報（オプション）
    * @param hiddenStems 蔵干情報（オプション）
+   * @param dayMaster 日主（日干）
    */
   constructor(
     public readonly fourPillars: FourPillars,
@@ -37,8 +38,12 @@ export class SajuProfile {
     public readonly tenGods: Record<string, string>,
     public readonly secondaryElement?: string,
     public readonly twelveFortunes?: Record<string, string>,
-    public readonly hiddenStems?: Record<string, string[]>
-  ) {}
+    public readonly hiddenStems?: Record<string, string[]>,
+    public readonly dayMaster?: string
+  ) {
+    // 日主が指定されていない場合は、自動的に日干から取得
+    this.dayMaster = dayMaster || fourPillars.dayPillar.stem;
+  }
   
   /**
    * 簡易表現での五行陰陽の組み合わせを取得
@@ -65,7 +70,8 @@ export class SajuProfile {
       yinYang: this.yinYang,
       tenGods: this.tenGods,
       twelveFortunes: this.twelveFortunes,
-      hiddenStems: this.hiddenStems
+      hiddenStems: this.hiddenStems,
+      dayMaster: this.dayMaster
     };
   }
 }

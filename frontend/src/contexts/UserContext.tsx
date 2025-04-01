@@ -1,8 +1,10 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { IUser, UserUpdateRequest, NotificationSettingsType } from '../utils/sharedTypes';
-import { ISajuProfile } from '../types/models';
+import { IUser, NotificationSettingsType, ISajuProfile } from '../types/models';
 import userService from '../services/user.service';
 import { useAuth } from './AuthContext';
+
+// UserUpdateRequestの型定義
+type UserUpdateRequest = Partial<Omit<IUser, 'id' | 'createdAt' | 'updatedAt' | 'password'>>;
 
 // コンテキストの型定義
 interface UserContextType {
@@ -95,6 +97,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // 認証状態が変わったら、ユーザーデータを取得
+  // fetchUserDataをdependencyから外し、無限ループを防止
   useEffect(() => {
     if (isAuthenticated) {
       fetchUserData();
@@ -103,6 +106,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSajuProfile(null);
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   // プロフィール更新

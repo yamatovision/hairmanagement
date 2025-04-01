@@ -11,6 +11,7 @@
 
 // ユーティリティーのインポート
 export * from './utils/elemental-types';
+export * from './utils/saju-types';
 
 // APIベースパス
 export const API_BASE_PATH = '/api/v1';

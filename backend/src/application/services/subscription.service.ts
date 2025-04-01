@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import ISubscriptionRepository from '../../domain/repositories/ISubscriptionRepository';
+import { ISubscriptionRepository } from '../../domain/repositories/ISubscriptionRepository';
 import { Subscription, PlanType, SubscriptionStatus, PlanInfo, AiModelType } from '../../domain/entities/Subscription';
 
 /**

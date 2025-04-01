@@ -1,5 +1,7 @@
 import { IRepository } from './IRepository';
-import { User } from '../entities/User';
+import { User } from '../user/entities/user.entity';
+import { UserRole } from '../user/value-objects/user-role';
+import { ElementType } from '@shared';
 
 /**
  * ユーザーリポジトリインターフェース
@@ -18,14 +20,14 @@ export interface IUserRepository extends IRepository<User, string> {
    * @param role ユーザーロール
    * @returns 該当するロールを持つユーザーの配列
    */
-  findByRole(role: string): Promise<User[]>;
+  findByRole(role: UserRole): Promise<User[]>;
   
   /**
    * 属性によるユーザー検索
    * @param element 陰陽五行の属性（木、火、土、金、水）
    * @returns 該当する属性を持つユーザーの配列
    */
-  findByElementalAttribute(element: string): Promise<User[]>;
+  findByElementalAttribute(element: ElementType): Promise<User[]>;
   
   /**
    * パスワードの更新

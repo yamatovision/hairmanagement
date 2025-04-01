@@ -10,6 +10,7 @@ import { CustomError } from './utils/error.util';
 import getFeatureFlags, { getEnabledFeaturesString } from './feature-flags';
 import { setupDatabaseConnection, connectDB } from './db/connection';
 import { healthCheck } from './utils/monitoring.util';
+import { logger } from './utils/logger.util';
 
 // 詳細なエラーハンドリングユーティリティをインポート
 // TypeScriptエラーを無視：JSファイルだが必要なため
@@ -29,6 +30,7 @@ import './infrastructure/di/container';
 
 // クリーンアーキテクチャのルートのインポート
 import { registerRoutes } from './interfaces/http/routes';
+import teamRoutes from './interfaces/http/routes/team.routes';
 
 // アプリケーションの初期化
 console.log('アプリケーションの初期化を開始します...');
@@ -58,6 +60,15 @@ console.log(`CORS設定: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`)
 // 詳細なリクエストロガーを追加
 app.use(requestLogger);
 
+// Winstonロガーによるリクエストログ記録も追加
+app.use((req, res, next) => {
+  logger.http(`${req.method} ${req.originalUrl || req.url}`, {
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.headers['user-agent']
+  });
+  next();
+});
+
 // ネットワーク設定の詳細を出力
 console.log('サーバーネットワーク設定:');
 console.log(getNetworkInfo());
@@ -67,6 +78,15 @@ process.on('uncaughtException', (err) => {
   console.error('未処理の例外が発生しました:');
   console.error(err);
   console.error(err.stack);
+  
+  // エラーをファイルに書き出して詳細を確認
+  const fs = require('fs');
+  fs.writeFileSync('error.log', JSON.stringify({
+    message: err.message,
+    stack: err.stack,
+    name: err.name,
+    time: new Date().toISOString()
+  }, null, 2));
 });
 
 // Promiseの拒否をキャッチ
@@ -101,14 +121,26 @@ try {
   // 正しいAPIベースパスを設定
   app.use(baseApiPath, router);
   
+  // 従来のルート構造も併用（後方互換性のために残す）
+  // 但し新しいルート構造が正しく機能するためコメントアウト
+  // app.use(`${apiPrefix}/teams`, teamRoutes);
+  
   // デバッグ用 - ルート一覧表示
-  console.log('登録されたルート:');
-  router.stack.forEach((layer: any) => {
-    if (layer.route) {
-      const methods = Object.keys(layer.route.methods).join(',');
-      console.log(`${methods.toUpperCase()} ${baseApiPath}${layer.route.path}`);
+  try {
+    console.log('登録されたルート:');
+    if (router && router.stack) {
+      router.stack.forEach((layer: any) => {
+        if (layer && layer.route) {
+          const methods = Object.keys(layer.route.methods).join(',');
+          console.log(`${methods.toUpperCase()} ${baseApiPath}${layer.route.path}`);
+        }
+      });
+    } else {
+      console.log('ルーターが初期化されていないか、スタックが存在しません');
     }
-  });
+  } catch (err) {
+    console.error('ルート一覧の表示中にエラーが発生しました:', err);
+  }
   
   console.log(`クリーンアーキテクチャのルート登録成功！ベースパス: ${baseApiPath}`);
 } catch (error) {
@@ -332,7 +364,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // データベース接続は db/connection.ts に移動
 
 // サーバー起動（非同期DB接続処理付き）
-const startServer = async () => {
+const startServer = async (): Promise<void> => {
   try {
     console.log('============== サーバー起動プロセス開始 ==============');
     
@@ -353,6 +385,9 @@ const startServer = async () => {
     console.log(`- enableTeam: ${featureFlags.enableTeam}`);
     console.log(`- enableAnalytics: ${featureFlags.enableAnalytics}`);
     console.log(`- enableConversation: ${featureFlags.enableConversation}`);
+    
+    // データベース接続の初期化
+    setupDatabaseConnection();
     
     // モデルが読み込まれていることを確認
     console.log('モデル読み込み状態:');
@@ -383,26 +418,24 @@ const startServer = async () => {
       const registeredModels = Object.keys(mongoose.models);
       console.log('登録済みMongooseモデル:', registeredModels.join(', '));
     } catch (dbError) {
-      console.error('データベース接続中にエラーが発生しました:');
-      console.error(dbError);
+      logger.error('データベース接続中にエラーが発生しました:', dbError);
       if (dbError instanceof Error) {
-        console.error('スタックトレース:', dbError.stack);
+        logger.error('スタックトレース:', dbError.stack);
       }
-      console.error('エラー詳細:', JSON.stringify(dbError, null, 2));
       
       // データベースが必要かどうかを確認
       const needsDatabase = featureFlags.enableFortune || featureFlags.enableTeam || 
                            featureFlags.enableAnalytics || featureFlags.enableConversation;
       
-      console.log(`データベースが必要か: ${needsDatabase ? 'はい' : 'いいえ'}`);
-      console.log(`SKIP_DB_ERRORS: ${process.env.SKIP_DB_ERRORS}`);
+      logger.info(`データベースが必要か: ${needsDatabase ? 'はい' : 'いいえ'}`);
+      logger.info(`SKIP_DB_ERRORS: ${process.env.SKIP_DB_ERRORS}`);
       
       if (needsDatabase && process.env.SKIP_DB_ERRORS !== 'true') {
-        console.error('データベースが必要な機能が有効なため、起動を中止します');
+        logger.error('データベースが必要な機能が有効なため、起動を中止します');
         process.exit(1);
       }
       
-      console.warn('データベース接続エラーを無視して続行します (SKIP_DB_ERRORS=true または必要な機能が無効)');
+      logger.warn('データベース接続エラーを無視して続行します (SKIP_DB_ERRORS=true または必要な機能が無効)');
     }
     
     // イベントハンドラーの初期化
@@ -453,19 +486,27 @@ const startServer = async () => {
       console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
       
       // ルート一覧を表示
-      console.log('有効なルート:');
-      app._router.stack.forEach((r: any) => {
-        if (r.route && r.route.path) {
-          console.log(`${Object.keys(r.route.methods).join(',')} ${r.route.path}`);
-        } else if (r.name === 'router' && r.handle.stack) {
-          r.handle.stack.forEach((stackItem: any) => {
-            if (stackItem.route) {
-              const methods = Object.keys(stackItem.route.methods).join(',');
-              console.log(`${methods} ${r.regexp} ${stackItem.route.path}`);
+      try {
+        console.log('有効なルート:');
+        if (app && app._router && app._router.stack) {
+          app._router.stack.forEach((r: any) => {
+            if (r && r.route && r.route.path) {
+              console.log(`${Object.keys(r.route.methods).join(',')} ${r.route.path}`);
+            } else if (r && r.name === 'router' && r.handle && r.handle.stack) {
+              r.handle.stack.forEach((stackItem: any) => {
+                if (stackItem && stackItem.route) {
+                  const methods = Object.keys(stackItem.route.methods).join(',');
+                  console.log(`${methods} ${r.regexp} ${stackItem.route.path}`);
+                }
+              });
             }
           });
+        } else {
+          console.log('ルーターのスタックが見つかりませんでした');
         }
-      });
+      } catch (err) {
+        console.error('ルート一覧表示中のエラー:', err);
+      }
     });
     
     // エラーハンドリングをサーバーに追加
@@ -514,7 +555,25 @@ const startServer = async () => {
 
 // テスト用にアプリケーションをエクスポート
 if (process.env.NODE_ENV !== 'test') {
-  startServer();
+  try {
+    startServer().catch(err => {
+      console.error('\n===================================================');
+      console.error('サーバーの起動に失敗しました。シンプルサーバーを使用してください:');
+      console.error('node server-minimal.js');
+      console.error('===================================================\n');
+      console.error('エラー詳細:', err);
+      console.error('\n');
+      process.exit(1);
+    });
+  } catch (error) {
+    console.error('\n===================================================');
+    console.error('サーバーの起動に失敗しました。シンプルサーバーを使用してください:');
+    console.error('node server-minimal.js');
+    console.error('===================================================\n');
+    console.error('エラー詳細:', error);
+    console.error('\n');
+    process.exit(1);
+  }
 }
 
 export default app;

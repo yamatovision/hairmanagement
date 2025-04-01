@@ -3,8 +3,8 @@ import { inject, injectable } from 'tsyringe';
 import { IFortuneRepository } from '../../../domain/repositories/IFortuneRepository';
 import { ElementalCalculatorService } from '../../../application/services/elemental-calculator.service';
 import { SajuCalculatorService } from '../../../application/services/saju-calculator.service';
-import { ElementType, YinYangType } from '@shared';
-import { SajuFortune } from '@shared/utils/saju-types';
+import { ElementType, YinYangType } from '../../../shared';
+import { SajuFortune } from '../../../shared/utils/saju-types';
 
 /**
  * 運勢コントローラー
@@ -77,9 +77,12 @@ export class FortuneController {
       }
       
       // 四柱推命情報で運勢を拡張
+      // 文字列から日付オブジェクトに変換
+      const birthDateObj = new Date(birthDate);
+      
       const enhancedFortune = await this.sajuCalculatorService.enhanceFortuneWithSaju(
         response,
-        birthDate,
+        birthDateObj,
         birthHour
       );
       
@@ -163,9 +166,12 @@ export class FortuneController {
       }
       
       // 四柱推命情報で運勢を拡張
+      // 文字列から日付オブジェクトに変換
+      const birthDateObj = new Date(birthDate);
+      
       const enhancedFortune = await this.sajuCalculatorService.enhanceFortuneWithSaju(
         response,
-        birthDate,
+        birthDateObj,
         birthHour
       );
       
@@ -243,11 +249,14 @@ export class FortuneController {
         birthHour = Number(req.query.birthHour);
       }
       
+      // 文字列から日付オブジェクトに変換
+      const birthDateObj = new Date(birthDate);
+      
       // 各運勢に四柱推命情報を追加
       const enhancedFortunes = await Promise.all(formattedFortunes.map(fortune => 
         this.sajuCalculatorService.enhanceFortuneWithSaju(
           fortune,
-          birthDate,
+          birthDateObj,
           birthHour
         )
       ));

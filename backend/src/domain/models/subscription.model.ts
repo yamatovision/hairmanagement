@@ -135,7 +135,7 @@ SubscriptionSchema.index({ renewalDate: 1 });
 
 // teamIdとuserIdの両方がnullにならないようにバリデーション
 SubscriptionSchema.pre('validate', function(next) {
-  const subscription = this as ISubscriptionDocument;
+  const subscription = this as any;
   
   if (!subscription.teamId && !subscription.userId) {
     const error = new Error('teamIdまたはuserIdのいずれかが必要です');

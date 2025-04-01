@@ -40,4 +40,4 @@ interface ISubscriptionRepository extends IRepository<Subscription, string> {
   ): Promise<boolean>;
 }
 
-export default ISubscriptionRepository;
+export { ISubscriptionRepository };

@@ -11,10 +11,12 @@ import {
   Tabs,
   Tab
 } from '@mui/material';
+// TeamAnalytics will be imported directly in the render function to avoid circular dependencies
 import PeopleIcon from '@mui/icons-material/People';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import StaffStatusPanel from '../components/dashboard/StaffStatusPanel';
 import SubscriptionManagement from '../components/dashboard/SubscriptionManagement';
 import analyticsService from '../services/analytics.service';
@@ -47,6 +49,9 @@ const ManagerDashboardPage: React.FC = () => {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
+
+  // チームIDを取得（実際の実装では認証済みユーザーのチーム情報から取得）
+  const currentTeamId = "1"; // 仮のチームID
   
   // ダミーユーザーリスト（本番ではデータベースから取得する）
   const dummyUsers: IUser[] = [
@@ -455,6 +460,16 @@ const ManagerDashboardPage: React.FC = () => {
               />
               スタッフ状態管理
             </>
+          ) : currentTab === 1 ? (
+            <>
+              <BarChartIcon 
+                sx={{ 
+                  marginRight: 1.5, 
+                  color: '#64b5f6', // 水の色
+                }} 
+              />
+              チーム五行分析
+            </>
           ) : (
             <>
               <SubscriptionsIcon 
@@ -490,6 +505,7 @@ const ManagerDashboardPage: React.FC = () => {
             textColor="primary"
           >
             <Tab label="スタッフ状態" />
+            <Tab label="チーム分析" />
             <Tab label="サブスクリプション" />
           </Tabs>
         </Container>
@@ -509,9 +525,20 @@ const ManagerDashboardPage: React.FC = () => {
               followupRecommendations={followupRecommendations}
             />
           )
+        ) : currentTab === 1 ? (
+          // チーム分析タブ - 動的にインポートして循環参照を防ぐ
+          (() => {
+            const TeamAnalytics = require('../components/dashboard/TeamAnalytics').default;
+            return (
+              <TeamAnalytics 
+                teamId={currentTeamId} 
+                onInviteMember={() => console.log('メンバー招待ダイアログを表示')}
+              />
+            );
+          })()
         ) : (
           // サブスクリプション管理タブ
-          <SubscriptionManagement teamId="1" />
+          <SubscriptionManagement teamId={currentTeamId} />
         )}
       </Container>
     </Box>

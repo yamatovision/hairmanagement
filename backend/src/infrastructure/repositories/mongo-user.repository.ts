@@ -179,7 +179,7 @@ export class MongoUserRepository extends MongoRepositoryBase<User, string> imple
   async updateLastLogin(userId: string, loginTime: Date): Promise<boolean> {
     const result = await this.getModel().findByIdAndUpdate(
       userId,
-      { lastLoginAt: loginTime }
+      { lastLoginAt: loginTime.toISOString() }
     ).exec();
     
     return result !== null;

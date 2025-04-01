@@ -141,21 +141,256 @@ if (enabledFeatures.fortune) {
 
 // チーム情報（チーム機能が有効な場合のみ）
 if (enabledFeatures.team) {
-  app.get(`${baseApiPath}/teams`, (req, res) => {
+  // チーム一覧取得
+  app.get(`${apiPrefix}/teams`, (req, res) => {
     console.log('チーム一覧エンドポイントへのアクセス');
     res.json({
       success: true,
+      data: [
+        {
+          id: 'team-123',
+          name: 'チームA',
+          description: 'テストチーム',
+          ownerId: 'user-123',
+          admins: [],
+          members: [
+            {
+              userId: 'user-456',
+              role: 'member',
+              joinedAt: new Date().toISOString()
+            }
+          ],
+          isActive: true,
+          goal: 'テスト目標',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ]
+    });
+  });
+
+  // チーム作成
+  app.post(`${apiPrefix}/teams`, (req, res) => {
+    console.log('チーム作成エンドポイントへのアクセス:', req.body);
+    res.status(201).json({
+      success: true,
       data: {
-        teams: [
+        id: 'team-' + Math.random().toString(36).substring(2, 7),
+        name: req.body.name || 'テストチーム',
+        description: req.body.description || 'テスト説明',
+        ownerId: 'user-123',
+        admins: [],
+        members: [],
+        isActive: true,
+        goal: req.body.goal || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+  });
+
+  // チーム詳細取得
+  app.get(`${apiPrefix}/teams/:teamId`, (req, res) => {
+    console.log(`チーム詳細エンドポイントへのアクセス: ${req.params.teamId}`);
+    res.json({
+      success: true,
+      data: {
+        id: req.params.teamId,
+        name: 'チームA',
+        description: 'テストチーム',
+        ownerId: 'user-123',
+        admins: [],
+        members: [
           {
-            id: 'team-123',
-            name: 'チームA',
-            description: 'テストチーム',
-            members: ['user-123', 'user-456'],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            userId: 'user-456',
+            role: 'member',
+            joinedAt: new Date().toISOString()
+          }
+        ],
+        isActive: true,
+        goal: 'テスト目標',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+  });
+
+  // チーム更新
+  app.put(`${apiPrefix}/teams/:teamId`, (req, res) => {
+    console.log(`チーム更新エンドポイントへのアクセス: ${req.params.teamId}`, req.body);
+    res.json({
+      success: true,
+      data: {
+        id: req.params.teamId,
+        name: req.body.name || 'チームA',
+        description: req.body.description || 'テストチーム',
+        ownerId: 'user-123',
+        admins: [],
+        members: [
+          {
+            userId: 'user-456',
+            role: 'member',
+            joinedAt: new Date().toISOString()
+          }
+        ],
+        isActive: req.body.isActive !== undefined ? req.body.isActive : true,
+        goal: req.body.goal || 'テスト目標',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+  });
+
+  // チーム削除
+  app.delete(`${apiPrefix}/teams/:teamId`, (req, res) => {
+    console.log(`チーム削除エンドポイントへのアクセス: ${req.params.teamId}`);
+    res.status(204).end();
+  });
+
+  // チームメンバー追加
+  app.post(`${apiPrefix}/teams/:teamId/members`, (req, res) => {
+    console.log(`チームメンバー追加エンドポイントへのアクセス: ${req.params.teamId}`, req.body);
+    res.json({
+      success: true,
+      data: {
+        id: req.params.teamId,
+        name: 'チームA',
+        description: 'テストチーム',
+        ownerId: 'user-123',
+        admins: [],
+        members: [
+          {
+            userId: req.body.userId || 'self',
+            role: req.body.role || 'member',
+            joinedAt: new Date().toISOString()
+          },
+          {
+            userId: 'user-456',
+            role: 'member',
+            joinedAt: new Date().toISOString()
+          }
+        ],
+        isActive: true,
+        goal: 'テスト目標',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+  });
+
+  // チームメンバー削除
+  app.delete(`${apiPrefix}/teams/:teamId/members/:memberId`, (req, res) => {
+    console.log(`チームメンバー削除エンドポイントへのアクセス: ${req.params.teamId}/${req.params.memberId}`);
+    res.json({
+      success: true,
+      data: {
+        id: req.params.teamId,
+        name: 'チームA',
+        description: 'テストチーム',
+        ownerId: 'user-123',
+        admins: [],
+        members: [
+          {
+            userId: 'user-456',
+            role: 'member',
+            joinedAt: new Date().toISOString()
+          }
+        ],
+        isActive: true,
+        goal: 'テスト目標',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+  });
+
+  // メンバー役割更新
+  app.put(`${apiPrefix}/teams/:teamId/members/:memberId/role`, (req, res) => {
+    console.log(`メンバー役割更新エンドポイントへのアクセス: ${req.params.teamId}/${req.params.memberId}`, req.body);
+    res.json({
+      success: true,
+      data: {
+        id: req.params.teamId,
+        name: 'チームA',
+        description: 'テストチーム',
+        ownerId: 'user-123',
+        admins: [],
+        members: [
+          {
+            userId: req.params.memberId,
+            role: req.body.role || 'admin',
+            joinedAt: new Date().toISOString()
+          },
+          {
+            userId: 'user-456',
+            role: 'member',
+            joinedAt: new Date().toISOString()
+          }
+        ],
+        isActive: true,
+        goal: 'テスト目標',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+  });
+
+  // チーム相性分析
+  app.get(`${apiPrefix}/teams/:teamId/compatibility`, (req, res) => {
+    console.log(`チーム相性分析エンドポイントへのアクセス: ${req.params.teamId}`);
+    res.json({
+      success: true,
+      data: {
+        teamId: req.params.teamId,
+        elementDistribution: {
+          wood: 25,
+          fire: 15,
+          earth: 20,
+          metal: 15,
+          water: 25
+        },
+        yinYangBalance: {
+          yin: 40,
+          yang: 60
+        },
+        complementaryRelations: [
+          {
+            userId1: 'user-123',
+            userId2: 'user-456',
+            compatibilityScore: 85,
+            relationshipType: '相生',
+            complementaryAreas: ['創造力', '実行力']
+          }
+        ],
+        teamStrengths: ['創造的な発想力', '安定した実行力'],
+        teamWeaknesses: ['計画性の欠如', '柔軟性の不足'],
+        optimizationSuggestions: [
+          {
+            type: 'recruitment',
+            description: '「金」属性の人材を追加し、チームの分析力と精度を強化する',
+            priority: 'high'
+          },
+          {
+            type: 'development',
+            description: '「木」属性メンバーの創造的発想を活かしたブレインストーミングセッションの導入',
+            priority: 'medium'
           }
         ]
+      }
+    });
+  });
+
+  // メンバー招待
+  app.post(`${apiPrefix}/teams/:teamId/invite`, (req, res) => {
+    console.log(`メンバー招待エンドポイントへのアクセス: ${req.params.teamId}`, req.body);
+    res.status(201).json({
+      success: true,
+      message: 'Invitation sent successfully',
+      data: {
+        teamId: req.params.teamId,
+        email: req.body.email || 'test@example.com',
+        role: req.body.role || 'member',
+        sent: true
       }
     });
   });

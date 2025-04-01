@@ -22,7 +22,7 @@ export const registerConversationRoutes = (router: Router): void => {
     
     conversationRouter.post(
       '/message',
-      authMiddleware.handle(),
+      authMiddleware.handle.bind(authMiddleware),
       (req, res, next) => conversationController.sendMessage(req, res, next)
     );
   } catch (error) {
@@ -48,7 +48,7 @@ export const registerConversationRoutes = (router: Router): void => {
     
     conversationRouter.get(
       '/',
-      authMiddleware.handle(),
+      authMiddleware.handle.bind(authMiddleware),
       (req, res, next) => conversationController.getAllConversations(req, res, next)
     );
   } catch (error) {
@@ -74,7 +74,7 @@ export const registerConversationRoutes = (router: Router): void => {
     
     conversationRouter.get(
       '/:id',
-      authMiddleware.handle(),
+      authMiddleware.handle.bind(authMiddleware),
       (req, res, next) => conversationController.getConversationById(req, res, next)
     );
   } catch (error) {
@@ -100,7 +100,7 @@ export const registerConversationRoutes = (router: Router): void => {
     
     conversationRouter.post(
       '/generate-prompt',
-      authMiddleware.handle(),
+      authMiddleware.handle.bind(authMiddleware),
       (req, res, next) => conversationController.generatePromptQuestion(req, res, next)
     );
   } catch (error) {
@@ -126,7 +126,7 @@ export const registerConversationRoutes = (router: Router): void => {
     
     conversationRouter.put(
       '/:id/archive',
-      authMiddleware.handle(),
+      authMiddleware.handle.bind(authMiddleware),
       (req, res, next) => conversationController.archiveConversation(req, res, next)
     );
   } catch (error) {
@@ -152,7 +152,7 @@ export const registerConversationRoutes = (router: Router): void => {
     
     conversationRouter.put(
       '/:id/favorite',
-      authMiddleware.handle(),
+      authMiddleware.handle.bind(authMiddleware),
       (req, res, next) => conversationController.toggleFavoriteMessage(req, res, next)
     );
   } catch (error) {
@@ -178,7 +178,7 @@ export const registerConversationRoutes = (router: Router): void => {
     
     conversationRouter.post(
       '/team-member-chat',
-      authMiddleware.handle(),
+      authMiddleware.handle.bind(authMiddleware),
       (req, res, next) => conversationController.startTeamMemberChat(req, res, next)
     );
   } catch (error) {
@@ -204,7 +204,7 @@ export const registerConversationRoutes = (router: Router): void => {
     
     conversationRouter.post(
       '/fortune-chat',
-      authMiddleware.handle(),
+      authMiddleware.handle.bind(authMiddleware),
       (req, res, next) => conversationController.startFortuneChat(req, res, next)
     );
   } catch (error) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, Paper, Tabs, Tab, CircularProgress } from '@mui/material';
 import { useUser } from '../contexts/UserContext';
 import ProfileForm from '../components/profile/ProfileForm';
@@ -40,13 +40,55 @@ const a11yProps = (index: number) => {
 
 // プロフィールページコンポーネント
 const ProfilePage: React.FC = () => {
-  const { user, loading, error } = useUser();
+  const { user, loading, error, refreshUserData, loadSajuProfile } = useUser();
   const [tabValue, setTabValue] = useState(0);
+  const [sajuProfileLoaded, setSajuProfileLoaded] = useState(false);
 
   // タブの変更ハンドラー
   const handleTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
     setTabValue(newValue);
+    
+    // 四柱推命タブに切り替えた場合、プロファイルがまだ読み込まれていなければ読み込む
+    if (newValue === 1 && !sajuProfileLoaded && user?.birthDate) {
+      loadSajuProfile()
+        .then(profile => {
+          if (profile) {
+            setSajuProfileLoaded(true);
+            console.log('四柱推命タブでプロファイルを読み込みました');
+          }
+        })
+        .catch(err => {
+          console.error('四柱推命プロファイル読み込みエラー:', err);
+        });
+    }
   };
+
+  // コンポーネントマウント時に一度だけユーザーデータを最新化（マウント時のみ実行）
+  useEffect(() => {
+    // 初回マウント時のみ実行
+    const initialLoad = async () => {
+      if (user) {
+        try {
+          // まずユーザーデータを更新
+          await refreshUserData();
+          
+          // 生年月日があれば四柱推命プロファイルも取得
+          if (user.birthDate) {
+            const profile = await loadSajuProfile();
+            if (profile) {
+              setSajuProfileLoaded(true);
+              console.log('コンポーネントマウント時に四柱推命プロファイルを読み込みました');
+            }
+          }
+        } catch (err) {
+          console.error('プロファイル読み込みエラー:', err);
+        }
+      }
+    };
+    
+    initialLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ローディング中表示
   if (loading) {

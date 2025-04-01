@@ -136,6 +136,51 @@ export const TEN_GOD_KR: Record<string, string> = {
 };
 
 /**
+ * 地支の十神関係を判定する
+ * @param dayStem 日主（日柱の天干）
+ * @param branch 地支
+ * @returns 十神関係
+ */
+export function determineBranchTenGodRelation(dayStem: string, branch: string): string {
+  // 地支の五行を取得
+  const branchElement = getElementFromBranch(branch);
+  // 日主の五行
+  const dayElement = getElementFromStem(dayStem);
+  // 日主が陰性かどうか
+  const dayYin = isStemYin(dayStem);
+  // 地支が陰性かどうか (子・寅・辰・午・申・戌は陽、丑・卯・巳・未・酉・亥は陰)
+  const branchYin = ['丑', '卯', '巳', '未', '酉', '亥'].includes(branch);
+  const sameSex = dayYin === branchYin;
+  
+  // 1. 同じ五行の場合
+  if (dayElement === branchElement) {
+    return sameSex ? '比肩' : '劫財';
+  }
+  
+  // 2. 対象が日主を生む関係
+  if (ELEMENT_GENERATES[branchElement] === dayElement) {
+    return sameSex ? '偏印' : '正印';
+  }
+  
+  // 3. 対象が日主を克する関係
+  if (ELEMENT_CONTROLS[branchElement] === dayElement) {
+    return sameSex ? '偏官' : '正官';
+  }
+  
+  // 4. 日主が対象を生む関係
+  if (ELEMENT_GENERATES[dayElement] === branchElement) {
+    return sameSex ? '食神' : '傷官';
+  }
+  
+  // 5. 日主が対象を克する関係
+  if (ELEMENT_CONTROLS[dayElement] === branchElement) {
+    return sameSex ? '偏財' : '正財';
+  }
+  
+  return '不明';
+}
+
+/**
  * 蔵干（地支に内包される天干）を取得
  * @param branch 地支
  * @returns 蔵干の配列
@@ -165,19 +210,42 @@ export function getHiddenStems(branch: string): string[] {
  * @param yearStem 年干
  * @param monthStem 月干
  * @param hourStem 時干
+ * @param yearBranch 年支
+ * @param monthBranch 月支
+ * @param dayBranch 日支
+ * @param hourBranch 時支
  * @returns 十神関係のマップ
  */
 export function calculateTenGods(
   dayStem: string,
   yearStem: string,
   monthStem: string,
-  hourStem: string
+  hourStem: string,
+  yearBranch: string,
+  monthBranch: string,
+  dayBranch: string,
+  hourBranch: string
 ): Record<string, string> {
-  return {
+  // 天干の十神関係
+  const stemTenGods = {
     year: determineTenGodRelation(dayStem, yearStem),
     month: determineTenGodRelation(dayStem, monthStem),
     day: '比肩', // 日柱自身は常に比肩
     hour: determineTenGodRelation(dayStem, hourStem)
+  };
+  
+  // 地支の十神関係
+  const branchTenGods = {
+    yearBranch: determineBranchTenGodRelation(dayStem, yearBranch),
+    monthBranch: determineBranchTenGodRelation(dayStem, monthBranch),
+    dayBranch: determineBranchTenGodRelation(dayStem, dayBranch),
+    hourBranch: determineBranchTenGodRelation(dayStem, hourBranch)
+  };
+  
+  // 両方を統合して返す
+  return {
+    ...stemTenGods,
+    ...branchTenGods
   };
 }
 

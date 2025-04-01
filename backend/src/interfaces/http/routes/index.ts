@@ -4,6 +4,7 @@ import { registerUserRoutes } from './user.routes';
 import { registerFortuneRoutes } from './fortune.routes';
 import { registerConversationRoutes } from './conversation.routes';
 import { registerSubscriptionRoutes } from './subscription.routes';
+import { registerTeamRoutes } from './team.routes';
 
 /**
  * APIルート登録
@@ -20,6 +21,7 @@ export const registerRoutes = (router: Router): void => {
   registerFortuneRoutes(router);
   registerConversationRoutes(router);
   registerSubscriptionRoutes(router);
+  registerTeamRoutes(router);
   
   // ヘルスチェックエンドポイント
   router.get('/health', (_, res) => {
