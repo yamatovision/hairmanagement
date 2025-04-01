@@ -9,7 +9,7 @@ import { DateTimeProcessor } from './DateTimeProcessor';
  */
 const TEST_DATES = [
   {
-    description: "1986年5月26日 5時 (丙寅年)",
+    description: "1986年5月26日 5時 (丙寅年) - 男性 東京",
     date: new Date(1986, 4, 26),
     hour: 5,
     gender: 'M' as 'M',
@@ -17,7 +17,7 @@ const TEST_DATES = [
     expected: null
   },
   {
-    description: "2023年10月15日 12時 (癸卯年)",
+    description: "2023年10月15日 12時 (癸卯年) - 男性 東京",
     date: new Date(2023, 9, 15),
     hour: 12,
     gender: 'M' as 'M',
@@ -25,7 +25,7 @@ const TEST_DATES = [
     expected: null
   },
   {
-    description: "2022年4月6日 23時 (壬寅年)",
+    description: "2022年4月6日 23時 (壬寅年) - 女性 ソウル",
     date: new Date(2022, 3, 6),
     hour: 23,
     gender: 'F' as 'F',
@@ -45,11 +45,42 @@ function formatFourPillars(fourPillars) {
 }
 
 /**
+ * 蔵干情報をフォーマットして表示用文字列に変換
+ */
+function formatHiddenStems(hiddenStems) {
+  if (!hiddenStems) return "情報なし";
+  
+  return `年[${hiddenStems.year?.join('、') || 'なし'}] ` +
+         `月[${hiddenStems.month?.join('、') || 'なし'}] ` +
+         `日[${hiddenStems.day?.join('、') || 'なし'}] ` +
+         `時[${hiddenStems.hour?.join('、') || 'なし'}]`;
+}
+
+/**
+ * 十二運星情報をフォーマットして表示用文字列に変換
+ */
+function formatTwelveFortunes(twelveFortunes) {
+  if (!twelveFortunes) return "情報なし";
+  
+  return `年[${twelveFortunes.year || 'なし'}] ` +
+         `月[${twelveFortunes.month || 'なし'}] ` +
+         `日[${twelveFortunes.day || 'なし'}] ` +
+         `時[${twelveFortunes.hour || 'なし'}]`;
+}
+
+/**
  * テスト結果を文字列化する
  */
 function formatPillarExpectation(expected) {
   if (!expected) return "動的に計算";
   return `年柱[${expected.year}] 月柱[${expected.month}] 日柱[${expected.day}] 時柱[${expected.hour}]`;
+}
+
+/**
+ * 日時を読みやすい形式にフォーマット
+ */
+function formatSimpleDateTime(dateTime) {
+  return `${dateTime.year}年${dateTime.month}月${dateTime.day}日 ${dateTime.hour}時${dateTime.minute > 0 ? dateTime.minute + '分' : ''}`;
 }
 
 /**
@@ -104,8 +135,6 @@ function testSajuEngine(): void {
   
   for (const test of allTests) {
     console.log(`\n【${test.description}】`);
-    console.log(`- 日付: ${test.date.toISOString().split('T')[0]}`);
-    console.log(`- 時間: ${test.hour}時`);
     console.log(`- 場所: ${test.location}`);
     console.log(`- 性別: ${test.gender === 'F' ? '女性' : '男性'}`);
     console.log(`- 期待値: ${formatPillarExpectation(test.expected)}`);
@@ -119,6 +148,12 @@ function testSajuEngine(): void {
         test.location
       );
       
+      // 調整済み日時情報を表示
+      if (result.processedDateTime) {
+        console.log(`- 原始日時: ${formatSimpleDateTime(result.processedDateTime.simpleDate)}`);
+        console.log(`- 調整日時: ${formatSimpleDateTime(result.processedDateTime.adjustedDate)}`);
+      }
+      
       // 旧暦情報を表示
       if (result.lunarDate) {
         console.log(`- 旧暦: ${result.lunarDate.year}年${result.lunarDate.month}月${result.lunarDate.day}日${result.lunarDate.isLeapMonth ? ' (閏月)' : ''}`);
@@ -126,6 +161,12 @@ function testSajuEngine(): void {
       
       // 四柱情報を表示
       console.log(`- 四柱: ${formatFourPillars(result.fourPillars)}`);
+      
+      // 蔵干情報を表示
+      console.log(`- 蔵干: ${formatHiddenStems(result.hiddenStems)}`);
+      
+      // 十二運星情報を表示
+      console.log(`- 十二運星: ${formatTwelveFortunes(result.twelveFortunes)}`);
       
       // 五行属性を表示
       console.log(`- 五行: ${result.elementProfile.yinYang}${result.elementProfile.mainElement}(主) / ${result.elementProfile.secondaryElement}(副)`);
@@ -175,7 +216,7 @@ function testDateTimeProcessor(): void {
   ];
   
   for (const test of testDates) {
-    console.log(`\n【${test.date.toISOString().split('T')[0]} ${test.hour}時 @ ${test.location}】`);
+    console.log(`\n【${test.date.getFullYear()}年${test.date.getMonth() + 1}月${test.date.getDate()}日 ${test.hour}時 @ ${test.location}】`);
     
     // オプション更新
     processor.updateOptions({ location: test.location });
@@ -183,8 +224,9 @@ function testDateTimeProcessor(): void {
     // 処理実行
     const processed = processor.processDateTime(test.date, test.hour);
     
-    console.log(`- 元の日時: ${processed.originalDate.toISOString()}`);
-    console.log(`- 調整日時: ${processed.adjustedDate.toISOString()}`);
+    console.log(`- 元の日時: ${formatSimpleDateTime(processed.simpleDate)}`);
+    console.log(`- 調整日時: ${formatSimpleDateTime(processed.adjustedDate)}`);
+    
     if (processed.lunarDate) {
       console.log(`- 旧暦情報: ${processed.lunarDate.year}年${processed.lunarDate.month}月${processed.lunarDate.day}日${processed.lunarDate.isLeapMonth ? ' (閏月)' : ''}`);
     }
