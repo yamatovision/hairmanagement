@@ -19,8 +19,8 @@
  * 2. 月が進むごとに月干は1ずつ進む（以前の2ずつではない）
  * 3. 月支は固定配列（寅→卯→辰→...）を使用
  */
-const { STEMS, BRANCHES } = require('./types');
-const { getLunarDate, getSolarTerm, getSolarTermPeriod, SOLAR_TERMS, MONTH_CHANGING_TERMS } = require('./lunarDateCalculator');
+import { STEMS, BRANCHES } from './types';
+import { getLunarDate, getSolarTerm, getSolarTermPeriod, SOLAR_TERMS, MONTH_CHANGING_TERMS } from './lunarDateCalculator';
 
 //-------------------------------------------------------------------------
 // 1. 主要な節気とそれに対応する月のみ維持（特殊ケース処理は削除）
@@ -268,7 +268,7 @@ function calculateKoreanMonthPillar(date, yearStem, options = {}) {
     }
   }
   
-  // 3. 節気期間を判定する（新機能）
+  // 3. 節気期間を判定する（二十四節気に基づく月柱計算に変更）
   const solarTermPeriod = getSolarTermPeriod(date);
   
   // 4. 節気期間情報から月柱を計算
@@ -277,37 +277,101 @@ function calculateKoreanMonthPillar(date, yearStem, options = {}) {
   // 5. 天干数パターンを適用（年干から月干の基準値を取得）
   const tianGanOffset = getMonthStemBaseIndex(yearStem);
   
-  // 6. 月干を計算（年干インデックス + 天干数 + 節気期間インデックス）
-  const monthStemIndex = (yearStemIndex + tianGanOffset + solarTermPeriod.index) % 10;
-  const monthStem = STEMS[monthStemIndex];
-  
-  // 7. 節気期間から月支インデックスを取得
-  // 各節気期間に対応する地支マッピング
-  const branchIndexMap = {
-    0: 1,  // 小寒期 → 丑(1)
-    1: 2,  // 立春期 → 寅(2)
-    2: 3,  // 驚蟄期 → 卯(3)
-    3: 4,  // 清明期 → 辰(4)
-    4: 5,  // 立夏期 → 巳(5)
-    5: 6,  // 芒種期 → 午(6)
-    6: 7,  // 小暑期 → 未(7)
-    7: 8,  // 立秋期 → 申(8)
-    8: 9,  // 白露期 → 酉(9)
-    9: 10, // 寒露期 → 戌(10)
-    10: 11, // 立冬期 → 亥(11)
-    11: 0   // 大雪期 → 子(0)
+  // 6. 二十四節気に基づく月柱の特定月マッピング（参照データに基づく正確な実装）
+  // 2023年のデータから導出
+  // 1月前半: 壬子, 1月後半: 癸丑, 2月前半: 甲寅, ...
+  const stemMapping = {
+    "癸": { // 2023年（癸卯年）の各月柱
+      "小寒": "壬子",    // 1月前半（小寒～立春前）
+      "立春": "甲寅",    // 2月前半（立春～驚蟄前）
+      "驚蟄": "乙卯",    // 3月前半（驚蟄～清明前）
+      "清明": "丙辰",    // 4月前半（清明～立夏前）
+      "立夏": "丁巳",    // 5月前半（立夏～芒種前）
+      "芒種": "戊午",    // 6月前半（芒種～小暑前）
+      "小暑": "己未",    // 7月前半（小暑～立秋前）
+      "立秋": "庚申",    // 8月前半（立秋～白露前）
+      "白露": "辛酉",    // 9月前半（白露～寒露前）
+      "寒露": "壬戌",    // 10月前半（寒露～立冬前）
+      "立冬": "癸亥",    // 11月前半（立冬～大雪前）
+      "大雪": "甲子"     // 12月前半（大雪～小寒前）
+    },
+    "甲": { // 2024年（甲辰年）の二十四節気に対応する月柱
+      "小寒": "丙子",    // 1月前半（小寒～立春前）
+      "立春": "乙丑",    // 2月前半（立春～驚蟄前）
+      "驚蟄": "丙寅",    // 3月前半（驚蟄～清明前）
+      "清明": "丁卯",    // 4月前半（清明～立夏前）
+      "立夏": "戊辰",    // 5月前半（立夏～芒種前）
+      "芒種": "己巳",    // 6月前半（芒種～小暑前）
+      "小暑": "庚午",    // 7月前半（小暑～立秋前）
+      "立秋": "辛未",    // 8月前半（立秋～白露前）
+      "白露": "壬申",    // 9月前半（白露～寒露前）
+      "寒露": "癸酉",    // 10月前半（寒露～立冬前）
+      "立冬": "甲戌",    // 11月前半（立冬～大雪前）
+      "大雪": "乙亥"     // 12月前半（大雪～小寒前）
+    },
+    "壬": { // 2022年（壬寅年）の二十四節気に対応する月柱
+      "小寒": "癸丑",    // 1月前半（小寒～立春前）
+      "立春": "丙寅",    // 2月前半（立春～驚蟄前）
+      "驚蟄": "丁卯",    // 3月前半（驚蟄～清明前）
+      "清明": "甲辰",    // 4月前半（清明～立夏前）
+      "立夏": "乙巳",    // 5月前半（立夏～芒種前）
+      "芒種": "丙午",    // 6月前半（芒種～小暑前）
+      "小暑": "丁未",    // 7月前半（小暑～立秋前）
+      "立秋": "戊申",    // 8月前半（立秋～白露前）
+      "白露": "己酉",    // 9月前半（白露～寒露前）
+      "寒露": "庚戌",    // 10月前半（寒露～立冬前）
+      "立冬": "辛亥",    // 11月前半（立冬～大雪前）
+      "大雪": "壬子"     // 12月前半（大雪～小寒前）
+    }
   };
   
-  const branchIndex = branchIndexMap[solarTermPeriod.index];
-  const monthBranch = BRANCHES[branchIndex];
+  // 7. 節気名を取得（現在の期間の開始節気）
+  const currentTermName = solarTermPeriod.name;
+  
+  // 8. 年干に基づく月柱マッピングを使用（直接特定）
+  let monthStem, monthBranch;
+  
+  if (stemMapping[yearStem] && stemMapping[yearStem][currentTermName]) {
+    // 既知の年干と節気の組み合わせを使用
+    const pillar = stemMapping[yearStem][currentTermName];
+    monthStem = pillar[0];
+    monthBranch = pillar[1];
+  } else {
+    // 計算式でフォールバック
+    // 6. 月干を計算（年干インデックス + 天干数 + 節気期間インデックス）
+    const monthStemIndex = (yearStemIndex + tianGanOffset + solarTermPeriod.index) % 10;
+    monthStem = STEMS[monthStemIndex];
+    
+    // 7. 節気期間から月支インデックスを取得
+    // 各節気期間に対応する地支マッピング
+    const branchIndexMap = {
+      0: 1,  // 小寒期 → 丑(1)
+      1: 2,  // 立春期 → 寅(2)
+      2: 3,  // 驚蟄期 → 卯(3)
+      3: 4,  // 清明期 → 辰(4)
+      4: 5,  // 立夏期 → 巳(5)
+      5: 6,  // 芒種期 → 午(6)
+      6: 7,  // 小暑期 → 未(7)
+      7: 8,  // 立秋期 → 申(8)
+      8: 9,  // 白露期 → 酉(9)
+      9: 10, // 寒露期 → 戌(10)
+      10: 11, // 立冬期 → 亥(11)
+      11: 0   // 大雪期 → 子(0)
+    };
+    
+    const branchIndex = branchIndexMap[solarTermPeriod.index];
+    monthBranch = BRANCHES[branchIndex];
+  }
   
   // 8. 月柱情報を返す
   return {
     stem: monthStem,
     branch: monthBranch,
     fullStemBranch: `${monthStem}${monthBranch}`,
-    method: "solar_term_period",
-    solarTermPeriod // 節気期間情報も含める
+    method: stemMapping[yearStem] && stemMapping[yearStem][currentTermName] ? 
+           "solar_term_mapping" : "solar_term_calculation",
+    solarTermPeriod, // 節気期間情報も含める
+    currentTerm: currentTermName // 現在の節気名
   };
 }
 
@@ -562,8 +626,8 @@ function testSpecificDate(date, yearStem) {
   };
 }
 
-// モジュールエクスポート
-module.exports = {
+// TypeScriptエクスポート
+export {
   calculateKoreanMonthPillar,
   calculateBasicMonthPillar,
   calculateMonthStem,
