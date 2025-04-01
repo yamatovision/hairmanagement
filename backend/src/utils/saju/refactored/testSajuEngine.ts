@@ -91,6 +91,14 @@ function testSajuEngine(): void {
       gender: 'F' as 'F',
       location: '東京',
       expected: null
+    },
+    {
+      description: "1985年4月22日 10時 (乙丑年) - 女性 ソウル",
+      date: new Date(1985, 3, 22),
+      hour: 10,
+      gender: 'F' as 'F',
+      location: 'ソウル',
+      expected: null
     }
   ];
   
