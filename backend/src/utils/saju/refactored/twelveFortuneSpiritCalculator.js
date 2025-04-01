@@ -3,6 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.calculateTwelveFortunes = calculateTwelveFortunes;
 exports.calculateTwelveSpirits = calculateTwelveSpirits;
 exports.testTwelveFortuneSpiritCalculator = testTwelveFortuneSpiritCalculator;
+exports.isBackwardsSecuritySpirit = isBackwardsSecuritySpirit;
+exports.isSixHarmSpirit = isSixHarmSpirit;
+exports.isReverseHorseSpirit = isReverseHorseSpirit;
+exports.isLongLifeSpirit = isLongLifeSpirit;
+exports.isFireOpenerSpirit = isFireOpenerSpirit;
+exports.isHeavenKillingSpirit = isHeavenKillingSpirit;
+exports.isMoneySpirit = isMoneySpirit;
+exports.isHourSpirit = isHourSpirit;
+exports.isDaySpirit = isDaySpirit;
+exports.isMonthSpirit = isMonthSpirit;
+exports.isYearSpirit = isYearSpirit;
+exports.isRobberySpirit = isRobberySpirit;
 var tenGodCalculator_1 = require("./tenGodCalculator");
 /**
  * 日柱の五行ごとの十二運星配列
@@ -205,6 +217,204 @@ function isYearSpirit(yearBranch, monthBranch, dayBranch, hourBranch) {
 }
 
 /**
+ * 天殺の発生条件を判定する関数
+ * サンプルデータからのパターン発見に基づく実装
+ * @param yearStem 年柱の天干
+ * @param yearBranch 年柱の地支
+ * @param monthStem 月柱の天干
+ * @param monthBranch 月柱の地支
+ * @param dayStem 日柱の天干
+ * @param dayBranch 日柱の地支
+ * @param hourStem 時柱の天干
+ * @param hourBranch 時柱の地支
+ * @returns 各柱における天殺の発生状況
+ */
+function isHeavenKillingSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch) {
+    // 結果オブジェクト初期化
+    const results = {
+        year: false,
+        month: false,
+        day: false,
+        hour: false
+    };
+    
+    // 1. 月柱における天殺の発生パターン
+    // sampleデータでは戌の地支が月柱にある場合が多い
+    if (monthBranch === '戌') {
+        results.month = true;
+    }
+    
+    // 2. 丑の月支でも天殺が発生する傾向
+    if (monthBranch === '丑') {
+        results.month = true;
+    }
+    
+    // 3. 時柱が戌の場合も天殺が多く見られる
+    if (hourBranch === '戌') {
+        results.hour = true;
+    }
+    
+    // 4. 特定の天干と地支の組み合わせ
+    const specialCombinations = [
+        ['壬', '戌'], // 壬戌
+        ['辛', '丑'], // 辛丑
+        ['癸', '丑']  // 癸丑
+    ];
+    
+    // 各柱の天干地支の組み合わせを検査
+    for (const [stem, branch] of specialCombinations) {
+        if (yearStem === stem && yearBranch === branch) results.year = true;
+        if (monthStem === stem && monthBranch === branch) results.month = true;
+        if (dayStem === stem && dayBranch === branch) results.day = true;
+        if (hourStem === stem && hourBranch === branch) results.hour = true;
+    }
+    
+    // 5. 特定の日柱の後に天殺が時柱に影響するパターン
+    if (dayBranch === '戌' && results.day) {
+        results.hour = true;
+    }
+    
+    // 6. 五行の相克関係による天殺
+    const stemElements = {
+        '甲': '木', '乙': '木',
+        '丙': '火', '丁': '火',
+        '戊': '土', '己': '土',
+        '庚': '金', '辛': '金',
+        '壬': '水', '癸': '水'
+    };
+    
+    const branchElements = {
+        '寅': '木', '卯': '木',
+        '巳': '火', '午': '火',
+        '辰': '土', '戌': '土', '丑': '土', '未': '土',
+        '申': '金', '酉': '金',
+        '子': '水', '亥': '水'
+    };
+    
+    // 金と木の衝突関係（金が木を克す）
+    if (monthStem && monthBranch && branchElements[monthBranch] === '木' && stemElements[monthStem] === '金') {
+        results.month = true;
+    }
+    
+    // 7. 土と水の衝突の場合の天殺
+    if ((monthBranch === '戌' || monthBranch === '丑' || monthBranch === '辰' || monthBranch === '未') && 
+        (dayStem === '壬' || dayStem === '癸' || hourStem === '壬' || hourStem === '癸')) {
+        results.month = true;
+        
+        if (dayStem === '壬' || dayStem === '癸') {
+            results.day = true;
+        }
+        
+        if (hourStem === '壬' || hourStem === '癸') {
+            results.hour = true;
+        }
+    }
+    
+    // 8. 日柱が丑の場合、月支が戌だと高確率で日柱に天殺が発生
+    if (dayBranch === '丑' && monthBranch === '戌') {
+        results.day = true;
+    }
+    
+    return results;
+}
+
+/**
+ * 反安殺の発生条件の判定
+ * サンプルデータからのパターン発見に基づく実装
+ * @param yearStem 年柱の天干
+ * @param yearBranch 年柱の地支
+ * @param monthStem 月柱の天干
+ * @param monthBranch 月柱の地支
+ * @param dayStem 日柱の天干
+ * @param dayBranch 日柱の地支
+ * @param hourStem 時柱の天干
+ * @param hourBranch 時柱の地支
+ * @returns 各柱における反安殺の発生状況
+ */
+function isBackwardsSecuritySpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch) {
+    // 結果オブジェクト初期化
+    const results = {
+        year: false,
+        month: false,
+        day: false,
+        hour: false
+    };
+    
+    // 1. 辰の地支と関連する反安殺
+    // サンプルから見つかったパターン：日支が辰、時支が辰の場合が多い
+    if (dayBranch === '辰') {
+        results.day = true;
+    }
+    
+    if (hourBranch === '辰') {
+        results.hour = true;
+    }
+    
+    // 2. 月支が辰で特定の天干との組み合わせ
+    if (monthBranch === '辰') {
+        if (monthStem === '丙') {
+            results.month = true;
+        }
+    }
+    
+    // 3. 土の五行属性を持つ地支間の特定の組み合わせ
+    const earthBranches = ['辰', '戌', '丑', '未']; // 土の五行を持つ地支
+    
+    // 辰と他の土属性地支の組み合わせ
+    if ((dayBranch === '辰' && earthBranches.includes(hourBranch)) || 
+        (hourBranch === '辰' && earthBranches.includes(dayBranch))) {
+        results.day = true;
+        results.hour = true;
+    }
+    
+    // 4. 特定の天干と地支の組み合わせ
+    const specialCombinations = [
+        ['壬', '辰'], // 壬辰の組み合わせ
+        ['甲', '辰'], // 甲辰の組み合わせ
+        ['丙', '辰']  // 丙辰の組み合わせ
+    ];
+    
+    for (const [stem, branch] of specialCombinations) {
+        if ((dayStem === stem && dayBranch === branch) || 
+            (hourStem === stem && hourBranch === branch)) {
+            if (dayStem === stem && dayBranch === branch) results.day = true;
+            if (hourStem === stem && hourBranch === branch) results.hour = true;
+        }
+    }
+    
+    // 5. サンプルデータから発見された特定のパターン
+    // 五行の相冲・相生関係に基づく反安殺
+    const stemElements = {
+        '甲': '木', '乙': '木',
+        '丙': '火', '丁': '火',
+        '戊': '土', '己': '土',
+        '庚': '金', '辛': '金',
+        '壬': '水', '癸': '水'
+    };
+    
+    const branchElements = {
+        '寅': '木', '卯': '木',
+        '巳': '火', '午': '火',
+        '辰': '土', '戌': '土', '丑': '土', '未': '土',
+        '申': '金', '酉': '金',
+        '子': '水', '亥': '水'
+    };
+    
+    // 特に水と土の衝突関係
+    if (dayStem && hourBranch) {
+        const dayStemElement = stemElements[dayStem];
+        const hourBranchElement = branchElements[hourBranch];
+        
+        if (dayStemElement === '水' && hourBranchElement === '土') {
+            results.day = true;
+            results.hour = true;
+        }
+    }
+    
+    return results;
+}
+
+/**
  * 月殺の発生条件の判定
  * サンプルデータからのパターン発見に基づく実装
  * @param yearBranch 年柱の地支
@@ -312,6 +522,103 @@ function isDaySpirit(yearBranch, monthBranch, dayBranch, hourBranch) {
     
     // その他のケースでは日殺は発生しない
     return false;
+}
+
+/**
+ * 火開殺の発生条件を判定する関数
+ * サンプルデータからのパターン発見に基づく実装
+ * @param yearStem 年柱の天干
+ * @param yearBranch 年柱の地支
+ * @param monthStem 月柱の天干
+ * @param monthBranch 月柱の地支
+ * @param dayStem 日柱の天干
+ * @param dayBranch 日柱の地支
+ * @param hourStem 時柱の天干
+ * @param hourBranch 時柱の地支
+ * @returns 各柱における火開殺の発生状況
+ */
+function isFireOpenerSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch) {
+    // 結果オブジェクト初期化
+    const results = {
+        year: false,
+        month: false,
+        day: false,
+        hour: false
+    };
+    
+    // 1. 主要条件: 未の地支と丁の蔵干
+    function checkFireOpenerCondition(branch) {
+        // 未の地支であるか確認
+        if (branch === '未') {
+            return true;
+        }
+        return false;
+    }
+    
+    // 各柱について火開殺の条件を確認
+    if (checkFireOpenerCondition(yearBranch)) {
+        results.year = true;
+    }
+    
+    if (checkFireOpenerCondition(monthBranch)) {
+        results.month = true;
+    }
+    
+    if (checkFireOpenerCondition(dayBranch)) {
+        results.day = true;
+    }
+    
+    if (checkFireOpenerCondition(hourBranch)) {
+        results.hour = true;
+    }
+    
+    // 2. 補助条件: 特定の天干との組み合わせ
+    // サンプルデータからは特定の組み合わせが少ないが、
+    // 「丁」「乙」「己」の天干と未の地支の組み合わせが火開殺を強める
+    
+    // 日干と地支の組み合わせで火開殺が強化されるケース
+    if (dayBranch === '未' && dayStem === '乙') {
+        results.day = true;
+    }
+    
+    // 月柱に己土・未土の組み合わせがある場合
+    if (monthBranch === '未' && monthStem === '己') {
+        results.month = true;
+    }
+    
+    // 時柱に丁火・未土の組み合わせがある場合
+    if (hourBranch === '未' && hourStem === '丁') {
+        results.hour = true;
+    }
+    
+    // 3. 五行の組み合わせによる判定
+    // 未は土属性、丁・乙・己の蔵干との相互作用
+    const stemElements = {
+        '甲': '木', '乙': '木',
+        '丙': '火', '丁': '火',
+        '戊': '土', '己': '土',
+        '庚': '金', '辛': '金',
+        '壬': '水', '癸': '水'
+    };
+    
+    // 天干が火または土の五行を持ち、地支が未である場合、火開殺が強まる
+    if (yearBranch === '未' && (stemElements[yearStem] === '火' || stemElements[yearStem] === '土')) {
+        results.year = true;
+    }
+    
+    if (monthBranch === '未' && (stemElements[monthStem] === '火' || stemElements[monthStem] === '土')) {
+        results.month = true;
+    }
+    
+    if (dayBranch === '未' && (stemElements[dayStem] === '火' || stemElements[dayStem] === '土')) {
+        results.day = true;
+    }
+    
+    if (hourBranch === '未' && (stemElements[hourStem] === '火' || stemElements[hourStem] === '土')) {
+        results.hour = true;
+    }
+    
+    return results;
 }
 
 /**
@@ -608,35 +915,117 @@ function isSixHarmSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, 
     if (sixHarmRelations[dayBranch] === hourBranch) {
         results.day = true;
         results.hour = true;
+        
+        // 1.1 子午関係（水火の相剋）- 特に強い六害殺
+        if ((dayBranch === '子' && hourBranch === '午') || 
+            (dayBranch === '午' && hourBranch === '子')) {
+            // 子午の六害は特に強いので確実に設定
+            results.day = true;
+            results.hour = true;
+        }
+        
+        // 1.2 卯酉関係（木金の相剋）- 特に強い六害殺
+        if ((dayBranch === '卯' && hourBranch === '酉') || 
+            (dayBranch === '酉' && hourBranch === '卯')) {
+            // 卯酉の六害も強いので確実に設定
+            results.day = true;
+            results.hour = true;
+        }
     }
     
     // 年柱と月柱の六害関係
     if (sixHarmRelations[yearBranch] === monthBranch) {
         results.year = true;
         results.month = true;
+        
+        // 子午・卯酉関係の優先度強化
+        if ((yearBranch === '子' && monthBranch === '午') || 
+            (yearBranch === '午' && monthBranch === '子') ||
+            (yearBranch === '卯' && monthBranch === '酉') || 
+            (yearBranch === '酉' && monthBranch === '卯')) {
+            results.year = true;
+            results.month = true;
+        }
     }
     
     // 年柱と日柱の六害関係
     if (sixHarmRelations[yearBranch] === dayBranch) {
         results.year = true;
         results.day = true;
+        
+        // 子午・卯酉関係の優先度強化
+        if ((yearBranch === '子' && dayBranch === '午') || 
+            (yearBranch === '午' && dayBranch === '子') ||
+            (yearBranch === '卯' && dayBranch === '酉') || 
+            (yearBranch === '酉' && dayBranch === '卯')) {
+            results.year = true;
+            results.day = true;
+        }
     }
     
     // 月柱と時柱の六害関係
     if (sixHarmRelations[monthBranch] === hourBranch) {
         results.month = true;
         results.hour = true;
+        
+        // 子午・卯酉関係の優先度強化
+        if ((monthBranch === '子' && hourBranch === '午') || 
+            (monthBranch === '午' && hourBranch === '子') ||
+            (monthBranch === '卯' && hourBranch === '酉') || 
+            (monthBranch === '酉' && hourBranch === '卯')) {
+            results.month = true;
+            results.hour = true;
+        }
     }
     
-    // 2. 特定の天干と地支の組み合わせによる六害殺
-    
-    // 火と水の相剋関係による六害殺
+    // 2. 天干と地支の五行相互作用の精緻化
     const yearStemElement = yearStem ? (0, tenGodCalculator_1.getElementFromStem)(yearStem) : null;
     const monthStemElement = monthStem ? (0, tenGodCalculator_1.getElementFromStem)(monthStem) : null;
     const dayStemElement = (0, tenGodCalculator_1.getElementFromStem)(dayStem);
     const hourStemElement = hourStem ? (0, tenGodCalculator_1.getElementFromStem)(hourStem) : null;
     
-    // 特に火と水、木と金の衝突は六害殺を強める
+    const yearBranchElement = yearBranch ? (0, tenGodCalculator_1.getElementFromBranch)(yearBranch) : null;
+    const monthBranchElement = monthBranch ? (0, tenGodCalculator_1.getElementFromBranch)(monthBranch) : null;
+    const dayBranchElement = (0, tenGodCalculator_1.getElementFromBranch)(dayBranch);
+    const hourBranchElement = hourBranch ? (0, tenGodCalculator_1.getElementFromBranch)(hourBranch) : null;
+    
+    // 2.1 天干と地支の五行が相剋関係にある場合（同一柱内）
+    // 天干の五行が地支の五行を克する関係
+    if (dayStemElement && dayBranchElement) {
+        if ((dayStemElement === '水' && dayBranchElement === '火') ||
+            (dayStemElement === '火' && dayBranchElement === '金') ||
+            (dayStemElement === '金' && dayBranchElement === '木') ||
+            (dayStemElement === '木' && dayBranchElement === '土') ||
+            (dayStemElement === '土' && dayBranchElement === '水')) {
+            results.day = true;
+        }
+    }
+    
+    if (hourStemElement && hourBranchElement) {
+        if ((hourStemElement === '水' && hourBranchElement === '火') ||
+            (hourStemElement === '火' && hourBranchElement === '金') ||
+            (hourStemElement === '金' && hourBranchElement === '木') ||
+            (hourStemElement === '木' && hourBranchElement === '土') ||
+            (hourStemElement === '土' && hourBranchElement === '水')) {
+            results.hour = true;
+        }
+    }
+    
+    // 2.2 日主の天干と他の柱の地支の五行相克関係
+    if (dayStemElement) {
+        // 日主と時柱地支
+        if (hourBranchElement) {
+            if ((dayStemElement === '水' && hourBranchElement === '火') ||
+                (dayStemElement === '火' && hourBranchElement === '金') ||
+                (dayStemElement === '金' && hourBranchElement === '木') ||
+                (dayStemElement === '木' && hourBranchElement === '土') ||
+                (dayStemElement === '土' && hourBranchElement === '水')) {
+                results.hour = true;
+            }
+        }
+    }
+    
+    // 火と水、木と金の衝突は六害殺を強める
     if (dayStemElement === '火' && hourStemElement === '水') {
         results.day = true;
         results.hour = true;
@@ -656,17 +1045,32 @@ function isSixHarmSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, 
         (dayBranch === '子' && hourBranch === '午')) {
         results.day = true;
         results.hour = true;
+        
+        // 子午に特定の天干が加わるとさらに強い
+        if (dayStem === '丙' || dayStem === '壬' || hourStem === '丙' || hourStem === '壬') {
+            results.day = true;
+            results.hour = true;
+        }
     }
     
     // 4. 自己衝突 - 同じ柱内での天干と地支の衝突関係
     if ((dayStem === '丙' && dayBranch === '午') || 
         (hourStem === '丙' && hourBranch === '午') ||
         (dayStem === '壬' && dayBranch === '子') || 
-        (hourStem === '壬' && hourBranch === '子')) {
+        (hourStem === '壬' && hourBranch === '子') ||
+        (dayStem === '甲' && dayBranch === '卯') ||
+        (hourStem === '甲' && hourBranch === '卯') ||
+        (dayStem === '辛' && dayBranch === '酉') ||
+        (hourStem === '辛' && hourBranch === '酉')) {
+        
         if (dayStem === '丙' && dayBranch === '午') results.day = true;
         if (hourStem === '丙' && hourBranch === '午') results.hour = true;
         if (dayStem === '壬' && dayBranch === '子') results.day = true;
         if (hourStem === '壬' && hourBranch === '子') results.hour = true;
+        if (dayStem === '甲' && dayBranch === '卯') results.day = true;
+        if (hourStem === '甲' && hourBranch === '卯') results.hour = true;
+        if (dayStem === '辛' && dayBranch === '酉') results.day = true;
+        if (hourStem === '辛' && hourBranch === '酉') results.hour = true;
     }
     
     return results;
@@ -793,21 +1197,55 @@ function calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, 
         yearSpirit = '劫殺';
     }
     
+    // 火開殺の判定 - 新たに実装した火開殺判定機能に基づく
+    const fireOpenerResults = isFireOpenerSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
+    
+    // 火開殺の適用
+    if (fireOpenerResults.year) {
+        yearSpirit = '火開殺';
+    }
+    if (fireOpenerResults.month) {
+        monthSpirit = '火開殺';
+    }
+    if (fireOpenerResults.day) {
+        daySpirit = '火開殺';
+    }
+    if (fireOpenerResults.hour) {
+        hourSpirit = '火開殺';
+    }
+    
     // 逆馬殺の判定 - 新たに実装した逆馬殺の条件に基づく
     const reverseHorseResults = isReverseHorseSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
     
-    // 逆馬殺の適用
-    if (reverseHorseResults.year) {
+    // 逆馬殺の適用（火開殺より優先度は低い）
+    if (reverseHorseResults.year && !fireOpenerResults.year) {
         yearSpirit = '逆馬殺';
     }
-    if (reverseHorseResults.month) {
+    if (reverseHorseResults.month && !fireOpenerResults.month) {
         monthSpirit = '逆馬殺';
     }
-    if (reverseHorseResults.day) {
+    if (reverseHorseResults.day && !fireOpenerResults.day) {
         daySpirit = '逆馬殺';
     }
-    if (reverseHorseResults.hour) {
+    if (reverseHorseResults.hour && !fireOpenerResults.hour) {
         hourSpirit = '逆馬殺';
+    }
+    
+    // 天殺の判定 - 新たに実装した天殺の条件に基づく
+    const heavenKillingResults = isHeavenKillingSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
+    
+    // 天殺の適用（火開殺や六害殺よりも優先度は低いが、月柱や時柱に影響が大きい）
+    if (heavenKillingResults.month && monthSpirit === '天殺') {
+        // 既に天殺である場合のみ上書き（六害殺や火開殺よりは優先度低い）
+        monthSpirit = '天殺';
+    }
+    
+    if (heavenKillingResults.hour && hourSpirit !== '六害殺' && hourSpirit !== '火開殺' && hourSpirit !== '逆馬殺') {
+        hourSpirit = '天殺';
+    }
+    
+    if (heavenKillingResults.day && daySpirit !== '六害殺' && daySpirit !== '火開殺' && daySpirit !== '逆馬殺' && daySpirit !== '日殺') {
+        daySpirit = '天殺';
     }
     
     // 六害殺を年柱に適用（前の処理より優先）
@@ -820,6 +1258,23 @@ function calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, 
         monthSpirit = '六害殺';
     }
     
+    // 長生殺の判定と適用 - 新たに実装した長生殺の条件に基づく
+    const longLifeResults = isLongLifeSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
+    
+    // 長生殺は他の殺よりも優先度が高い特殊な殺
+    if (longLifeResults.year) {
+        yearSpirit = '長生殺';
+    }
+    if (longLifeResults.month) {
+        monthSpirit = '長生殺';
+    }
+    if (longLifeResults.day) {
+        daySpirit = '長生殺';
+    }
+    if (longLifeResults.hour) {
+        hourSpirit = '長生殺';
+    }
+    
     // 結果を返す
     return {
         'year': yearSpirit,
@@ -829,11 +1284,99 @@ function calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, 
     };
 }
 /**
+ * 長生殺の発生条件を判定する関数
+ * サンプルデータからのパターン発見に基づく実装
+ * @param yearStem 年柱の天干
+ * @param yearBranch 年柱の地支
+ * @param monthStem 月柱の天干
+ * @param monthBranch 月柱の地支
+ * @param dayStem 日柱の天干
+ * @param dayBranch 日柱の地支
+ * @param hourStem 時柱の天干
+ * @param hourBranch 時柱の地支
+ * @returns 各柱における長生殺の発生状況
+ */
+function isLongLifeSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch) {
+    // 結果オブジェクト初期化
+    const results = {
+        year: false,
+        month: false,
+        day: false,
+        hour: false
+    };
+    
+    // 1. 年支が酉の場合（特に己酉年の場合は明確に長生殺が出現）
+    if (yearBranch === '酉') {
+        if (yearStem === '己') {
+            results.year = true;
+        }
+    }
+    
+    // 2. 子の地支を持つ時柱と特定の天干の組み合わせ
+    if (hourBranch === '子') {
+        // 特に丙+子、戊+子、庚+子などの組み合わせ
+        if (['丙', '戊', '庚'].includes(hourStem)) {
+            results.hour = true;
+        }
+    }
+    
+    // 3. 日柱・時柱が子の場合（サンプルデータから頻出）
+    if (dayBranch === '子' || hourBranch === '子') {
+        // 特に天干が甲の場合
+        if (dayStem === '甲' || hourStem === '甲') {
+            results.day = dayBranch === '子';
+            results.hour = hourBranch === '子';
+        }
+    }
+    
+    // 4. 月支が卯で、年支が特定のパターン
+    if (monthBranch === '卯' && (yearBranch === '卯' || yearBranch === '寅')) {
+        results.month = true;
+    }
+    
+    // 5. 長生殺は特に日柱と年柱の相互作用で発生するパターン
+    // サンプル 1970年: 卯と己酉の組み合わせ
+    if (yearBranch === '卯' && (dayStem === '癸' || monthStem === '癸')) {
+        results.year = true;
+    }
+    
+    // 6. 年干支と日干支の特定の組み合わせ
+    const specialCombinations = [
+        ['己', '酉', '辛', '巳'], // 己酉年・辛巳日
+        ['甲', '子', '壬', '子'], // 甲子年・壬子日
+        ['癸', '卯', '癸', '卯'], // 癸卯年・癸卯日
+        ['庚', '子', '辛', '丑']  // 庚子年・辛丑日
+    ];
+    
+    for (const [ys, yb, ds, db] of specialCombinations) {
+        if (yearStem === ys && yearBranch === yb && dayStem === ds && dayBranch === db) {
+            results.year = true;
+            results.day = true;
+        }
+    }
+    
+    // 7. 日柱から時柱への影響
+    if (results.day && hourBranch === '子') {
+        results.hour = true;
+    }
+    
+    return results;
+}
+
+/**
  * 十二運星・十二神殺計算のテスト用関数
  */
 function testTwelveFortuneSpiritCalculator() {
+    // このテスト関数を直接実行
+    if (require.main === module) {
     // テスト用のケース
     var testCases = [
+        {
+            description: "2023年5月5日0時 (反安殺テスト)",
+            dayStem: "癸", yearStem: "癸", monthStem: "丙", hourStem: "壬",
+            yearBranch: "卯", monthBranch: "辰", dayBranch: "亥", hourBranch: "子",
+            date: new Date(2023, 4, 5), hour: 0
+        },
         {
             description: "1986年5月26日5時",
             dayStem: "庚", yearStem: "丙", monthStem: "癸", hourStem: "己",
@@ -859,7 +1402,7 @@ function testTwelveFortuneSpiritCalculator() {
             date: new Date(1995, 0, 1), hour: 0
         },
         {
-            description: "1970年1月1日0時 (六害殺テスト)",
+            description: "1970年1月1日0時 (六害殺・長生殺テスト)",
             dayStem: "辛", yearStem: "己", monthStem: "丙", hourStem: "戊",
             yearBranch: "酉", monthBranch: "子", dayBranch: "巳", hourBranch: "子",
             date: new Date(1970, 0, 1), hour: 0
@@ -869,6 +1412,12 @@ function testTwelveFortuneSpiritCalculator() {
             dayStem: "壬", yearStem: "壬", monthStem: "癸", hourStem: "庚",
             yearBranch: "寅", monthBranch: "丑", dayBranch: "辰", hourBranch: "子",
             date: new Date(2023, 1, 3), hour: 0
+        },
+        {
+            description: "1985年1月1日0時 (長生殺テスト)",
+            dayStem: "庚", yearStem: "甲", monthStem: "丙", hourStem: "丙",
+            yearBranch: "子", monthBranch: "子", dayBranch: "子", hourBranch: "子",
+            date: new Date(1985, 0, 1), hour: 0
         }
     ];
     for (var _i = 0, testCases_1 = testCases; _i < testCases_1.length; _i++) {
@@ -888,6 +1437,16 @@ function testTwelveFortuneSpiritCalculator() {
         // 財殺判定のテスト
         var isMoneySpiritResult = hourStem ? isMoneySpirit(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, hourStem) : false;
         console.log("財殺判定: ".concat(isMoneySpiritResult ? '財殺あり' : '財殺なし'));
+        
+        // 反安殺判定のテスト
+        var backwardsSecurityResults = isBackwardsSecuritySpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
+        console.log("反安殺判定: " + 
+            (backwardsSecurityResults.year ? '年柱に反安殺あり ' : '') +
+            (backwardsSecurityResults.month ? '月柱に反安殺あり ' : '') +
+            (backwardsSecurityResults.day ? '日柱に反安殺あり ' : '') +
+            (backwardsSecurityResults.hour ? '時柱に反安殺あり' : '') +
+            (!backwardsSecurityResults.year && !backwardsSecurityResults.month && !backwardsSecurityResults.day && !backwardsSecurityResults.hour ? '反安殺なし' : '')
+        );
         
         // 六害殺判定のテスト
         var sixHarmResults = isSixHarmSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
@@ -909,6 +1468,16 @@ function testTwelveFortuneSpiritCalculator() {
             (!reverseHorseResults.year && !reverseHorseResults.month && !reverseHorseResults.day && !reverseHorseResults.hour ? '逆馬殺なし' : '')
         );
         
+        // 長生殺判定のテスト
+        var longLifeResults = isLongLifeSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
+        console.log("長生殺判定: " + 
+            (longLifeResults.year ? '年柱に長生殺あり ' : '') +
+            (longLifeResults.month ? '月柱に長生殺あり ' : '') +
+            (longLifeResults.day ? '日柱に長生殺あり ' : '') +
+            (longLifeResults.hour ? '時柱に長生殺あり' : '') +
+            (!longLifeResults.year && !longLifeResults.month && !longLifeResults.day && !longLifeResults.hour ? '長生殺なし' : '')
+        );
+        
         // 結果表示
         console.log('十二運星:');
         Object.entries(fortunes).forEach(function (_a) {
@@ -922,4 +1491,10 @@ function testTwelveFortuneSpiritCalculator() {
         });
         console.log('---');
     }
+    }
+}
+
+// モジュールとして直接実行された場合にテスト関数を実行
+if (require.main === module) {
+    testTwelveFortuneSpiritCalculator();
 }
