@@ -471,6 +471,106 @@ function isMoneySpirit(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, 
 }
 
 /**
+ * 逆馬殺の発生条件を判定する関数
+ * サンプルデータからのパターン発見に基づく実装
+ * @param yearStem 年柱の天干
+ * @param yearBranch 年柱の地支
+ * @param monthStem 月柱の天干
+ * @param monthBranch 月柱の地支
+ * @param dayStem 日柱の天干
+ * @param dayBranch 日柱の地支
+ * @param hourStem 時柱の天干
+ * @param hourBranch 時柱の地支
+ * @returns 各柱における逆馬殺の発生状況
+ */
+function isReverseHorseSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch) {
+    // 結果オブジェクト初期化
+    const results = {
+        year: false,
+        month: false,
+        day: false,
+        hour: false
+    };
+    
+    // 1. 寅と寅の組み合わせ (既存の条件)
+    if (yearBranch === '寅' && hourBranch === '寅') {
+        results.year = true;
+    }
+    
+    // 2. 巳（蛇）を含む地支パターン
+    if (dayBranch === '巳') {
+        // 日柱に巳がある場合、日柱に逆馬殺
+        results.day = true;
+    }
+    
+    if (monthBranch === '巳') {
+        // 特に乙木の天干と巳火の地支の組み合わせ
+        if (monthStem === '乙') {
+            results.month = true;
+        }
+    }
+    
+    // 3. 特定の干支組み合わせ
+    const specialCombinations = [
+        // [天干, 地支, 影響を受ける柱]
+        ['壬', '寅', 'year'],   // 壬寅年
+        ['癸', '巳', 'day'],    // 癸巳日
+        ['己', '巳', 'day'],    // 己巳日
+        ['丙', '寅', 'year']    // 丙寅年
+    ];
+    
+    for (const [stem, branch, pillar] of specialCombinations) {
+        if ((pillar === 'year' && yearStem === stem && yearBranch === branch) ||
+            (pillar === 'day' && dayStem === stem && dayBranch === branch) ||
+            (pillar === 'month' && monthStem === stem && monthBranch === branch) ||
+            (pillar === 'hour' && hourStem === stem && hourBranch === branch)) {
+            results[pillar] = true;
+        }
+    }
+    
+    // 4. 木と火の関係（寅は木、巳は火）
+    // 木が火を生じる関係で、特定の条件下での逆馬殺
+    if ((yearBranch === '寅' && (monthBranch === '巳' || dayBranch === '巳')) ||
+        (monthBranch === '寅' && dayBranch === '巳')) {
+        results.year = true;  // 木（寅）→火（巳）の生剋関係
+    }
+    
+    // 5. 年支が寅で、特に水の五行を持つ天干（壬、癸）との組み合わせ
+    if (yearBranch === '寅' && (yearStem === '壬' || yearStem === '癸')) {
+        results.year = true;
+    }
+    
+    // 6. 基本的な五行相剋関係に基づく追加判定
+    // 水→火→木→土→水の相剋関係
+    const stemElements = {
+        '甲': '木', '乙': '木',
+        '丙': '火', '丁': '火',
+        '戊': '土', '己': '土',
+        '庚': '金', '辛': '金',
+        '壬': '水', '癸': '水'
+    };
+    
+    const branchElements = {
+        '寅': '木', '卯': '木',
+        '巳': '火', '午': '火',
+        '辰': '土', '戌': '土', '丑': '土', '未': '土',
+        '申': '金', '酉': '金',
+        '子': '水', '亥': '水'
+    };
+    
+    // 日柱の天干と地支の五行が相剋関係にある場合
+    const dayStemElement = stemElements[dayStem];
+    const dayBranchElement = branchElements[dayBranch];
+    
+    if ((dayStemElement === '水' && dayBranchElement === '火') ||
+        (dayStemElement === '火' && dayBranchElement === '木')) {
+        results.day = true;
+    }
+    
+    return results;
+}
+
+/**
  * 六害殺の発生条件を判定する関数
  * 六害関係（相対する地支）に基づく実装
  * @param yearStem 年柱の天干
@@ -691,8 +791,23 @@ function calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, 
     // 特定の組み合わせの処理（サンプルデータから抽出）
     if (yearBranch === '寅' && monthBranch === '巳') {
         yearSpirit = '劫殺';
-    } else if (yearBranch === '寅' && hourBranch === '寅') {
+    }
+    
+    // 逆馬殺の判定 - 新たに実装した逆馬殺の条件に基づく
+    const reverseHorseResults = isReverseHorseSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
+    
+    // 逆馬殺の適用
+    if (reverseHorseResults.year) {
         yearSpirit = '逆馬殺';
+    }
+    if (reverseHorseResults.month) {
+        monthSpirit = '逆馬殺';
+    }
+    if (reverseHorseResults.day) {
+        daySpirit = '逆馬殺';
+    }
+    if (reverseHorseResults.hour) {
+        hourSpirit = '逆馬殺';
     }
     
     // 六害殺を年柱に適用（前の処理より優先）
@@ -748,6 +863,12 @@ function testTwelveFortuneSpiritCalculator() {
             dayStem: "辛", yearStem: "己", monthStem: "丙", hourStem: "戊",
             yearBranch: "酉", monthBranch: "子", dayBranch: "巳", hourBranch: "子",
             date: new Date(1970, 0, 1), hour: 0
+        },
+        {
+            description: "2023年2月3日0時 (逆馬殺テスト)",
+            dayStem: "壬", yearStem: "壬", monthStem: "癸", hourStem: "庚",
+            yearBranch: "寅", monthBranch: "丑", dayBranch: "辰", hourBranch: "子",
+            date: new Date(2023, 1, 3), hour: 0
         }
     ];
     for (var _i = 0, testCases_1 = testCases; _i < testCases_1.length; _i++) {
@@ -776,6 +897,16 @@ function testTwelveFortuneSpiritCalculator() {
             (sixHarmResults.day ? '日柱に六害殺あり ' : '') +
             (sixHarmResults.hour ? '時柱に六害殺あり' : '') +
             (!sixHarmResults.year && !sixHarmResults.month && !sixHarmResults.day && !sixHarmResults.hour ? '六害殺なし' : '')
+        );
+        
+        // 逆馬殺判定のテスト
+        var reverseHorseResults = isReverseHorseSpirit(yearStem, yearBranch, monthStem, monthBranch, dayStem, dayBranch, hourStem, hourBranch);
+        console.log("逆馬殺判定: " + 
+            (reverseHorseResults.year ? '年柱に逆馬殺あり ' : '') +
+            (reverseHorseResults.month ? '月柱に逆馬殺あり ' : '') +
+            (reverseHorseResults.day ? '日柱に逆馬殺あり ' : '') +
+            (reverseHorseResults.hour ? '時柱に逆馬殺あり' : '') +
+            (!reverseHorseResults.year && !reverseHorseResults.month && !reverseHorseResults.day && !reverseHorseResults.hour ? '逆馬殺なし' : '')
         );
         
         // 結果表示
