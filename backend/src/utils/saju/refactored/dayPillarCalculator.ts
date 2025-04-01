@@ -28,7 +28,7 @@ export interface DayPillarOptions extends SajuOptions {
    * 計算モード
    * - 'astronomical': 天文学的日付変更（午前0時）
    * - 'traditional': 伝統的日付変更（正子=午前0時）
-   * - 'korean': 韓国式四柱推命（日の出）
+   * - 'korean': 韓国式四柱推命（午前0時）- 以前は朝5時と誤って記載されていました
    */
   dateChangeMode?: 'astronomical' | 'traditional' | 'korean';
 }
@@ -174,20 +174,9 @@ function adjustForDateChange(date: Date, options: DayPillarOptions = {}): Date {
         break;
         
       case 'korean':
-        // 韓国式では朝5時頃に日付が変わる（午前5時までは前日の日柱）
-        // 午前0時から午前5時までは前日の日付として扱う
-        const hours = date.getHours();
-        if (hours >= 0 && hours < 5) {
-          // 日付を1日前にする（年/月の変わり目も適切に処理）
-          const prevDay = new Date(date);
-          prevDay.setDate(date.getDate() - 1);
-          
-          // デバッグログ
-          console.log(`日付変更モード[${mode}]: ${formatDateKey(date)} → ${formatDateKey(prevDay)} (${hours}時は前日扱い)`);
-          
-          // 新しい日付オブジェクトを返す
-          adjustedDate = new Date(prevDay);
-        }
+        // 韓国式では午前0時に日付が変わる（実際の検証により確認済み）
+        // 注：以前は午前5時が基準と誤解されていました
+        // 現在は'astronomical'および'traditional'モードと同様に午前0時基準で処理します
         break;
         
       case 'astronomical':
@@ -324,20 +313,9 @@ export function calculateKoreanDayPillar(date: Date, options: DayPillarOptions =
  */
 export function getDayPillar(date: Date, options: DayPillarOptions = {}): Pillar {
   // 韓国式日付変更モードの特別処理
-  if (options.dateChangeMode === 'korean') {
-    const hours = date.getHours();
-    // 午前0-5時は前日の日付として扱う
-    if (hours >= 0 && hours < 5) {
-      // 日付を前日に変更
-      const prevDay = new Date(date);
-      prevDay.setDate(date.getDate() - 1);
-      
-      // 前日の干支を取得（韓国式モードなしで前日計算）
-      const prevOptions = { ...options };
-      delete prevOptions.dateChangeMode; // 無限ループを避けるためモード設定を削除
-      return calculateKoreanDayPillar(prevDay, prevOptions);
-    }
-  }
+  // 注: 実際の検証により、韓国式も午前0時に日付変更することが確認されたため、
+  // 特別な処理は不要になりました
+  // 'korean', 'astronomical', 'traditional'はすべて同じ扱いになります
   
   // 通常の計算
   return calculateKoreanDayPillar(date, options);

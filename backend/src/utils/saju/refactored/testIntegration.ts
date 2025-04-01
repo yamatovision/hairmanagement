@@ -32,6 +32,18 @@ const TEST_DATES = [
     gender: 'F' as 'F'
   },
   {
+    description: "韓国語テスト1: 2023年8月7日 12時",
+    date: new Date(2023, 7, 7),
+    hour: 12,
+    gender: 'F' as 'F'
+  },
+  {
+    description: "韓国語テスト2: 2023年6月19日 12時",
+    date: new Date(2023, 5, 19),
+    hour: 12,
+    gender: 'F' as 'F'
+  },
+  {
     description: "現在の日時",
     date: new Date(),
     hour: new Date().getHours(),
