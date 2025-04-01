@@ -3,7 +3,8 @@
  * シンプルな日時処理と地方時調整の実装
  */
 import { SajuOptions } from './types';
-import { getLunarDate, getSolarTermPeriod } from './lunarDateCalculator';
+// lunar-javascriptライブラリを使用した実装を使用
+import { getLunarDate, getSolarTermPeriod } from './lunarConverter-new';
 
 /**
  * シンプルな日時データ構造
