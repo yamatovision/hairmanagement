@@ -31,6 +31,46 @@ const TEST_DATES = [
     gender: 'F' as 'F',
     location: 'ソウル',
     expected: null
+  },
+  // sample.mdからの追加テストデータ
+  {
+    description: "2023年2月4日 0時 (立春日) - 女性 ソウル",
+    date: new Date(2023, 1, 4),
+    hour: 0,
+    gender: 'F' as 'F',
+    location: 'ソウル',
+    expected: {
+      year: "壬寅",
+      month: "癸丑",
+      day: "癸巳",
+      hour: "壬子"
+    }
+  },
+  {
+    description: "2023年10月15日 1時 (子の刻) - 女性 ソウル",
+    date: new Date(2023, 9, 15),
+    hour: 1,
+    gender: 'F' as 'F',
+    location: 'ソウル',
+    expected: {
+      year: "癸卯",
+      month: "壬戌",
+      day: "丙午",
+      hour: "戊子"
+    }
+  },
+  {
+    description: "1985年1月1日 0時 - 男性 ソウル",
+    date: new Date(1985, 0, 1),
+    hour: 0,
+    gender: 'M' as 'M',
+    location: 'ソウル',
+    expected: {
+      year: "甲子",
+      month: "丙子",
+      day: "庚子",
+      hour: "丙子"
+    }
   }
 ];
 
@@ -79,8 +119,8 @@ function formatPillarExpectation(expected) {
 /**
  * 日時を読みやすい形式にフォーマット
  */
-function formatSimpleDateTime(dateTime) {
-  return `${dateTime.year}年${dateTime.month}月${dateTime.day}日 ${dateTime.hour}時${dateTime.minute > 0 ? dateTime.minute + '分' : ''}`;
+function formatSimpleDateTime(date: Date) {
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}時${date.getMinutes() > 0 ? date.getMinutes() + '分' : ''}`;
 }
 
 /**
@@ -150,7 +190,7 @@ function testSajuEngine(): void {
       
       // 調整済み日時情報を表示
       if (result.processedDateTime) {
-        console.log(`- 原始日時: ${formatSimpleDateTime(result.processedDateTime.simpleDate)}`);
+        console.log(`- 原始日時: ${formatSimpleDateTime(result.processedDateTime.originalDate)}`);
         console.log(`- 調整日時: ${formatSimpleDateTime(result.processedDateTime.adjustedDate)}`);
       }
       
@@ -224,7 +264,7 @@ function testDateTimeProcessor(): void {
     // 処理実行
     const processed = processor.processDateTime(test.date, test.hour);
     
-    console.log(`- 元の日時: ${formatSimpleDateTime(processed.simpleDate)}`);
+    console.log(`- 元の日時: ${formatSimpleDateTime(processed.originalDate)}`);
     console.log(`- 調整日時: ${formatSimpleDateTime(processed.adjustedDate)}`);
     
     if (processed.lunarDate) {
