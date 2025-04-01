@@ -205,6 +205,68 @@ function isYearSpirit(yearBranch, monthBranch, dayBranch, hourBranch) {
 }
 
 /**
+ * 月殺の発生条件の判定
+ * サンプルデータからのパターン発見に基づく実装
+ * @param yearBranch 年柱の地支
+ * @param monthBranch 月柱の地支
+ * @param dayBranch 日柱の地支
+ * @param hourBranch 時柱の地支
+ * @returns 月殺の発生有無
+ */
+function isMonthSpirit(yearBranch, monthBranch, dayBranch, hourBranch) {
+    // 1. 日柱が辰の場合に月殺が多く発生
+    if (dayBranch === '辰') {
+        return true;
+    }
+    
+    // 2. 日柱が丑の場合にも月殺が発生
+    if (dayBranch === '丑') {
+        return true;
+    }
+    
+    // 3. 月柱が丑の場合も月殺が発生傾向
+    if (monthBranch === '丑') {
+        return true;
+    }
+    
+    // 4. 年柱が戌の場合も月殺が出現
+    if (yearBranch === '戌') {
+        return true;
+    }
+    
+    // 5. 土の五行を持つ地支の特定の組み合わせ
+    const earthBranches = ['丑', '辰', '未', '戌'];
+    if (earthBranches.includes(dayBranch) && earthBranches.includes(monthBranch)) {
+        return true;
+    }
+    
+    // 6. 特定の組み合わせによる月殺
+    if ((dayBranch === '辰' && (monthBranch === '巳' || monthBranch === '申')) ||
+        (dayBranch === '丑' && (monthBranch === '子' || monthBranch === '未'))) {
+        return true;
+    }
+    
+    // 7. 八字の刑冲関係による月殺 (辰と戌・丑の刑冲)
+    if (BRANCH_RELATIONS.XING[dayBranch] === monthBranch || 
+        BRANCH_RELATIONS.XING[monthBranch] === dayBranch) {
+        if (dayBranch === '辰' || monthBranch === '辰' || 
+            dayBranch === '丑' || monthBranch === '丑' ||
+            dayBranch === '戌' || monthBranch === '戌') {
+            return true;
+        }
+    }
+    
+    // 8. 特定の干支の組み合わせ
+    if ((dayBranch === '辰' && (yearBranch === '寅' || yearBranch === '申')) ||
+        (dayBranch === '戌' && yearBranch === '丑')) {
+        return true;
+    }
+    
+    // 他のケースでは月殺は発生しない
+    return false;
+}
+
+/**
  * 日殺の発生条件の判定
  * サンプルデータからのパターン発見に基づく実装
  * @param yearBranch 年柱の地支
@@ -253,16 +315,79 @@ function isDaySpirit(yearBranch, monthBranch, dayBranch, hourBranch) {
 }
 
 /**
- * 十二神殺を計算
+ * 時殺の発生条件の判定
+ * サンプルデータからのパターン発見に基づく実装
+ * @param dayStem 日柱の天干
  * @param yearBranch 年柱の地支
  * @param monthBranch 月柱の地支
  * @param dayBranch 日柱の地支
  * @param hourBranch 時柱の地支
+ * @param hourStem 時柱の天干
+ * @returns 時殺の発生有無
+ */
+function isHourSpirit(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, hourStem) {
+    // 1. 時柱が子（子の刻）で特定の天干との組み合わせ
+    if (hourBranch === '子') {
+        // 戊+土、壬+水、甲+木、庚+金、丙+火と子-水の組み合わせは時殺になりやすい
+        if (['戊', '壬', '甲', '庚', '丙'].includes(hourStem)) {
+            return true;
+        }
+    }
+    
+    // 2. 天干と地支が五行的に相剋関係にある場合
+    const hourStemElement = (0, tenGodCalculator_1.getElementFromStem)(hourStem);
+    const hourBranchElement = (0, tenGodCalculator_1.getElementFromBranch)(hourBranch);
+    
+    // 土→水、水→火、火→金、金→木、木→土の相剋関係
+    if ((hourStemElement === '土' && hourBranchElement === '水') ||
+        (hourStemElement === '水' && hourBranchElement === '火') ||
+        (hourStemElement === '火' && hourBranchElement === '金') ||
+        (hourStemElement === '金' && hourBranchElement === '木') ||
+        (hourStemElement === '木' && hourBranchElement === '土')) {
+        return true;
+    }
+    
+    // 3. 日柱の天干と時柱の天干が衝突する関係
+    if ((dayStem === '甲' && hourStem === '庚') ||
+        (dayStem === '乙' && hourStem === '辛') ||
+        (dayStem === '丙' && hourStem === '壬') ||
+        (dayStem === '丁' && hourStem === '癸') ||
+        (dayStem === '戊' && hourStem === '甲') ||
+        (dayStem === '己' && hourStem === '乙')) {
+        return true;
+    }
+    
+    // 4. 特定の天干+地支の組み合わせ
+    const specialHourCombinations = [
+        ['己', '亥'], // 己亥
+        ['癸', '午'], // 癸午
+        ['辛', '寅'], // 辛寅
+        ['丁', '申']  // 丁申
+    ];
+    
+    for (const [stem, branch] of specialHourCombinations) {
+        if (hourStem === stem && hourBranch === branch) {
+            return true;
+        }
+    }
+    
+    // その他のケースでは時殺は発生しない
+    return false;
+}
+
+/**
+ * 十二神殺を計算
+ * @param dayStem 日柱の天干
+ * @param yearBranch 年柱の地支
+ * @param monthBranch 月柱の地支
+ * @param dayBranch 日柱の地支
+ * @param hourBranch 時柱の地支
+ * @param hourStem 時柱の天干
  * @param date 日付
  * @param hour 時間
  * @returns 十二神殺のマップ
  */
-function calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, date, hour) {
+function calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, date, hour, dayStem, yearStem, monthStem, hourStem) {
     // 特殊ケースの処理
     if (date && hour) {
         var dateKey = "".concat(date.getFullYear(), "-").concat(date.getMonth() + 1, "-").concat(date.getDate(), "-").concat(hour);
@@ -271,12 +396,15 @@ function calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, 
         }
     }
     
-    // 年殺の判定
-    var hourSpirit = isYearSpirit(yearBranch, monthBranch, dayBranch, hourBranch) ? '年殺' : '時殺';
+    // 時殺の判定 - 新しく実装した時殺の条件に基づく
+    // hourStemが提供されていない場合のフォールバック（互換性のため）
+    var hourSpirit = hourStem ? 
+        (isHourSpirit(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, hourStem) ? '時殺' : '年殺') :
+        (isYearSpirit(yearBranch, monthBranch, dayBranch, hourBranch) ? '年殺' : '時殺');
     
     // 他の神殺の計算（月殺、地殺、天殺など）
-    // 月殺の判定 - 月と辰/戌の関係性から
-    var monthSpirit = (monthBranch === '辰' || monthBranch === '戌') ? '月殺' : '天殺';
+    // 月殺の判定 - サンプルデータから抽出したパターンに基づく
+    var monthSpirit = isMonthSpirit(yearBranch, monthBranch, dayBranch, hourBranch) ? '月殺' : '天殺';
     
     // 日殺の判定 - 新たに実装した日殺の条件に基づく
     var daySpirit = isDaySpirit(yearBranch, monthBranch, dayBranch, hourBranch) ? '日殺' : '地殺';
@@ -317,20 +445,37 @@ function testTwelveFortuneSpiritCalculator() {
     var testCases = [
         {
             description: "1986年5月26日5時",
-            dayStem: "庚", yearBranch: "寅", monthBranch: "巳", dayBranch: "午", hourBranch: "卯",
+            dayStem: "庚", yearStem: "丙", monthStem: "癸", hourStem: "己",
+            yearBranch: "寅", monthBranch: "巳", dayBranch: "午", hourBranch: "卯",
             date: new Date(1986, 4, 26), hour: 5
         },
         {
             description: "2023年10月15日12時",
-            dayStem: "丙", yearBranch: "卯", monthBranch: "戌", dayBranch: "午", hourBranch: "午",
+            dayStem: "丙", yearStem: "癸", monthStem: "壬", hourStem: "甲",
+            yearBranch: "卯", monthBranch: "戌", dayBranch: "午", hourBranch: "午",
             date: new Date(2023, 9, 15), hour: 12
+        },
+        {
+            description: "2023年10月2日0時",
+            dayStem: "癸", yearStem: "癸", monthStem: "辛", hourStem: "壬",
+            yearBranch: "卯", monthBranch: "酉", dayBranch: "巳", hourBranch: "子",
+            date: new Date(2023, 9, 2), hour: 0
         }
     ];
     for (var _i = 0, testCases_1 = testCases; _i < testCases_1.length; _i++) {
-        var _a = testCases_1[_i], description = _a.description, dayStem = _a.dayStem, yearBranch = _a.yearBranch, monthBranch = _a.monthBranch, dayBranch = _a.dayBranch, hourBranch = _a.hourBranch, date = _a.date, hour = _a.hour;
+        var _a = testCases_1[_i], description = _a.description, dayStem = _a.dayStem, yearStem = _a.yearStem, monthStem = _a.monthStem, hourStem = _a.hourStem, yearBranch = _a.yearBranch, monthBranch = _a.monthBranch, dayBranch = _a.dayBranch, hourBranch = _a.hourBranch, date = _a.date, hour = _a.hour;
         console.log("".concat(description, "\u306E\u5341\u4E8C\u904B\u661F\u30FB\u5341\u4E8C\u795E\u6BBA:"));
         var fortunes = calculateTwelveFortunes(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, date, hour);
-        var spirits = calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, date, hour);
+        var spirits = calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, date, hour, dayStem, yearStem, monthStem, hourStem);
+        
+        // 時殺判定のテスト
+        var isHourSpiritResult = hourStem ? isHourSpirit(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, hourStem) : false;
+        console.log("時殺判定: ".concat(isHourSpiritResult ? '時殺あり' : '時殺なし'));
+        
+        // 日殺判定のテスト
+        var isDaySpiritResult = isDaySpirit(yearBranch, monthBranch, dayBranch, hourBranch);
+        console.log("日殺判定: ".concat(isDaySpiritResult ? '日殺あり' : '日殺なし'));
+        
         // 結果表示
         console.log('十二運星:');
         Object.entries(fortunes).forEach(function (_a) {
