@@ -92,8 +92,9 @@ export class SajuEngine {
         yearPillar.stem
       );
       
-      // 6. 時柱を計算
-      const hourPillar = calculateKoreanHourPillar(birthHour, dayPillar.stem);
+      // 6. 時柱を計算 (地方時調整後の時間を使用)
+      const adjustedHour = adjustedDate.getHours();
+      const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
       
       // 7. 四柱を構成
       const fourPillars: FourPillars = {

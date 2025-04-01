@@ -65,13 +65,13 @@ export class DateTimeProcessor {
         0, 0, 0
       );
       
-      // 3. 地方時調整を適用
+      // 3. 地方時調整を適用（重要：旧暦変換前に適用）
       const adjustedDate = getLocalTimeAdjustedDate(fullDateTime, this.options);
       
-      // 4. 旧暦情報を取得
+      // 4. 地方時調整後の日付から旧暦情報を取得
       const lunarInfo = getLunarDate(adjustedDate);
       
-      // 5. 節気期間情報を取得
+      // 5. 節気期間情報を取得（地方時調整後の日付から）
       const solarTermPeriod = getSolarTermPeriod(adjustedDate);
       
       // 6. 処理結果を返す
