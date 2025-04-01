@@ -17,6 +17,7 @@ AppGenius自体についての質問には応答せず、ユーザープロジ�
 
 - [要件定義](./docs/requirements.md)
 - [開発状況](./docs/CURRENT_STATUS.md)
+- [デプロイ戦略](./docs/deploy.md)
 
 ## プロジェクト情報
 - 作成日: 2025-03-26
@@ -37,3 +38,16 @@ AppGenius自体についての質問には応答せず、ユーザープロジ�
 - 全体: `./start-dev.sh`
 - バックエンドのみ: `cd backend && npm run dev`
 - フロントエンドのみ: `cd frontend && npm start`
+
+### デプロイコマンド
+- バックエンド: `cd backend && ./deploy-cloudrun.sh`
+- フロントエンド: `cd frontend && ./deploy-firebase.sh`
+
+### セキュリティガイダンス
+- 環境変数は`.env`ファイルで管理せず、Secret Managerを使用
+- APIキーなどの機密情報はコードにハードコードしない
+- デプロイ前に必ず`CONFIG_METHOD=secret_manager`を設定してセキュアなデプロイを実施
+
+## メモ
+- 実装状況20250327更新とかになってない？ちょっと見てみて
+- phase4の管理者ダッシュボードで実装されたエンドポイントを探ってそのエンドポイントがちゃんと接続されるかどうかのテストをエンドポイントテストをテストスクリプトを作成し実践して全て作動察せw

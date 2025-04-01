@@ -4,10 +4,10 @@ import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import ConversationPage from '../pages/ConversationPage';
 import { FortuneProvider, useFortune } from '../contexts/FortuneContext';
+import conversationService from '../services/conversation.service';
 
 // 正しいコンテキストを使うためのインスタンス作成
 const FortuneContext = React.createContext({});
-import { conversationService } from '../services/conversation.service';
 
 // モック設定
 jest.mock('../services/conversation.service');

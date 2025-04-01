@@ -96,24 +96,28 @@ const FortuneDetail: React.FC<FortuneDetailProps> = ({ fortune }) => {
     );
   }
 
-  // 運勢表示用のデータを抽出
+  // 運勢表示用のデータを抽出（デフォルト値を設定）
   const {
     date,
-    dailyElement,
-    yinYang,
-    overallLuck,
-    careerLuck,
-    relationshipLuck,
-    creativeEnergyLuck,
-    healthLuck,
-    wealthLuck,
+    dailyElement = '木',
+    yinYang = '陽',
+    overallLuck = 50,
+    careerLuck = 50,
+    relationshipLuck = 50,
+    creativeEnergyLuck = 50,
+    healthLuck = 50,
+    wealthLuck = 50,
     description,
     advice,
-    luckyColors,
-    luckyDirections,
-    compatibleElements,
-    incompatibleElements
+    luckyColors = ['青', '緑'],
+    luckyDirections = ['東', '南'],
+    compatibleElements = ['水', '火'],
+    incompatibleElements = ['金']
   } = fortune;
+
+  // 説明とアドバイスのデフォルト値（dailyElementを参照するためこれは分割代入の後に設定）
+  const defaultDescription = `${dailyElement}の特性を活かせる一日です。バランスの取れた活動を心がけましょう。`;
+  const defaultAdvice = '自然の流れに逆らわず、状況に適応する姿勢が今日のカギとなるでしょう。';
 
   // 運勢の日付表示
   const formattedDate = formatDate(date);
@@ -122,11 +126,15 @@ const FortuneDetail: React.FC<FortuneDetailProps> = ({ fortune }) => {
   // 運勢スコアスタイル
   const overallScoreStyle = getLuckScoreStyle(overallLuck);
   
-  // 陰陽の特性を取得
-  const yinYangProps = YIN_YANG_PROPERTIES[yinYang as keyof typeof YIN_YANG_PROPERTIES];
+  // 陰陽の特性を取得（ない場合は陽のデフォルト特性を使用）
+  const yinYangProps = yinYang 
+    ? YIN_YANG_PROPERTIES[yinYang as keyof typeof YIN_YANG_PROPERTIES]
+    : YIN_YANG_PROPERTIES['陽'];
 
-  // 運勢要素の特性を取得
-  const elementProps = ELEMENT_PROPERTIES[dailyElement as keyof typeof ELEMENT_PROPERTIES];
+  // 運勢要素の特性を取得（ない場合は木のデフォルト特性を使用）
+  const elementProps = dailyElement 
+    ? ELEMENT_PROPERTIES[dailyElement as keyof typeof ELEMENT_PROPERTIES]
+    : ELEMENT_PROPERTIES['木'];
 
   return (
     <Card elevation={3} sx={{ overflow: 'visible', mb: 4 }}>
@@ -214,14 +222,14 @@ const FortuneDetail: React.FC<FortuneDetailProps> = ({ fortune }) => {
           {/* 運勢説明 */}
           <Grid item xs={12} sm={8}>
             <Typography variant="body1" gutterBottom>
-              {description}
+              {description || defaultDescription}
             </Typography>
             <Box sx={{ mt: 2, mb: 1 }}>
               <Typography variant="subtitle1" fontWeight="bold" color={elementTextColor}>
                 アドバイス:
               </Typography>
               <Typography variant="body2">
-                {advice}
+                {advice || defaultAdvice}
               </Typography>
             </Box>
           </Grid>

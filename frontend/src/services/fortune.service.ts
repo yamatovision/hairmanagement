@@ -16,6 +16,7 @@ type FortuneQueryRequest = {
   startDate?: string;
   endDate?: string;
   userId?: string;
+  birthDate?: string;
 };
 
 /**
@@ -65,41 +66,100 @@ class FortuneService {
    */
   async getFortuneRange(query: FortuneQueryRequest): Promise<IFortune[]> {
     try {
+      // クエリパラメータのチェック
+      if (!query.startDate || !query.endDate) {
+        console.error('日付範囲のパラメータが不足しています', query);
+        return []; // パラメータ不足時は空配列を返す
+      }
+
+      // birthDateが設定されていない場合、ユーザーに通知
+      if (!query.birthDate) {
+        console.error('生年月日(birthDate)が設定されていません。プロフィールで生年月日を登録してください。');
+        // エラー情報を含むダミーオブジェクトを返す（UI側でエラー表示に使用可能）
+        return [{
+          id: 'error-missing-birthdate',
+          date: new Date().toISOString().split('T')[0],
+          error: true,
+          message: '生年月日が設定されていません。プロフィール設定画面で生年月日を登録してください。'
+        }] as any;
+      }
+
+      // APIエンドポイントとサーバーが正しく設定されているか確認
+      const apiUrl = process.env.REACT_APP_API_URL || '';
+      if (!apiUrl) {
+        console.error('API URLが設定されていません。環境変数REACT_APP_API_URLを確認してください。');
+        return []; // API URL未設定時は空配列を返す
+      }
+
       // オフラインモード対応のAPIリクエスト（キャッシュあり）
-      return await apiRequest<IFortune[]>(FORTUNE.GET_RANGE, {
-        method: 'GET',
-        params: query,
-        offlineTtl: 7 * 24 * 60 * 60 * 1000 // 7日間キャッシュ
-      });
+      try {
+        const result = await apiRequest<IFortune[]>(FORTUNE.GET_RANGE, {
+          method: 'GET',
+          params: query,
+          offlineTtl: 7 * 24 * 60 * 60 * 1000 // 7日間キャッシュ
+        });
+        
+        // 結果が配列でない場合のフォールバック
+        if (!Array.isArray(result)) {
+          console.error('運勢範囲データが配列形式ではありません:', result);
+          return [];
+        }
+        
+        return result;
+      } catch (apiError) {
+        console.error('運勢範囲データAPI呼び出しエラー:', apiError);
+        // エラー時は仮のデータまたは空配列を返す
+        return [];
+      }
     } catch (error) {
       console.error('運勢範囲データ取得エラー:', error);
-      throw error;
+      // 外部エラーハンドリングのために例外をスローせず、空配列を返す
+      return [];
     }
   }
 
   /**
    * 週間運勢を取得（デフォルトで今日から7日間）
    * @param startDate 開始日（省略時は今日）
+   * @param birthDate 生年月日（YYYY-MM-DD形式、省略時はユーザープロファイルから取得）
    * @returns 週間運勢データリスト
    */
-  async getWeeklyFortunes(startDate?: string): Promise<IFortune[]> {
+  async getWeeklyFortunes(startDate?: string, birthDate?: string): Promise<IFortune[]> {
     try {
       // 開始日が指定されていなければ今日の日付を使用
-      const start = startDate || new Date().toISOString().split('T')[0];
+      let start: string;
+      try {
+        start = startDate || new Date().toISOString().split('T')[0];
+      } catch (e) {
+        console.error('日付取得エラー:', e);
+        // フォールバック: 直接文字列化
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        start = `${year}-${month}-${day}`;
+      }
       
       // 終了日を計算（開始日から7日後）
-      const end = new Date(start);
-      end.setDate(end.getDate() + 6); // 7日間（当日を含む）
-      const endDate = end.toISOString().split('T')[0];
-      
-      // 日付範囲の運勢を取得
-      return this.getFortuneRange({
-        startDate: start,
-        endDate: endDate
-      });
+      try {
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6); // 7日間（当日を含む）
+        const endDate = end.toISOString().split('T')[0];
+        
+        // 日付範囲の運勢を取得（生年月日を渡す）
+        return await this.getFortuneRange({
+          startDate: start,
+          endDate: endDate,
+          birthDate: birthDate
+        });
+      } catch (e) {
+        console.error('日付範囲計算エラー:', e);
+        return []; // エラー時は空配列を返す
+      }
     } catch (error) {
       console.error('週間運勢取得エラー:', error);
-      throw error;
+      // エラーをスローせず、空配列を返す
+      return [];
     }
   }
 

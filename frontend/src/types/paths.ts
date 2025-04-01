@@ -21,6 +21,7 @@ export const USER = {
   UPDATE_PROFILE: `${API_BASE_PATH}/users/me`,
   UPDATE_PASSWORD: `${API_BASE_PATH}/users/me/password`,
   UPDATE_NOTIFICATION_SETTINGS: `${API_BASE_PATH}/users/me/notification-settings`,
+  GET_SAJU_PROFILE: `${API_BASE_PATH}/users/me/saju-profile`,
   GET_BY_ID: (userId: string) => `${API_BASE_PATH}/users/${userId}`,
   GET_ALL: `${API_BASE_PATH}/users`,
   UPDATE_BY_ID: (userId: string) => `${API_BASE_PATH}/users/${userId}`,
@@ -45,6 +46,7 @@ export const CONVERSATION = {
   GET_BY_ID: (conversationId: string) => `${API_BASE_PATH}/conversation/${conversationId}`,
   GENERATE_PROMPT_QUESTION: `${API_BASE_PATH}/conversation/generate-prompt`,
   ARCHIVE: (conversationId: string) => `${API_BASE_PATH}/conversation/${conversationId}/archive`,
+  TOGGLE_FAVORITE: (conversationId: string) => `${API_BASE_PATH}/conversation/${conversationId}/favorite`,
 };
 
 // 目標関連
@@ -102,4 +104,12 @@ export const ANALYTICS = {
   GET_FOLLOW_UP_RECOMMENDATIONS: `${API_BASE_PATH}/analytics/follow-up-recommendations`,
   GET_SENTIMENT_TREND: `${API_BASE_PATH}/analytics/sentiment-trend`,
   GET_GOAL_COMPLETION_RATE: `${API_BASE_PATH}/analytics/goal-completion-rate`,
+};
+
+// サブスクリプション関連
+export const SUBSCRIPTION = {
+  GET_TEAM_SUBSCRIPTION: (teamId: string) => `${API_BASE_PATH}/subscriptions/team/${teamId}`,
+  CREATE: `${API_BASE_PATH}/subscriptions`,
+  CHANGE_PLAN: (teamId: string) => `${API_BASE_PATH}/subscriptions/team/${teamId}/plan`,
+  UPDATE_STATUS: (teamId: string) => `${API_BASE_PATH}/subscriptions/team/${teamId}/status`,
 };

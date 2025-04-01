@@ -122,6 +122,7 @@ export class SubscriptionService {
     const newSubscription: Subscription = {
       id: '', // リポジトリで自動生成される
       teamId: '', // ユーザーサブスクリプションの場合は空
+      userId: userId, // ユーザーIDを追加
       planType,
       planInfo,
       status: SubscriptionStatus.ACTIVE,

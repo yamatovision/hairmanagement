@@ -25,7 +25,10 @@ type UserRegistrationRequest = {
 };
 
 // APIのBase URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// 環境に応じて適切なURLを選択
+const isDevelopment = process.env.NODE_ENV === 'development';
+// 開発環境ではプロキシを使用
+const API_URL = isDevelopment ? '' : 'https://patrolmanagement-backend-235426778039.asia-northeast1.run.app';
 
 /**
  * 認証サービス
@@ -125,7 +128,8 @@ class AuthService {
   async getCurrentUser(): Promise<IUser> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/me`, {
+    // Clean Architectureに合わせてエンドポイントをusers/meに変更
+    const response = await fetch(`${API_URL}${API_BASE_PATH}/users/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -134,7 +138,24 @@ class AuthService {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      // 404エラーの場合は、古いエンドポイントを試す（フォールバック）
+      if (response.status === 404) {
+        console.log('新しいエンドポイントが見つからないため、従来のエンドポイントを試します');
+        const fallbackResponse = await fetch(`${API_URL}${API_BASE_PATH}/auth/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          return fallbackData.data;
+        }
+      }
+      
+      const errorData = await response.json().catch(() => ({ message: '不明なエラー' }));
       throw new Error(errorData.message || 'ユーザー情報の取得に失敗しました');
     }
 

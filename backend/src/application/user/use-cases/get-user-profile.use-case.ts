@@ -11,6 +11,8 @@ export interface UserProfileResponse {
   email: string;
   name: string;
   birthDate: string;
+  birthHour?: number;
+  birthLocation?: string;
   role: string;
   profileImage?: string;
   elementalProfile: {
@@ -64,6 +66,8 @@ export class GetUserProfileUseCase {
       email: user.email,
       name: user.name,
       birthDate: user.birthDate.toISOString().split('T')[0], // YYYY-MM-DD形式
+      birthHour: user.birthHour, // 出生時間を追加
+      birthLocation: user.birthLocation, // 出生地を追加
       role: user.role,
       profileImage: user.profileImage,
       elementalProfile: {

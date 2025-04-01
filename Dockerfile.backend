@@ -2,18 +2,18 @@ FROM node:18 AS builder
 
 WORKDIR /app
 
-# 共有モジュールをコピーしてビルド
-COPY shared ./shared
-RUN cd shared && npm install && npm run build
-
 # バックエンドの依存関係をインストール
-COPY backend/package*.json backend/
-COPY backend/tsconfig.json backend/
+COPY backend/package*.json ./backend/
+COPY backend/tsconfig.json ./backend/
 RUN cd backend && npm install
+RUN cd backend && npm install --save-dev @types/uuid @types/bcrypt
 
-# バックエンドのソースコードをコピーしてビルド
-COPY backend/src backend/src
-COPY backend/babel.config.js backend/
+# バックエンドのソースコードとshared_moduleをコピー
+COPY backend/src ./backend/src
+COPY backend/shared_module ./backend/shared_module
+COPY backend/babel.config.js ./backend/
+
+# バックエンドをビルド
 RUN cd backend && npm run build
 
 # 実行用のステージ
@@ -23,19 +23,33 @@ WORKDIR /app
 
 # ビルド済みのファイルをコピー
 COPY --from=builder /app/backend/dist ./dist
-COPY --from=builder /app/shared/dist ./shared/dist
+COPY --from=builder /app/backend/shared_module ./shared_module
 COPY backend/package*.json ./
 
 # 本番環境の依存関係のみをインストール
 RUN npm install --only=production
+RUN npm install bcrypt uuid @anthropic-ai/sdk
+
+# シンボリックリンクを作成して@sharedをNodeモジュールとして利用可能にする
+RUN mkdir -p /app/node_modules/@shared
+RUN ln -sf /app/shared_module/* /app/node_modules/@shared/
 
 # 環境変数を設定
 ENV NODE_ENV=production
 ENV PORT=8080
 ENV CORS_ORIGIN="https://dailyfortune-app.web.app"
+ENV MONGODB_URI="mongodb://mongodb:27017/patrolmanagement"
+ENV JWT_SECRET="your-strong-secret-key-for-jwt"
+ENV CLAUDE_API_KEY="your-claude-api-key"
+
+# MongoDB対応
+RUN npm install mongoose
+
+# デバッグ出力を有効化
+ENV DEBUG="*"
 
 # ポートを公開
 EXPOSE 8080
 
 # アプリケーションを起動
-CMD ["node", "dist/index.js"]
+CMD ["node", "--trace-warnings", "dist/index.js"]

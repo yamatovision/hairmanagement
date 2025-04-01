@@ -6,6 +6,7 @@
  * - 2025/03/26: 初期モデル・APIパス定義 (AppGenius)
  * - 2025/03/27: BaseModelType修正、Mongoose互換性対応 (Claude)
  * - 2025/03/27: モジュール構造の改善 (Claude)
+ * - 2025/03/31: 四柱推命型定義の追加 (Claude)
  */
 
 // ===============================================================
@@ -179,6 +180,61 @@ export const COMPATIBILITY_RATINGS = {
 };
 
 // ===============================================================
+// 四柱推命関連の型定義
+// ===============================================================
+
+// 天干の型
+export type StemType = '甲' | '乙' | '丙' | '丁' | '戊' | '己' | '庚' | '辛' | '壬' | '癸';
+
+// 地支の型
+export type BranchType = '子' | '丑' | '寅' | '卯' | '辰' | '巳' | '午' | '未' | '申' | '酉' | '戌' | '亥';
+
+// 干支（六十干支）の型
+export type StemBranchType = `${StemType}${BranchType}`;
+
+// 柱（四柱推命の柱）の型
+export interface PillarType {
+  stem: StemType;
+  branch: BranchType;
+  fullStemBranch: StemBranchType;
+}
+
+// 四柱の型
+export interface FourPillarsType {
+  yearPillar: PillarType;
+  monthPillar: {
+    term: string | null;
+    fullStemBranch: string;
+  };
+  dayPillar: PillarType;
+  hourPillar: PillarType;
+}
+
+// 十神の型
+export type TenGodType = 
+  | '比肩' | '劫財' 
+  | '偏印' | '正印' 
+  | '偏官' | '正官' 
+  | '偏財' | '正財' 
+  | '食神' | '傷官';
+
+// 五行プロファイルの型（四柱推命ベース）
+export interface SajuElementalProfile {
+  mainElement: ElementType;
+  secondaryElement: ElementType;
+  yinYang: YinYangType;
+  dayMaster: StemType;
+  fourPillars?: FourPillarsType;
+}
+
+// 運勢結果に四柱推命情報を追加
+export interface SajuFortune extends IFortune {
+  fourPillars?: FourPillarsType;
+  tenGods?: Record<string, TenGodType>;
+  dayStemBranch?: StemBranchType;
+}
+
+// ===============================================================
 // データモデル定義
 // ===============================================================
 
@@ -216,10 +272,12 @@ export interface IUser extends BaseModelType {
   password?: string; // APIレスポンスには含まれない
   name: string;
   birthDate: string; // YYYY-MM-DD形式
+  birthHour?: number; // 生まれた時間（0-23）
   role: 'employee' | 'manager' | 'admin' | 'superadmin';
   teamIds?: string[]; // 所属チームID
   profilePicture?: string;
   elementalType?: ElementalType;
+  sajuProfile?: SajuElementalProfile; // 四柱推命プロファイル
   notificationSettings?: NotificationSettingsType;
   isActive: boolean;
   lastLoginAt?: string | Date; // mongooseとの互換性のため両方サポート
@@ -244,6 +302,7 @@ export type UserRegistrationRequest = {
   password: string;
   name: string;
   birthDate: string;
+  birthHour?: number;
   role?: 'employee' | 'manager' | 'admin';
 };
 
@@ -279,12 +338,17 @@ export interface IFortune extends BaseModelType {
   compatibleElements?: ElementType[];
   incompatibleElements?: ElementType[];
   viewedAt?: string | Date;
+  // エラーハンドリング用の追加フィールド
+  error?: boolean;
+  message?: string;
 }
 
 export type FortuneQueryRequest = {
   startDate?: string;
   endDate?: string;
   userId?: string;
+  birthDate?: string;
+  birthHour?: number;
 };
 
 // 会話関連型定義

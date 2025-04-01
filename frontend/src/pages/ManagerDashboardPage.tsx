@@ -7,12 +7,16 @@ import {
   Paper, 
   Avatar,
   IconButton,
-  CircularProgress
+  CircularProgress,
+  Tabs,
+  Tab
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import SettingsIcon from '@mui/icons-material/Settings';
+import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import StaffStatusPanel from '../components/dashboard/StaffStatusPanel';
+import SubscriptionManagement from '../components/dashboard/SubscriptionManagement';
 import analyticsService from '../services/analytics.service';
 import { IUser, ITeamAnalytics } from '../utils/sharedTypes';
 
@@ -21,6 +25,9 @@ import { IUser, ITeamAnalytics } from '../utils/sharedTypes';
  * チーム全体の状態把握とフォローアップが必要なスタッフの管理
  */
 const ManagerDashboardPage: React.FC = () => {
+  // タブの状態管理
+  const [currentTab, setCurrentTab] = useState<number>(0);
+  
   // 分析データの状態管理
   const [teamAnalytics, setTeamAnalytics] = useState<ITeamAnalytics | null>(null);
   const [staffData, setStaffData] = useState<any[]>([]);
@@ -34,6 +41,11 @@ const ManagerDashboardPage: React.FC = () => {
     '土': '#ffd54f', // 黄
     '金': '#b0bec5', // 銀/灰色
     '水': '#64b5f6', // 青
+  };
+  
+  // タブ変更ハンドラー
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
   };
   
   // ダミーユーザーリスト（本番ではデータベースから取得する）
@@ -144,21 +156,65 @@ const ManagerDashboardPage: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // チーム分析データを取得（本番環境ではAPIから取得）
-        const analyticsData = await analyticsService.getTeamAnalytics();
-        // 必要なクリエイト日時とアップデート日時を追加
-        const analytics = {
-          ...analyticsData,
+        
+        // モックデータを直接使用（APIエンドポイントが存在しないため）
+        const mockAnalyticsData: ITeamAnalytics = {
+          id: 'mock-team-analytics-id',
+          period: {
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            endDate: new Date().toISOString()
+          },
+          overallEngagement: 78,
+          responseRate: 82,
+          sentimentDistribution: {
+            positive: 65,
+            neutral: 25,
+            negative: 10
+          },
+          topConcerns: [
+            { topic: '業務量', frequency: 12, averageSentiment: -0.7 },
+            { topic: 'チーム連携', frequency: 8, averageSentiment: -0.5 },
+            { topic: '報酬体系', frequency: 5, averageSentiment: -0.6 }
+          ],
+          topStrengths: [
+            { topic: '職場環境', frequency: 15, averageSentiment: 0.8 },
+            { topic: '技術サポート', frequency: 10, averageSentiment: 0.7 },
+            { topic: '成長機会', frequency: 9, averageSentiment: 0.9 }
+          ],
+          followUpRecommendations: [
+            {
+              userId: '1',
+              urgency: 'high' as const,
+              reason: '過去2週間で急激な満足度低下。技術習得と待遇について複数回の否定的発言あり。',
+              suggestedApproach: '新しい技術トレーニングの機会について1対1でのミーティングを実施し、キャリアビジョンと待遇についての対話を行う。'
+            },
+            {
+              userId: '2',
+              urgency: 'medium' as const,
+              reason: '運勢確認頻度が低下中。対話内容からチーム内人間関係の悩みが検出されている。',
+              suggestedApproach: '間接的にチーム活動への参加を促し、コミュニケーションの機会を増やす。必要に応じてメンター制度の活用を検討。'
+            },
+            {
+              userId: '3',
+              urgency: 'low' as const,
+              reason: 'スキル成長に関する不安の兆候。自己評価が低く、キャリアパスの明確さを求めている。',
+              suggestedApproach: '具体的なスキル向上計画を一緒に設定し、成功体験を増やす機会を提供。組織内での将来的なポジションについて対話を行う。'
+            }
+          ],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
-        setTeamAnalytics(analytics);
+        
+        // 本番環境ではAPIから取得（現在はエンドポイントがないためコメントアウト）
+        // const analyticsData = await analyticsService.getTeamAnalytics();
+        
+        setTeamAnalytics(mockAnalyticsData);
         
         // 個別のスタッフ状態を処理して設定
-        processStaffData(dummyUsers, analytics);
+        processStaffData(dummyUsers, mockAnalyticsData);
         
         // フォローアップ推奨リストを処理
-        processFollowupRecommendations(analytics.followUpRecommendations, dummyUsers);
+        processFollowupRecommendations(mockAnalyticsData.followUpRecommendations, dummyUsers);
         
       } catch (error) {
         console.error('ダッシュボードデータ取得エラー:', error);
@@ -389,13 +445,27 @@ const ManagerDashboardPage: React.FC = () => {
             alignItems: 'center',
           }}
         >
-          <PeopleIcon 
-            sx={{ 
-              marginRight: 1.5, 
-              color: '#ffd54f', // 土の色
-            }} 
-          />
-          スタッフ状態管理
+          {currentTab === 0 ? (
+            <>
+              <PeopleIcon 
+                sx={{ 
+                  marginRight: 1.5, 
+                  color: '#ffd54f', // 土の色
+                }} 
+              />
+              スタッフ状態管理
+            </>
+          ) : (
+            <>
+              <SubscriptionsIcon 
+                sx={{ 
+                  marginRight: 1.5, 
+                  color: '#3f51b5', // サブスクリプションカラー
+                }} 
+              />
+              サブスクリプション管理
+            </>
+          )}
         </Typography>
         
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -408,18 +478,40 @@ const ManagerDashboardPage: React.FC = () => {
           <Avatar sx={{ bgcolor: '#b0bec5', width: 36, height: 36 }}>M</Avatar>
         </Box>
       </Box>
+
+      {/* タブナビゲーション */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: '#ffffff' }}>
+        <Container maxWidth="lg">
+          <Tabs 
+            value={currentTab} 
+            onChange={handleTabChange}
+            aria-label="ダッシュボードタブ"
+            indicatorColor="primary"
+            textColor="primary"
+          >
+            <Tab label="スタッフ状態" />
+            <Tab label="サブスクリプション" />
+          </Tabs>
+        </Container>
+      </Box>
       
       {/* メインコンテンツ */}
       <Container maxWidth="lg" sx={{ paddingY: 3 }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
-            <CircularProgress />
-          </Box>
+        {currentTab === 0 ? (
+          // スタッフ状態タブ
+          loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <StaffStatusPanel 
+              staffData={staffData}
+              followupRecommendations={followupRecommendations}
+            />
+          )
         ) : (
-          <StaffStatusPanel 
-            staffData={staffData}
-            followupRecommendations={followupRecommendations}
-          />
+          // サブスクリプション管理タブ
+          <SubscriptionManagement teamId="1" />
         )}
       </Container>
     </Box>

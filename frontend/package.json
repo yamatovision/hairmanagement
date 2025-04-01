@@ -20,10 +20,14 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build",
+    "build": "rimraf build && craco build",
     "test": "craco test",
+    "test:coverage": "craco test --coverage",
     "eject": "react-scripts eject",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "eslintConfig": {
     "extends": [
@@ -51,7 +55,19 @@
     "@craco/craco": "^7.1.0",
     "@emotion/babel-plugin": "^11.13.5",
     "@emotion/babel-preset-css-prop": "^11.12.0",
+    "@storybook/addon-docs": "^7.6.17",
+    "@storybook/addon-essentials": "^7.6.17",
+    "@storybook/addon-interactions": "^7.6.17",
+    "@storybook/addon-links": "^7.6.17",
+    "@storybook/addon-onboarding": "^1.0.11",
+    "@storybook/blocks": "^7.6.17",
+    "@storybook/react": "^7.6.17",
+    "@storybook/react-webpack5": "^7.6.17",
+    "@storybook/testing-library": "^0.2.2",
     "@types/axios-mock-adapter": "^1.9.0",
-    "axios-mock-adapter": "^2.1.0"
+    "axios-mock-adapter": "^2.1.0",
+    "babel-loader": "^10.0.0",
+    "rimraf": "^5.0.10",
+    "storybook": "^7.6.17"
   }
 }

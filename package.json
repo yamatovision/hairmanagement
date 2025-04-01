@@ -8,17 +8,36 @@
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "cd backend && npm run dev",
     "start:frontend": "cd frontend && npm start",
-    "start:dev": "node start-dev.sh"
+    "start:dev": "node start-dev.sh",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:record": "cypress run --record",
+    "test:e2e": "start-server-and-test start http://localhost:3000 cy:run",
+    "test:e2e:open": "start-server-and-test start http://localhost:3000 cy:open",
+    "test:e2e:ci": "start-server-and-test start http://localhost:3000 cy:run:record",
+    "seed:test-data": "node scripts/seed-e2e-test-data.js"
   },
   "dependencies": {
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.1",
+    "lunar-javascript": "^1.7.1",
     "mongoose": "^8.1.1",
     "node-fetch": "^3.3.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@storybook/addon-docs": "^8.6.11",
+    "@storybook/addon-essentials": "^8.6.11",
+    "@storybook/addon-links": "^8.6.11",
+    "@storybook/react": "^8.6.11",
+    "@testing-library/cypress": "^10.0.3",
+    "axe-core": "^4.10.3",
+    "concurrently": "^8.2.2",
+    "cypress": "^14.2.1",
+    "cypress-axe": "^1.6.0",
+    "cypress-plugin-tab": "^1.0.5",
+    "start-server-and-test": "^2.0.11",
+    "storybook": "^8.6.11"
   }
 }

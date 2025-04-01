@@ -11,9 +11,15 @@ import { IFortune } from '../utils/sharedTypes';
 import { useAuth } from './AuthContext';
 import fortuneService from '../services/fortune.service';
 
+// エラーハンドリング用の拡張FortuneType
+type FortuneWithErrorType = IFortune & {
+  error?: boolean;
+  message?: string;
+};
+
 interface FortuneContextType {
   dailyFortune: IFortune | null;
-  weeklyFortunes: IFortune[];
+  weeklyFortunes: FortuneWithErrorType[];
   selectedFortune: IFortune | null;
   fetchDailyFortune: () => Promise<void>;
   fetchWeeklyFortunes: (startDate?: string) => Promise<void>;
@@ -29,7 +35,7 @@ const FortuneContext = createContext<FortuneContextType | undefined>(undefined);
 export const FortuneProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [dailyFortune, setDailyFortune] = useState<IFortune | null>(null);
-  const [weeklyFortunes, setWeeklyFortunes] = useState<IFortune[]>([]);
+  const [weeklyFortunes, setWeeklyFortunes] = useState<FortuneWithErrorType[]>([]);
   const [selectedFortune, setSelectedFortune] = useState<IFortune | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,11 +75,34 @@ export const FortuneProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setError(null);
     
     try {
-      const fortunes = await fortuneService.getWeeklyFortunes(startDate);
-      setWeeklyFortunes(fortunes);
+      // ユーザーの生年月日を取得（実際の実装ではユーザープロファイルから取得する）
+      const birthDate = user.birthDate || localStorage.getItem('userBirthDate');
+      
+      // サービスが例外をスローしない実装になっているが、念のためtry-catchで囲む
+      const fortunes = await fortuneService.getWeeklyFortunes(startDate, birthDate);
+      
+      // 受け取ったデータが有効か確認
+      if (Array.isArray(fortunes)) {
+        // エラーメッセージが含まれている場合
+        if (fortunes.length === 1 && fortunes[0]?.error === true) {
+          console.warn('週間運勢の取得でエラーが返されました:', fortunes[0]?.message);
+          setWeeklyFortunes(fortunes);
+          setError(fortunes[0]?.message || '週間運勢の取得でエラーが発生しました');
+        } else {
+          setWeeklyFortunes(fortunes);
+          setError(null);
+        }
+      } else {
+        // データが無効な場合は空の配列を設定
+        console.warn('週間運勢の取得結果が配列ではありません:', fortunes);
+        setWeeklyFortunes([]);
+        setError('週間運勢データの形式が不正です');
+      }
     } catch (err) {
       setError('週間運勢の取得に失敗しました');
       console.error('週間運勢取得エラー:', err);
+      // エラー時も空の配列を設定して状態を更新
+      setWeeklyFortunes([]);
     } finally {
       setLoading(false);
     }

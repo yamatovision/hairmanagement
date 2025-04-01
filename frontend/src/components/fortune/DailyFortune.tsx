@@ -161,17 +161,17 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
 
   // ここから運勢表示
   const {
-    dailyElement,
-    yinYang,
-    overallLuck,
-    careerLuck,
-    relationshipLuck,
-    creativeEnergyLuck,
-    healthLuck,
-    wealthLuck,
+    dailyElement = '木',
+    yinYang = '陽',
+    overallLuck = 50,
+    careerLuck = 50,
+    relationshipLuck = 50,
+    creativeEnergyLuck = 50,
+    healthLuck = 50,
+    wealthLuck = 50,
     description,
     advice,
-    compatibleElements
+    compatibleElements = []
   } = dailyFortune;
 
   // 運勢要素の色を取得
@@ -288,7 +288,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
           {/* 運勢説明 */}
           <Grid item xs={12} sm={8}>
             <Typography variant="body1" sx={{ mb: 1 }}>
-              {description.split('\n')[0]} {/* 長い説明の最初の行だけ表示 */}
+              {description ? description.split('\n')[0] : `今日は${dailyElement}の気が強い日です。${getLuckLevelText(overallLuck)}でしょう。`}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
               {keywords.map((keyword, index) => (
@@ -413,7 +413,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
               今日のアドバイス
             </Typography>
             <Typography variant="body2" sx={{ mb: 2 }}>
-              {advice}
+              {advice || `${dailyElement}の特性を活かして、${getLuckLevelText(overallLuck)}な一日を過ごすためのポイントを意識しましょう。`}
             </Typography>
             
             <Typography variant="subtitle2" gutterBottom>

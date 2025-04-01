@@ -236,16 +236,41 @@ export type ErrorResponseType = {
   details?: any;
 };
 
+// 四柱情報の型定義
+export interface IPillar {
+  stem?: string;
+  branch?: string;
+  fullStemBranch?: string;
+  hiddenStems?: string[];
+}
+
+export interface ISajuProfile {
+  fourPillars?: {
+    yearPillar?: IPillar;
+    monthPillar?: IPillar;
+    dayPillar?: IPillar;
+    hourPillar?: IPillar;
+  };
+  mainElement?: string;
+  secondaryElement?: string;
+  yinYang?: string;
+  tenGods?: Record<string, string>;
+}
+
 // ユーザー関連型定義
 export interface IUser extends BaseModelType {
   email: string;
   password?: string; // APIレスポンスには含まれない
   name: string;
   birthDate: string; // YYYY-MM-DD形式
+  birthHour?: number; // 出生時間（0-23）
+  birthLocation?: string; // 出生地
   role: 'employee' | 'manager' | 'admin' | 'superadmin';
   teamIds?: string[]; // 所属チームID
   profilePicture?: string;
   elementalType?: ElementalType;
+  elementalProfile?: ElementalType; // バックエンドとの互換性のため
+  sajuProfile?: ISajuProfile; // 四柱推命プロファイル
   notificationSettings?: NotificationSettingsType;
   isActive: boolean;
   lastLoginAt?: string | Date; // mongooseとの互換性のため両方サポート
@@ -284,7 +309,7 @@ export type UserLoginResponse = {
   refreshToken: string;
 };
 
-export type UserUpdateRequest = Partial<Omit<IUser, 'id' | 'createdAt' | 'updatedAt' | 'password'>>;
+export type UserUpdateRequest = Partial<Omit<IUser, 'id' | 'createdAt' | 'updatedAt' | 'password' | 'sajuProfile'>>;
 
 // 運勢関連型定義
 export interface IFortune extends BaseModelType {
@@ -305,12 +330,16 @@ export interface IFortune extends BaseModelType {
   compatibleElements?: ElementType[];
   incompatibleElements?: ElementType[];
   viewedAt?: string | Date;
+  // エラーハンドリング用の追加フィールド
+  error?: boolean;
+  message?: string;
 }
 
 export type FortuneQueryRequest = {
   startDate?: string;
   endDate?: string;
   userId?: string;
+  birthDate?: string;
 };
 
 // 会話関連型定義
@@ -490,6 +519,7 @@ export const USER = {
   UPDATE_PROFILE: `${API_BASE_PATH}/users/me`,
   UPDATE_PASSWORD: `${API_BASE_PATH}/users/me/password`,
   UPDATE_NOTIFICATION_SETTINGS: `${API_BASE_PATH}/users/me/notification-settings`,
+  GET_SAJU_PROFILE: `${API_BASE_PATH}/users/me/saju-profile`,
   GET_BY_ID: (userId: string) => `${API_BASE_PATH}/users/${userId}`,
   GET_ALL: `${API_BASE_PATH}/users`,
   UPDATE_BY_ID: (userId: string) => `${API_BASE_PATH}/users/${userId}`,

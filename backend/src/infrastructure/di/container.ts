@@ -117,12 +117,30 @@ export function configureContainer(): void {
   container.register<IFortuneRepository>('IFortuneRepository', { useClass: MongoFortuneRepository });
   
   try {
-    const ISubscriptionRepository = require('../../domain/repositories/ISubscriptionRepository').default;
-    const MongoSubscriptionRepository = require('../repositories/MongoSubscriptionRepository').default;
-    container.register('ISubscriptionRepository', { useClass: MongoSubscriptionRepository });
+    container.register('ISubscriptionRepository', { 
+      useClass: require('../repositories/MongoSubscriptionRepository').default 
+    });
     console.log('ISubscriptionRepositoryが正常に登録されました');
   } catch (error) {
     console.error('ISubscriptionRepositoryの登録に失敗しました:', error);
+  }
+
+  try {
+    container.register('ITeamRepository', { 
+      useClass: require('../repositories/MongoTeamRepository').MongoTeamRepository 
+    });
+    console.log('ITeamRepositoryが正常に登録されました');
+  } catch (error) {
+    console.error('ITeamRepositoryの登録に失敗しました:', error);
+  }
+
+  try {
+    container.register('IConversationRepository', { 
+      useClass: require('../repositories/MongoConversationRepository').MongoConversationRepository 
+    });
+    console.log('IConversationRepositoryが正常に登録されました');
+  } catch (error) {
+    console.error('IConversationRepositoryの登録に失敗しました:', error);
   }
   
   // モデル
@@ -136,8 +154,15 @@ export function configureContainer(): void {
   }
   
   try {
-    // Subscriptionモデルを登録
-    const SubscriptionModel = require('../../domain/models/subscription.model').default;
+    // 事前にモデルがロードされていることを確認
+    if (!mongoose.models.Subscription) {
+      // モデルが登録されていない場合は明示的に読み込む
+      require('../../domain/models/subscription.model');
+      console.log('Subscriptionモデルを登録しました');
+    }
+    
+    // モデルを取得
+    const SubscriptionModel = mongoose.model('Subscription');
     container.register('SubscriptionModel', { useValue: SubscriptionModel });
     console.log('SubscriptionModelが正常に登録されました');
   } catch (error) {
@@ -150,11 +175,12 @@ export function configureContainer(): void {
   
   // サブスクリプション関連サービスを登録
   try {
-    const { SubscriptionService } = require('../../application/services/subscription.service');
-    const { AiModelSelectorService } = require('../../application/services/ai-model-selector.service');
-    
-    container.register('SubscriptionService', { useClass: SubscriptionService });
-    container.register('AiModelSelectorService', { useClass: AiModelSelectorService });
+    container.register('SubscriptionService', { 
+      useClass: require('../../application/services/subscription.service').SubscriptionService 
+    });
+    container.register('AiModelSelectorService', { 
+      useClass: require('../../application/services/ai-model-selector.service').AiModelSelectorService 
+    });
     
     console.log('サブスクリプションサービスが正常に登録されました');
   } catch (error) {
@@ -180,6 +206,47 @@ export function configureContainer(): void {
     }
   }
   
+  // チーム相性サービスを登録
+  try {
+    const { TeamCompatibilityService } = require('../../application/services/team-compatibility.service');
+    container.register('TeamCompatibilityService', { useClass: TeamCompatibilityService });
+    console.log('TeamCompatibilityServiceが正常に登録されました');
+  } catch (error) {
+    console.error('TeamCompatibilityServiceの登録に失敗しました:', error);
+    if (error instanceof Error) {
+      console.error(error.stack);
+    }
+  }
+  
+  // 会話サービスを登録
+  try {
+    const { ConversationService } = require('../../application/services/conversation.service');
+    container.register('ConversationService', { useClass: ConversationService });
+    console.log('ConversationServiceが正常に登録されました');
+  } catch (error) {
+    console.error('ConversationServiceの登録に失敗しました:', error);
+    if (error instanceof Error) {
+      console.error(error.stack);
+    }
+  }
+  
+  // Claude AI サービスを登録
+  try {
+    const { ClaudeAIService } = require('../external/ClaudeAIService');
+    const claudeApiKey = process.env.CLAUDE_API_KEY || 'dummy-api-key';
+    const claudeApiUrl = process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/messages';
+    
+    container.register('ClaudeApiKey', { useValue: claudeApiKey });
+    container.register('ClaudeApiUrl', { useValue: claudeApiUrl });
+    container.register('IAIService', { useClass: ClaudeAIService });
+    console.log('ClaudeAIServiceが正常に登録されました');
+  } catch (error) {
+    console.error('ClaudeAIServiceの登録に失敗しました:', error);
+    if (error instanceof Error) {
+      console.error(error.stack);
+    }
+  }
+  
   // ユースケース
   container.register('UserAuthenticationUseCase', { useClass: UserAuthenticationUseCase });
   container.register('UserRegistrationUseCase', { useClass: UserRegistrationUseCase });
@@ -190,18 +257,27 @@ export function configureContainer(): void {
   // コントローラー
   container.register('FortuneController', { useClass: FortuneController });
   
-  // 追加コントローラーもここで登録
+  // 追加コントローラーとミドルウェアの登録
   try {
     const { AuthController } = require('../../interfaces/http/controllers/auth.controller');
     container.register('AuthController', { useClass: AuthController });
     console.log('AuthControllerが正常に登録されました');
+    
+    // 明示的にAuthMiddlewareを登録 (追加)
+    const { AuthMiddleware } = require('../../interfaces/http/middlewares/auth.middleware');
+    container.register(AuthMiddleware, { useClass: AuthMiddleware });
+    console.log('AuthMiddlewareが正常に登録されました');
   } catch (error) {
-    console.error('AuthControllerの登録に失敗しました:', error);
+    console.error('AuthController/AuthMiddlewareの登録に失敗しました:', error);
+    if (error instanceof Error) {
+      console.error(error.stack);
+    }
   }
   
   try {
-    const { SubscriptionController } = require('../../interfaces/http/controllers/subscription.controller');
-    container.register('SubscriptionController', { useClass: SubscriptionController });
+    container.register('SubscriptionController', { 
+      useClass: require('../../interfaces/http/controllers/subscription.controller').SubscriptionController 
+    });
     console.log('SubscriptionControllerが正常に登録されました');
   } catch (error) {
     console.error('SubscriptionControllerの登録に失敗しました:', error);
@@ -220,6 +296,20 @@ export function configureContainer(): void {
     console.log('UserControllerが正常に登録されました');
   } catch (error) {
     console.error('UserControllerの登録に失敗しました:', error);
+    if (error instanceof Error) {
+      console.error(error.stack);
+    }
+  }
+  
+  // ConversationControllerを登録
+  try {
+    const { ConversationController } = require('../../interfaces/http/controllers/conversation.controller');
+    container.register('ConversationController', { useClass: ConversationController });
+    // 文字列トークンとしてのAuthMiddlewareも登録
+    container.register('AuthMiddleware', { useClass: AuthMiddleware });
+    console.log('ConversationControllerとAuthMiddlewareが正常に登録されました');
+  } catch (error) {
+    console.error('ConversationControllerの登録に失敗しました:', error);
     if (error instanceof Error) {
       console.error(error.stack);
     }
@@ -306,6 +396,15 @@ export function initializeEventHandlers(): void {
  */
 export function resetContainer(): void {
   container.clearInstances();
+}
+
+// AuthMiddlewareを事前に登録
+try {
+  const { AuthMiddleware } = require('../../interfaces/http/middlewares/auth.middleware');
+  container.register('AuthMiddleware', { useClass: AuthMiddleware });
+  console.log('事前登録: AuthMiddlewareが登録されました');
+} catch (error) {
+  console.error('事前登録: AuthMiddlewareの登録に失敗しました:', error);
 }
 
 // アプリケーション起動時に依存性を設定

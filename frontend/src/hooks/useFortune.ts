@@ -31,6 +31,7 @@ interface FortuneHookReturn {
   getCompatibleUsers: (elementType: ElementalType) => string[];
   formatDate: (dateString: string) => string;
   isToday: (dateString: string) => boolean;
+  isValidBirthDate: (dateString?: string) => boolean;
 }
 
 export const useFortune = (): FortuneHookReturn => {
@@ -105,6 +106,17 @@ export const useFortune = (): FortuneHookReturn => {
     const todayStr = today.toISOString().split('T')[0];
     return dateString === todayStr;
   }, []);
+  
+  // 誕生日の書式が正しいか確認するヘルパー関数
+  const isValidBirthDate = useCallback((dateString?: string): boolean => {
+    if (!dateString) return false;
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) return false;
+    
+    // 日付としての妥当性確認
+    const date = new Date(dateString);
+    return !isNaN(date.getTime()) && date < new Date();
+  }, []);
 
   return {
     ...fortuneContext,
@@ -114,6 +126,7 @@ export const useFortune = (): FortuneHookReturn => {
     getLuckLevel,
     getCompatibleUsers,
     formatDate,
-    isToday
+    isToday,
+    isValidBirthDate
   };
 };

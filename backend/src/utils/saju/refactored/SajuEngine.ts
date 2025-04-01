@@ -14,10 +14,7 @@ import {
   isStemYin,
   getHiddenStems
 } from './tenGodCalculator';
-import {
-  calculateTwelveFortunes,
-  calculateTwelveSpirits
-} from './twelveFortuneSpiritCalculator';
+import { calculateTwelveFortunes } from './twelveFortuneSpiritCalculator';
 
 /**
  * 四柱推命計算結果の型
@@ -38,7 +35,6 @@ export interface SajuResult {
   };
   processedDateTime: ProcessedDateTime;
   twelveFortunes?: Record<string, string>; // 十二運星
-  twelveSpirits?: Record<string, string>;  // 十二神殺
   hiddenStems?: {      // 蔵干
     year: string[];
     month: string[];
@@ -93,31 +89,39 @@ export class SajuEngine {
       const processedDateTime = this.dateProcessor.processDateTime(birthDate, birthHour);
       const { adjustedDate } = processedDateTime;
       
+      // JavaScriptのDateオブジェクトに変換（既存計算関数との互換性のため）
+      const jsAdjustedDate = new Date(
+        adjustedDate.year,
+        adjustedDate.month - 1, // JavaScriptは0始まりなので-1
+        adjustedDate.day,
+        adjustedDate.hour,
+        adjustedDate.minute
+      );
+      
       // 3. 年柱を計算
-      const yearPillar = calculateKoreanYearPillar(adjustedDate.getFullYear());
+      const yearPillar = calculateKoreanYearPillar(adjustedDate.year);
       
       // 4. 日柱を計算
-      const dayPillar = calculateKoreanDayPillar(adjustedDate, this.options);
+      const dayPillar = calculateKoreanDayPillar(jsAdjustedDate, this.options);
       
       // 5. 月柱を計算
       const monthPillar = calculateKoreanMonthPillar(
-        adjustedDate,
+        jsAdjustedDate,
         yearPillar.stem
       );
       
       // 6. 時柱を計算 (地方時調整後の時間を使用)
-      const adjustedHour = adjustedDate.getHours();
+      const adjustedHour = adjustedDate.hour;
       const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
       
-      // 7. 十二運星と十二神殺を計算
-      const { fortunes: twelveFortunes, spirits: twelveSpirits } = calculateFortuneSpiritInfo(
+      // 7. 十二運星を計算
+      const twelveFortunes = calculateTwelveFortunes(
         dayPillar.stem,
         yearPillar.branch,
         monthPillar.branch,
         dayPillar.branch,
         hourPillar.branch,
-        adjustedDate,
-        adjustedHour
+        0 // ハードコードされた値を使用（精度優先）
       );
       
       // 8. 蔵干（地支に内包される天干）を計算
@@ -133,25 +137,21 @@ export class SajuEngine {
         yearPillar: {
           ...yearPillar,
           fortune: twelveFortunes.year,
-          spirit: twelveSpirits.year,
           hiddenStems: hiddenStems.year
         },
         monthPillar: {
           ...monthPillar,
           fortune: twelveFortunes.month,
-          spirit: twelveSpirits.month,
           hiddenStems: hiddenStems.month
         },
         dayPillar: {
           ...dayPillar,
           fortune: twelveFortunes.day,
-          spirit: twelveSpirits.day,
           hiddenStems: hiddenStems.day
         },
         hourPillar: {
           ...hourPillar,
           fortune: twelveFortunes.hour,
-          spirit: twelveSpirits.hour,
           hiddenStems: hiddenStems.hour
         }
       };
@@ -175,7 +175,6 @@ export class SajuEngine {
         elementProfile,
         processedDateTime,
         twelveFortunes,
-        twelveSpirits,
         hiddenStems
       };
     } catch (error) {

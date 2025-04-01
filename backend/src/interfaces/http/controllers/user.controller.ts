@@ -84,14 +84,10 @@ export class UserController {
         return;
       }
       
-      // 四柱推命プロファイルが存在する場合はそれを返す
-      if (userEntity.sajuProfile) {
-        res.status(200).json(userEntity.sajuProfile.toPlain());
-        return;
-      }
-      
-      // プロファイルが存在しない場合は、生年月日データから生成
-      if (!userEntity.birthDate) {
+      // 生年月日データから四柱推命プロファイルを生成
+      // 生年月日が設定されているか確認
+      const birthDate = userEntity.birthDate;
+      if (!birthDate) {
         res.status(400).json({
           message: '生年月日情報がありません。プロフィール設定で生年月日を登録してください。',
           code: 'MISSING_BIRTH_DATA'
@@ -99,19 +95,34 @@ export class UserController {
         return;
       }
       
-      // 四柱推命プロファイル計算
+      // 出生時間と出生地の確認
+      const birthHour = userEntity.birthHour;
+      const birthLocation = userEntity.birthLocation;
+      
+      // 四柱推命プロファイル計算（出生地も渡す）
       const sajuProfile = await this.sajuCalculatorService.calculateSajuProfile(
         userEntity.id,
-        userEntity.birthDate,
-        userEntity.birthHour,
-        userEntity.birthLocation
+        birthDate,
+        birthHour,
+        birthLocation
       );
       
-      // ユーザーのSajuProfileを更新（実装次第では省略可能）
-      // this.userRepository.updateSajuProfile(user.userId, sajuProfile);
+      // ユーザー情報を四柱推命プロファイルで更新
+      // チャンスがあれば、計算された四柱推命プロファイルをユーザーに保存する
+      // これにより、次回の取得では計算せずに保存された値を返すことができる
+      try {
+        if (userEntity && sajuProfile) {
+          const updatedUser = userEntity.withUpdatedSajuProfile(sajuProfile);
+          await this.userRepository.update(userEntity.id, updatedUser);
+          console.log(`ユーザー ${userEntity.id} の四柱推命プロファイルを更新しました`);
+        }
+      } catch (updateError) {
+        // 更新に失敗しても、計算結果は返す（エラーログのみ記録）
+        console.error('四柱推命プロファイル更新エラー:', updateError);
+      }
       
       // プロファイルをJSONとして返す
-      res.status(200).json(sajuProfile.toPlain());
+      res.status(200).json(sajuProfile);
     } catch (error: any) {
       console.error('四柱推命プロファイル取得エラー:', error);
       res.status(error.statusCode || 500).json({
@@ -159,7 +170,7 @@ export class UserController {
   async updateUserProfile(req: Request, res: Response): Promise<void> {
     try {
       const user = req.user as TokenPayload;
-      const { name, profileImage, birthDate, elementalType } = req.body;
+      const { name, profileImage, birthDate, birthHour, birthLocation, elementalType } = req.body;
       
       if (!user || !user.userId) {
         res.status(401).json({
@@ -171,7 +182,7 @@ export class UserController {
       
       await this.updateProfileUseCase.execute(
         user.userId,
-        { name, profileImage, birthDate, elementalType },
+        { name, profileImage, birthDate, birthHour, birthLocation, elementalType },
         user.userId
       );
       

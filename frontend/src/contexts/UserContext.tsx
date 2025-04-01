@@ -1,27 +1,32 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { IUser, UserUpdateRequest, NotificationSettingsType } from '../utils/sharedTypes';
+import { ISajuProfile } from '../types/models';
 import userService from '../services/user.service';
 import { useAuth } from './AuthContext';
 
 // コンテキストの型定義
 interface UserContextType {
   user: IUser | null;
+  sajuProfile: ISajuProfile | null;
   loading: boolean;
   error: string | null;
-  updateProfile: (data: UserUpdateRequest) => Promise<void>;
+  updateProfile: (data: UserUpdateRequest) => Promise<IUser | null>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   updateNotificationSettings: (settings: NotificationSettingsType) => Promise<void>;
+  loadSajuProfile: () => Promise<ISajuProfile | null>;
   refreshUserData: () => Promise<void>;
 }
 
 // デフォルト値で初期化
 const UserContext = createContext<UserContextType>({
   user: null,
+  sajuProfile: null,
   loading: true,
   error: null,
-  updateProfile: async () => {},
+  updateProfile: async () => null,
   updatePassword: async () => {},
   updateNotificationSettings: async () => {},
+  loadSajuProfile: async () => null,
   refreshUserData: async () => {}
 });
 
@@ -31,6 +36,7 @@ export const useUser = () => useContext(UserContext);
 // プロバイダーコンポーネント
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<IUser | null>(null);
+  const [sajuProfile, setSajuProfile] = useState<ISajuProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth();
@@ -45,6 +51,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setLoading(true);
       const userData = await userService.getCurrentUser();
+      
+      // 四柱推命プロファイルの取得を試みる
+      try {
+        const profile = await userService.getSajuProfile();
+        if (profile) {
+          setSajuProfile(profile);
+          // ユーザーデータにも四柱推命プロファイルを設定
+          userData.sajuProfile = profile;
+        }
+      } catch (profileErr) {
+        console.error('四柱推命プロファイル取得エラー:', profileErr);
+      }
+      
       setUser(userData);
       setError(null);
     } catch (err) {
@@ -55,12 +74,33 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // 四柱推命プロファイルを読み込む関数
+  const loadSajuProfile = async (): Promise<ISajuProfile | null> => {
+    try {
+      const profile = await userService.getSajuProfile();
+      if (profile) {
+        setSajuProfile(profile);
+        
+        // userオブジェクトにもsajuProfileを設定
+        if (user) {
+          const updatedUser = { ...user, sajuProfile: profile };
+          setUser(updatedUser);
+        }
+      }
+      return profile;
+    } catch (err) {
+      console.error('四柱推命プロファイル取得エラー:', err);
+      return null;
+    }
+  };
+
   // 認証状態が変わったら、ユーザーデータを取得
   useEffect(() => {
     if (isAuthenticated) {
       fetchUserData();
     } else {
       setUser(null);
+      setSajuProfile(null);
       setLoading(false);
     }
   }, [isAuthenticated]);
@@ -70,8 +110,35 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setLoading(true);
       const updatedUser = await userService.updateProfile(data);
-      setUser(updatedUser);
-      setError(null);
+      
+      if (updatedUser) {
+        // 生年月日、出生時間、出生地のいずれかが更新された場合、sajuProfileも更新
+        if (data.birthDate || data.birthHour !== undefined || data.birthLocation) {
+          try {
+            // 四柱推命プロファイルを再取得
+            const newSajuProfile = await userService.getSajuProfile();
+            if (newSajuProfile) {
+              setSajuProfile(newSajuProfile);
+              
+              // 重要: sajuProfileをupdatedUserオブジェクトにも追加
+              updatedUser.sajuProfile = newSajuProfile;
+              console.log('四柱推命プロファイルを更新:', newSajuProfile);
+            }
+          } catch (error) {
+            console.error('四柱推命プロファイル更新エラー:', error);
+          }
+        } else if (sajuProfile) {
+          // sajuProfileが既に存在する場合は、それを保持
+          updatedUser.sajuProfile = sajuProfile;
+        }
+        
+        // 更新されたユーザー情報をセット
+        setUser(updatedUser);
+        setError(null);
+        return updatedUser;
+      } else {
+        throw new Error('ユーザー情報の更新に失敗しました');
+      }
     } catch (err) {
       setError('プロフィールの更新に失敗しました');
       console.error('プロフィール更新エラー:', err);
@@ -117,16 +184,24 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // ユーザーデータを再取得
   const refreshUserData = async () => {
     await fetchUserData();
+    
+    // 生年月日があれば四柱推命プロファイルも取得（出生時間は省略可）
+    // 生年月日が設定されていれば常にsajuProfileを取得する
+    if (user?.birthDate) {
+      await loadSajuProfile();
+    }
   };
 
   // コンテキスト値
   const value = {
     user,
+    sajuProfile,
     loading,
     error,
     updateProfile,
     updatePassword,
     updateNotificationSettings,
+    loadSajuProfile,
     refreshUserData
   };
 

@@ -58,10 +58,13 @@ export class MongoUserRepository extends MongoRepositoryBase<User, string> imple
       this.mapRoleFromModel(doc.role),
       this.mapStatusFromModel(doc.isActive),
       elementalProfile,
-      doc.profilePicture,
-      doc.lastLoginAt ? new Date(doc.lastLoginAt) : undefined,
-      doc.createdAt ? new Date(doc.createdAt) : undefined,
-      doc.updatedAt ? new Date(doc.updatedAt) : undefined
+      doc.sajuProfile, // サジュプロファイル
+      doc.birthHour, // 出生時間
+      doc.birthLocation, // 出生地
+      doc.profilePicture, // プロフィール画像
+      doc.lastLoginAt ? new Date(doc.lastLoginAt) : undefined, // 最終ログイン日時
+      doc.createdAt ? new Date(doc.createdAt) : undefined, // 作成日時
+      doc.updatedAt ? new Date(doc.updatedAt) : undefined // 更新日時
     );
   }
 
@@ -85,8 +88,11 @@ export class MongoUserRepository extends MongoRepositoryBase<User, string> imple
         secondaryElement: elementalProfile.secondaryElement,
         yinYang: elementalProfile.yinYang
       },
-      profilePicture: entity.profileImage,
-      lastLoginAt: entity.lastLoginAt,
+      sajuProfile: entity.sajuProfile, // サジュプロファイル
+      birthHour: entity.birthHour, // 出生時間
+      birthLocation: entity.birthLocation, // 出生地
+      profilePicture: entity.profileImage, // プロフィール画像
+      lastLoginAt: entity.lastLoginAt, // 最終ログイン日時
       ...(entity.id && { _id: entity.id })
     };
   }

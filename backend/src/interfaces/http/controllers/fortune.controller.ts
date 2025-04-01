@@ -546,17 +546,16 @@ export class FortuneController {
       console.log(`[FortuneController] 四柱推命計算方式: ${useKoreanMethodBool ? '韓国式' : '通常'}`);
       
       // 生年月日と時間から四柱推命プロファイルを計算
-      const sajuProfile = await this.sajuCalculatorService.calculateProfile(
-        birthDate,
-        Number(birthHour),
-        undefined,
-        useKoreanMethodBool
+      const sajuProfile = await this.sajuCalculatorService.calculateSajuProfile(
+        'temp-user-id',
+        new Date(birthDate), // 文字列日付をDate型に変換
+        Number(birthHour)
       );
       
       // 現在の四柱情報（本日の四柱）も計算
       const today = new Date();
       const todayStr = today.toISOString().split('T')[0];
-      const todayFourPillars = await this.sajuCalculatorService.calculateDayFourPillars(todayStr, useKoreanMethodBool);
+      const todayFourPillars = this.sajuCalculatorService.calculateDayFourPillars(todayStr, useKoreanMethodBool);
       
       // レスポンスを返す
       res.status(200).json({

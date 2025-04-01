@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "motherprompt",
+    "default": "aicontentsfactory-b730e",
     "production": "aicontentsfactory-b730e"
   },
   "targets": {},

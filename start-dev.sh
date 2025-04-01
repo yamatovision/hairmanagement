@@ -40,5 +40,29 @@ echo "⏱️ サーバーの起動には数秒かかることがあります"
 echo "📋 終了するには Ctrl+C を押してください"
 echo "--------------------------------------"
 
+# デバッグ用の環境変数を設定
+echo "🔍 デバッグモードを有効化しています..."
+export NODE_OPTIONS="--trace-warnings --trace-uncaught"
+export DEBUG="*"
+export LOG_LEVEL="debug"
+export SKIP_DB_ERRORS="true"
+
+# バックエンドのログファイルを初期化
+BACKEND_LOG_FILE="./backend/logs/debug-server.log"
+mkdir -p ./backend/logs
+echo "🌟 サーバー起動ログ - $(date)" > $BACKEND_LOG_FILE
+
 # 両方のサーバーを並行して起動
-npx concurrently "cd backend && npm run dev" "cd frontend && npm start"
+echo "🔍 バックエンドとフロントエンドを並行して起動しています..."
+echo "📝 詳細なログは $BACKEND_LOG_FILE に記録されます"
+
+# concurrentlyがインストールされているか確認
+if ! command -v npx &> /dev/null || ! npx concurrently --version &> /dev/null; then
+  echo "📦 concurrentlyをインストールしています..."
+  npm install -g concurrently
+fi
+
+# 両方のサーバーを並行して起動
+npx concurrently \
+  "cd backend && NODE_ENV=development PORT=5001 npm run dev 2>&1 | tee -a $BACKEND_LOG_FILE" \
+  "cd frontend && npm start"

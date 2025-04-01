@@ -4,6 +4,7 @@ import { NotFoundError } from '../../errors/not-found.error';
 import { ValidationError } from '../../errors/validation.error';
 import { AuthenticationError } from '../../errors/authentication.error';
 import { ElementalProfile } from '../../../domain/user/value-objects/elemental-profile';
+import { SajuCalculatorService } from '../../services/saju-calculator.service';
 
 /**
  * プロフィール更新リクエスト
@@ -12,6 +13,8 @@ export interface UpdateProfileRequest {
   name?: string;
   profileImage?: string;
   birthDate?: string;
+  birthHour?: number | null;
+  birthLocation?: string;
   elementalType?: {
     mainElement: '木' | '火' | '土' | '金' | '水';
     secondaryElement?: '木' | '火' | '土' | '金' | '水';
@@ -30,7 +33,8 @@ export class UpdateUserProfileUseCase {
    * @param userRepository ユーザーリポジトリ
    */
   constructor(
-    @inject('IUserRepository') private userRepository: IUserRepository
+    @inject('IUserRepository') private userRepository: IUserRepository,
+    @inject('SajuCalculatorService') private sajuCalculatorService: SajuCalculatorService
   ) {}
   
   /**
@@ -82,6 +86,25 @@ export class UpdateUserProfileUseCase {
       }
     }
     
+    // 出生時間の更新
+    if (request.birthHour !== undefined) {
+      // nullの場合も含めてチェック
+      if (request.birthHour !== user.birthHour) {
+        if (request.birthHour === null) {
+          // 出生時間が未設定の場合
+          updatedUser = updatedUser.withUpdatedBirthHour(undefined);
+        } else {
+          // 出生時間が設定されている場合
+          updatedUser = updatedUser.withUpdatedBirthHour(request.birthHour);
+        }
+      }
+    }
+    
+    // 出生地の更新
+    if (request.birthLocation !== undefined && request.birthLocation !== user.birthLocation) {
+      updatedUser = updatedUser.withUpdatedBirthLocation(request.birthLocation);
+    }
+    
     // 五行属性の更新
     if (request.elementalType) {
       const currentElemental = user.elementalProfile.toPlain();
@@ -104,9 +127,38 @@ export class UpdateUserProfileUseCase {
       }
     }
     
+    // 変更があるか、特に生年月日、出生時間、出生地の変更がある場合
+    const birthInfoChanged = 
+      request.birthDate !== undefined || 
+      request.birthHour !== undefined ||
+      request.birthLocation !== undefined;
+    
     // 変更がある場合のみリポジトリを呼び出す
     if (updatedUser !== user) {
+      // まずユーザー情報を更新
       await this.userRepository.update(userId, updatedUser);
+      
+      // 生年月日関連の情報が更新された場合は、四柱推命プロファイルも計算し直す
+      if (birthInfoChanged && updatedUser.birthDate) {
+        try {
+          // 四柱推命プロファイルを計算
+          const sajuProfile = await this.sajuCalculatorService.calculateSajuProfile(
+            userId,
+            updatedUser.birthDate,
+            updatedUser.birthHour,
+            updatedUser.birthLocation
+          );
+          
+          // 四柱推命プロファイルを更新
+          if (sajuProfile) {
+            const userWithSaju = updatedUser.withUpdatedSajuProfile(sajuProfile);
+            await this.userRepository.update(userId, userWithSaju);
+          }
+        } catch (error) {
+          console.error('四柱推命プロファイル更新エラー:', error);
+          // 四柱推命プロファイルの更新に失敗してもユーザー情報の更新は継続する
+        }
+      }
     }
   }
   
@@ -147,6 +199,18 @@ export class UpdateUserProfileUseCase {
           errors.birthDate = '有効な生年月日を入力してください';
         }
       }
+    }
+    
+    // 出生時間の検証
+    if (request.birthHour !== undefined && request.birthHour !== null) {
+      if (request.birthHour < 0 || request.birthHour > 23 || !Number.isInteger(request.birthHour)) {
+        errors.birthHour = '出生時間は0から23の整数で入力してください';
+      }
+    }
+    
+    // 出生地の検証
+    if (request.birthLocation !== undefined && request.birthLocation.length > 100) {
+      errors.birthLocation = '出生地は100文字以内で入力してください';
     }
     
     // 五行属性の検証

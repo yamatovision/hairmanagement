@@ -11,8 +11,8 @@ import { TEAM } from '../types/paths';
 import { ITeam } from '../utils/sharedTypes';
 import { InvitationRole } from '../types/models';
 
-// API URLの設定
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+// API設定をインポート
+import { getApiUrl } from '../api/apiConfig';
 
 // チーム作成リクエスト型
 interface TeamCreateRequest {
@@ -65,7 +65,7 @@ class Team2Service {
   async createTeam(teamData: TeamCreateRequest): Promise<ITeam> {
     try {
       const response = await axios.post(
-        `${API_URL}${TEAM.CREATE}`,
+        getApiUrl(TEAM.CREATE),
         teamData,
         this.getAuthHeader()
       );
@@ -83,7 +83,7 @@ class Team2Service {
   async getAllTeams(): Promise<ITeam[]> {
     try {
       const response = await axios.get(
-        `${API_URL}${TEAM.GET_ALL}`,
+        getApiUrl(TEAM.GET_ALL),
         this.getAuthHeader()
       );
       return response.data.data;
@@ -101,7 +101,7 @@ class Team2Service {
   async getTeamById(teamId: string): Promise<ITeam> {
     try {
       const response = await axios.get(
-        `${API_URL}${TEAM.GET_BY_ID(teamId)}`,
+        getApiUrl(TEAM.GET_BY_ID(teamId)),
         this.getAuthHeader()
       );
       return response.data.data;
@@ -120,7 +120,7 @@ class Team2Service {
   async updateTeam(teamId: string, updateData: TeamUpdateRequest): Promise<ITeam> {
     try {
       const response = await axios.put(
-        `${API_URL}${TEAM.UPDATE(teamId)}`,
+        getApiUrl(TEAM.UPDATE(teamId)),
         updateData,
         this.getAuthHeader()
       );
@@ -139,7 +139,7 @@ class Team2Service {
   async deleteTeam(teamId: string): Promise<{ success: boolean; message: string }> {
     try {
       const response = await axios.delete(
-        `${API_URL}${TEAM.DELETE(teamId)}`,
+        getApiUrl(TEAM.DELETE(teamId)),
         this.getAuthHeader()
       );
       return response.data;
@@ -158,7 +158,7 @@ class Team2Service {
   async addTeamMember(teamId: string, memberData: TeamMemberAddRequest): Promise<ITeam> {
     try {
       const response = await axios.post(
-        `${API_URL}${TEAM.ADD_MEMBER(teamId)}`,
+        getApiUrl(TEAM.ADD_MEMBER(teamId)),
         memberData,
         this.getAuthHeader()
       );
@@ -178,7 +178,7 @@ class Team2Service {
   async removeTeamMember(teamId: string, userId: string): Promise<ITeam> {
     try {
       const response = await axios.delete(
-        `${API_URL}${TEAM.REMOVE_MEMBER(teamId, userId)}`,
+        getApiUrl(TEAM.REMOVE_MEMBER(teamId, userId)),
         this.getAuthHeader()
       );
       return response.data.data;
@@ -196,7 +196,7 @@ class Team2Service {
   async createInvitation(invitationData: InvitationCreateRequest): Promise<any> {
     try {
       const response = await axios.post(
-        `${API_URL}${TEAM.INVITE}`,
+        getApiUrl(TEAM.INVITE),
         invitationData,
         this.getAuthHeader()
       );
@@ -215,7 +215,7 @@ class Team2Service {
   async getTeamInvitations(teamId: string): Promise<any[]> {
     try {
       const response = await axios.get(
-        `${API_URL}${TEAM.GET_INVITATIONS(teamId)}`,
+        getApiUrl(TEAM.GET_INVITATIONS(teamId)),
         this.getAuthHeader()
       );
       return response.data.data;
@@ -233,7 +233,7 @@ class Team2Service {
   async getInvitationByToken(token: string): Promise<any> {
     try {
       const response = await axios.get(
-        `${API_URL}${TEAM.ACCEPT_INVITATION(token).replace('/accept', '')}`,
+        getApiUrl(TEAM.ACCEPT_INVITATION(token).replace('/accept', '')),
         this.getAuthHeader()
       );
       return response.data.data;
@@ -251,7 +251,7 @@ class Team2Service {
   async acceptInvitation(token: string): Promise<any> {
     try {
       const response = await axios.post(
-        `${API_URL}${TEAM.ACCEPT_INVITATION(token)}`,
+        getApiUrl(TEAM.ACCEPT_INVITATION(token)),
         {},
         this.getAuthHeader()
       );
@@ -270,7 +270,7 @@ class Team2Service {
   async declineInvitation(token: string): Promise<any> {
     try {
       const response = await axios.post(
-        `${API_URL}${TEAM.DECLINE_INVITATION(token)}`,
+        getApiUrl(TEAM.DECLINE_INVITATION(token)),
         {},
         this.getAuthHeader()
       );
@@ -289,7 +289,7 @@ class Team2Service {
   async cancelInvitation(invitationId: string): Promise<any> {
     try {
       const response = await axios.delete(
-        `${API_URL}${TEAM.CANCEL_INVITATION(invitationId)}`,
+        getApiUrl(TEAM.CANCEL_INVITATION(invitationId)),
         this.getAuthHeader()
       );
       return response.data;
@@ -308,7 +308,7 @@ class Team2Service {
   async resendInvitation(invitationId: string, expirationDays?: number): Promise<any> {
     try {
       const response = await axios.post(
-        `${API_URL}${TEAM.RESEND_INVITATION(invitationId)}`,
+        getApiUrl(TEAM.RESEND_INVITATION(invitationId)),
         { expirationDays },
         this.getAuthHeader()
       );
@@ -320,4 +320,5 @@ class Team2Service {
   }
 }
 
-export default new Team2Service();
+const team2Service = new Team2Service();
+export default team2Service;

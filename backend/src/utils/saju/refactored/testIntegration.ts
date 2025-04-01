@@ -157,18 +157,11 @@ function testSajuCalculation(): void {
         console.log(`  ${pillar}: ${god}`);
       });
       
-      // 十二運星・十二神殺を表示（オプション）
+      // 十二運星を表示（オプション）
       if (result.twelveFortunes) {
         console.log('十二運星:');
         Object.entries(result.twelveFortunes).forEach(([branch, fortune]) => {
           console.log(`  ${branch}: ${fortune}`);
-        });
-      }
-      
-      if (result.twelveSpirits) {
-        console.log('十二神殺:');
-        Object.entries(result.twelveSpirits).forEach(([branch, spirit]) => {
-          console.log(`  ${branch}: ${spirit}`);
         });
       }
     } catch (error) {

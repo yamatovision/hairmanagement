@@ -12,7 +12,8 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
-    "test:subscription": "ts-node -r tsconfig-paths/register src/tests/subscription.test.ts"
+    "test:subscription": "ts-node -r tsconfig-paths/register src/tests/subscription.test.ts",
+    "test:api-endpoints": "node src/tests/api-endpoint-tests.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

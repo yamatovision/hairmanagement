@@ -8,6 +8,8 @@ interface Pillar {
   stem: string;
   branch: string;
   fullStemBranch: string;
+  hiddenStems?: string[]; // 蔵干（地支に隠れた天干）
+  fortune?: string; // 十二運星
 }
 
 interface FourPillars {
@@ -25,13 +27,17 @@ export class SajuProfile {
    * @param secondaryElement 副要素（オプション）
    * @param yinYang 陰陽
    * @param tenGods 十神関係
+   * @param twelveFortunes 十二運星情報（オプション）
+   * @param hiddenStems 蔵干情報（オプション）
    */
   constructor(
     public readonly fourPillars: FourPillars,
     public readonly mainElement: string,
     public readonly yinYang: string,
     public readonly tenGods: Record<string, string>,
-    public readonly secondaryElement?: string
+    public readonly secondaryElement?: string,
+    public readonly twelveFortunes?: Record<string, string>,
+    public readonly hiddenStems?: Record<string, string[]>
   ) {}
   
   /**
@@ -57,7 +63,9 @@ export class SajuProfile {
       mainElement: this.mainElement,
       secondaryElement: this.secondaryElement,
       yinYang: this.yinYang,
-      tenGods: this.tenGods
+      tenGods: this.tenGods,
+      twelveFortunes: this.twelveFortunes,
+      hiddenStems: this.hiddenStems
     };
   }
 }

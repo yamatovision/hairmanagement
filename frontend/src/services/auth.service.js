@@ -1,8 +1,25 @@
-import { AUTH } from '../types';
+// Import types and constants as needed
 
 // APIのBase URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-const API_BASE_PATH = process.env.API_BASE_PATH || '/api/v1';
+// 環境に応じて適切なURLを選択
+const isDevelopment = process.env.NODE_ENV === 'development';
+// 開発環境ではプロキシを使用
+const API_URL = isDevelopment ? '' : 'https://patrolmanagement-backend-235426778039.asia-northeast1.run.app';
+const API_BASE_PATH = '/api/v1';
+
+// axiosの代わりにfetchを使用しているため、開発環境ではCORS問題が発生する可能性がある
+// 開発環境用のヘルパー関数
+const getApiUrl = (endpoint) => {
+  // 開発環境では直接バックエンドURLを指定、本番環境ではプロキシ設定を使用
+  if (isDevelopment) {
+    return `http://localhost:5001${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  }
+  return `${API_URL}${endpoint}`;
+};
+
+if (isDevelopment) {
+  console.log('開発環境での認証サービスの初期化');
+}
 
 /**
  * 認証サービス
@@ -16,13 +33,16 @@ class AuthService {
    * @returns ログイン情報（ユーザー情報、トークン）
    */
   async login(email, password) {
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/login`, {
+    const url = getApiUrl(`${API_BASE_PATH}/auth/login`);
+    console.log('Login request URL:', url);
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include', // クッキーを含める
+      body: JSON.stringify({ email, password })
+      // credentials: 'include' を削除
     });
 
     if (!response.ok) {
@@ -31,10 +51,25 @@ class AuthService {
     }
 
     const data = await response.json();
-    return {
-      user: data.data.user,
-      token: data.data.token
-    };
+    console.log('Login response:', data);
+    
+    // クリーンアーキテクチャのレスポンス形式に対応
+    // レスポンスが data ラッパーを持っている場合と持っていない場合の両方に対応
+    if (data.data) {
+      // 以前の形式 (MVCアーキテクチャ): { data: { user: {...}, token: '...' } }
+      return {
+        user: data.data.user,
+        token: data.data.token,
+        refreshToken: data.data.refreshToken
+      };
+    } else {
+      // 新しい形式 (クリーンアーキテクチャ): { user: {...}, token: '...' }
+      return {
+        user: data.user,
+        token: data.token,
+        refreshToken: data.refreshToken
+      };
+    }
   }
 
   /**
@@ -44,13 +79,14 @@ class AuthService {
     const token = localStorage.getItem('token');
     
     try {
-      const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/logout`, {
+      const url = getApiUrl(`${API_BASE_PATH}/auth/logout`);
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        },
-        credentials: 'include', // クッキーを含める
+        }
+        // credentials: 'include' を削除
       });
 
       if (!response.ok) {
@@ -74,13 +110,14 @@ class AuthService {
   async refreshToken() {
     const refreshToken = localStorage.getItem('refreshToken');
     
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/refresh-token`, {
+    const url = getApiUrl(`${API_BASE_PATH}/auth/refresh-token`);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ refreshToken }),
-      credentials: 'include', // クッキーを含める
+      body: JSON.stringify({ refreshToken })
+      // credentials: 'include' を削除
     });
 
     if (!response.ok) {
@@ -89,10 +126,24 @@ class AuthService {
     }
 
     const data = await response.json();
-    return {
-      user: data.data.user,
-      token: data.data.token
-    };
+    console.log('Refresh token response:', data);
+    
+    // クリーンアーキテクチャのレスポンス形式に対応
+    if (data.data) {
+      // 以前の形式
+      return {
+        user: data.data.user,
+        token: data.data.token,
+        refreshToken: data.data.refreshToken
+      };
+    } else {
+      // 新しい形式
+      return {
+        user: data.user || {}, // ユーザー情報がない場合は空オブジェクト
+        token: data.token,
+        refreshToken: data.refreshToken
+      };
+    }
   }
 
   /**
@@ -102,21 +153,56 @@ class AuthService {
   async getCurrentUser() {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/me`, {
+    // Clean Architectureに合わせてエンドポイントをusers/meに変更
+    const url = getApiUrl(`${API_BASE_PATH}/users/me`);
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
-      },
-      credentials: 'include', // クッキーを含める
+      }
+      // credentials: 'include' を削除
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'ユーザー情報の取得に失敗しました');
+      // 404エラーの場合は、古いエンドポイントを試す（フォールバック）
+      if (response.status === 404) {
+        console.log('新しいエンドポイントが見つからないため、従来のエンドポイントを試します');
+        const fallbackUrl = getApiUrl(`${API_BASE_PATH}/auth/me`);
+        const fallbackResponse = await fetch(fallbackUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          // クリーンアーキテクチャのレスポンス形式に対応
+          if (fallbackData.data) {
+            return fallbackData.data; // 以前の形式
+          } else {
+            return fallbackData; // 新しい形式
+          }
+        }
+      }
+      
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'ユーザー情報の取得に失敗しました');
+      } catch (e) {
+        throw new Error('ユーザー情報の取得に失敗しました');
+      }
     }
 
     const data = await response.json();
-    return data.data;
+    console.log('Get current user response:', data);
+    
+    // クリーンアーキテクチャのレスポンス形式に対応
+    if (data.data) {
+      return data.data; // 以前の形式
+    } else {
+      return data; // 新しい形式
+    }
   }
 
   /**
@@ -124,7 +210,8 @@ class AuthService {
    * @param email メールアドレス
    */
   async forgotPassword(email) {
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/forgot-password`, {
+    const url = getApiUrl(`${API_BASE_PATH}/auth/forgot-password`);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -144,7 +231,8 @@ class AuthService {
    * @param password 新しいパスワード
    */
   async resetPassword(token, password) {
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/reset-password`, {
+    const url = getApiUrl(`${API_BASE_PATH}/auth/reset-password`);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -166,14 +254,15 @@ class AuthService {
   async changePassword(currentPassword, newPassword) {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/me/password`, {
+    const url = getApiUrl(`${API_BASE_PATH}/auth/me/password`);
+    const response = await fetch(url, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ currentPassword, newPassword }),
-      credentials: 'include', // クッキーを含める
+      body: JSON.stringify({ currentPassword, newPassword })
+      // credentials: 'include' を削除
     });
 
     if (!response.ok) {
@@ -188,13 +277,14 @@ class AuthService {
    * @returns 作成されたユーザー情報
    */
   async registerUser(userData) {
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/register`, {
+    const url = getApiUrl(`${API_BASE_PATH}/auth/register`);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(userData),
-      credentials: 'include', // クッキーを含める
+      body: JSON.stringify(userData)
+      // credentials: 'include' を削除
     });
 
     if (!response.ok) {
@@ -214,14 +304,15 @@ class AuthService {
   async adminRegisterUser(userData) {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}${API_BASE_PATH}/auth/admin/register`, {
+    const url = getApiUrl(`${API_BASE_PATH}/auth/admin/register`);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(userData),
-      credentials: 'include', // クッキーを含める
+      body: JSON.stringify(userData)
+      // credentials: 'include' を削除
     });
 
     if (!response.ok) {
@@ -241,13 +332,9 @@ class AuthService {
     const token = localStorage.getItem('token');
     if (!token) return false;
     
-    try {
-      // トークンが存在する場合は有効と見なす
-      // 実際のリクエスト時に401エラーが発生すればリフレッシュが試みられる
-      return true;
-    } catch (error) {
-      return false;
-    }
+    // トークンが存在する場合は有効と見なす
+    // 実際のリクエスト時に401エラーが発生すればリフレッシュが試みられる
+    return true;
   }
 }
 

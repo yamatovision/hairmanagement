@@ -131,7 +131,7 @@ const ElementTag: React.FC<ElementTagProps> = ({
       )}
       
       {/* スタイル */}
-      <style jsx>{`
+      <style>{`
         .element-tag {
           display: inline-flex;
           align-items: center;

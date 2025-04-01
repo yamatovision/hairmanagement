@@ -1,49 +1,11 @@
+import { getApiUrl } from '../api/apiConfig';
+import { CONVERSATION } from '../types';
 import { 
-  CONVERSATION 
-} from '../types';
-
-// 会話型定義
-interface IConversation {
-  id: string;
-  userId: string;
-  messages: IMessage[];
-  context?: {
-    fortuneId?: string;
-    relatedGoalId?: string;
-    teamRelated?: boolean;
-    sentimentScore?: number;
-  };
-  isArchived: boolean;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-}
-
-interface IMessage {
-  id: string;
-  sender: 'user' | 'ai';
-  content: string;
-  timestamp: string | Date;
-  isPromptQuestion?: boolean;
-  promptCategory?: 'growth' | 'team' | 'career' | 'organization';
-}
-
-type SendMessageRequest = {
-  conversationId?: string;
-  content: string;
-  context?: {
-    fortuneId?: string;
-    relatedGoalId?: string;
-  };
-};
-
-type GeneratePromptQuestionRequest = {
-  userId: string;
-  fortuneId?: string;
-  category?: 'growth' | 'team' | 'career' | 'organization';
-};
-
-// APIのBase URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  IConversation, 
+  IMessage, 
+  SendMessageRequest, 
+  GeneratePromptQuestionRequest 
+} from '../utils/sharedTypes';
 
 /**
  * 会話サービス
@@ -61,14 +23,14 @@ class ConversationService {
   }> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}${CONVERSATION.SEND_MESSAGE}`, {
+    const response = await fetch(getApiUrl(CONVERSATION.SEND_MESSAGE), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(messageData),
-      credentials: 'include',
+      // credentials: 'include', // クッキー認証を使用しないため削除
     });
     
     if (!response.ok) {
@@ -108,12 +70,12 @@ class ConversationService {
     
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
     
-    const response = await fetch(`${API_URL}${CONVERSATION.GET_ALL}${queryString}`, {
+    const response = await fetch(getApiUrl(`${CONVERSATION.GET_ALL}${queryString}`), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
       },
-      credentials: 'include',
+      // credentials: 'include', // クッキー認証を使用しないため削除
     });
     
     if (!response.ok) {
@@ -133,12 +95,12 @@ class ConversationService {
   async getConversationById(conversationId: string): Promise<IConversation> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}${CONVERSATION.GET_BY_ID(conversationId)}`, {
+    const response = await fetch(getApiUrl(CONVERSATION.GET_BY_ID(conversationId)), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
       },
-      credentials: 'include',
+      // credentials: 'include', // クッキー認証を使用しないため削除
     });
     
     if (!response.ok) {
@@ -163,14 +125,14 @@ class ConversationService {
   }> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}${CONVERSATION.GENERATE_PROMPT_QUESTION}`, {
+    const response = await fetch(getApiUrl(CONVERSATION.GENERATE_PROMPT_QUESTION), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(requestData),
-      credentials: 'include',
+      // credentials: 'include', // クッキー認証を使用しないため削除
     });
     
     if (!response.ok) {
@@ -190,12 +152,12 @@ class ConversationService {
   async archiveConversation(conversationId: string): Promise<IConversation> {
     const token = localStorage.getItem('token');
     
-    const response = await fetch(`${API_URL}${CONVERSATION.ARCHIVE(conversationId)}`, {
+    const response = await fetch(getApiUrl(CONVERSATION.ARCHIVE(conversationId)), {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
       },
-      credentials: 'include',
+      // credentials: 'include', // クッキー認証を使用しないため削除
     });
     
     if (!response.ok) {
@@ -219,17 +181,14 @@ class ConversationService {
   }> {
     const token = localStorage.getItem('token');
     
-    // APIパスが共有定義にないため、一時的に構築
-    const favoriteUrl = `${API_URL}/api/v1/conversation/${conversationId}/favorite`;
-    
-    const response = await fetch(favoriteUrl, {
+    const response = await fetch(getApiUrl(CONVERSATION.TOGGLE_FAVORITE(conversationId)), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ messageId }),
-      credentials: 'include',
+      // credentials: 'include', // クッキー認証を使用しないため削除
     });
     
     if (!response.ok) {
@@ -242,4 +201,5 @@ class ConversationService {
   }
 }
 
-export const conversationService = new ConversationService();
+const conversationService = new ConversationService();
+export default conversationService;

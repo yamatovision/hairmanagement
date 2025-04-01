@@ -1,416 +1,419 @@
-# 実装状況 (2025/03/27更新)
+# 実装状況 (2025/04/04更新)
 
 ## 全体進捗
-- 完成予定ファイル数: 33
-- 作成済みファイル数: 31
-- 進捗率: 94%
-- 最終更新日: 2025/03/27
+- 完成予定ファイル数: 68
+- 作成済みファイル数: 49
+- 進捗率: 72%
+- 最終更新日: 2025/04/04
 
-> **新規スコープ**: PWA機能の完全実装について[PWA実装計画](./PWA_IMPLEMENTATION.md)を作成しました。スマートフォンからアプリのように利用できるよう機能強化を検討しています。
+> **四柱推命パトロールマネジメントシステム進捗状況**: 既存の陰陽五行システムから韓国式四柱推命システムへの移行計画を推進中です。クリーンアーキテクチャ版（`/patrolmanagement-clean/`）を基盤とし、既存の四柱推命計算ロジック（`/backend/src/utils/saju/`）を移植する「ハイブリッドアプローチ」を採用。実装は**72%**の状態で、四柱推命エンジンの拡張（十二運星計算と蔵干抽出機能を追加）、ユーザープロフィール機能拡張、サブスクリプションシステムの実装に加え、チームメンバー相性機能と会話サービスの実装を完了しました。四柱推命に基づくチームメンバー間の相性計算（五行相性、陰陽バランス、十神関係の分析）とチーム全体の五行バランス分析機能を実装し、チーム構成の最適化提案が可能になりました。また、AIモデル選択機能（Haiku/Sonnet）を統合したAI対話システムを実装し、四柱推命の知識に基づくパーソナライズされたアドバイス提供が可能になりました。デイリーフォーチュンとチームメンバー相性に特化した対話機能により、ユーザーは運勢や対人関係について深い洞察を得られます。
 
-## スコープ状況
+参考ファイル:
+- backend/src/utils/saju/refactored/UNIFIED_ALGORITHM_DOCUMENT.md 
+- backend/src/utils/saju/refactored/SajuEngine.ts
+- backend/src/utils/saju/refactored/DateTimeProcessor.ts
+- backend/src/domain/user/value-objects/saju-profile.ts
+- backend/src/application/services/birth-location.service.ts
+- backend/src/domain/entities/Subscription.ts
+- backend/src/application/services/subscription.service.ts
+- backend/src/application/services/ai-model-selector.service.ts
+- backend/src/domain/entities/Team.ts
+- backend/src/application/services/team-compatibility.service.ts
+- backend/src/domain/entities/Conversation.ts
+- backend/src/application/services/conversation.service.ts
+- backend/src/infrastructure/external/ClaudeAIService.ts
+- backend/src/interfaces/http/controllers/conversation.controller.ts
+- frontend/src/components/profile/ProfileForm.tsx
+- frontend/src/components/dashboard/SubscriptionManagement.tsx
+- docs/requirements.md（絶対にこれは読むこと）
+- packages/saju-engine/
 
-### 進行中スコープ
-- [ ] エンドポイント検証とフロントエンド連携 (50%)
+## ページ構成
+- **/profile**: 四柱推命の基本情報・五行属性・プロフィール設定
+- **/fortune**: デイリーフォーチュンと運勢アドバイス
+- **/dashboard**: 管理者専用画面（チーム管理・サブスクリプション管理）
+- **/team**: チームメンバー一覧と相性情報
 
-### 未着手スコープ
-- [ ] テストとデプロイ (0%)
+## 新規プロジェクト構造
 
-### 完了済みスコープ (今回のセッションで完了)
-- [x] テストとモック実装 (100%)
-- [x] TypeScriptエラー修正 (100%)
-- [x] チーム連携機能 (100%)
-- [x] 認証システム検証 (100%)
+### プロジェクト基盤
+- [x] プロジェクト構造分析 (100%)
+- [x] 実装アプローチ決定 (100%)
+- [x] 詳細実装計画策定 (100%)
+- [x] モノレポ設定調整 (100%)
 
-### 完了済みスコープ
-- [x] PWA対応とオフラインモード (100%)
-- [x] 経営者ダッシュボード (100%)
-- [x] 要件定義と設計 (100%)
-- [x] 環境構築とインフラ整備 (100%)
-- [x] 認証システム実装 (100%)
-- [x] 共通コンポーネントライブラリ (100%)
-- [x] 陰陽五行エンジン開発 (100%)
-- [x] デイリーフォーチュン機能 (100%)
-- [x] ユーザープロフィール管理 (100%)
-- [x] AI対話システム (100%)
+### 四柱推命エンジン
+- [x] saju-engineパッケージ作成 (100%)
+- [x] 既存計算ロジックの移植 (100%)
+- [x] 四柱推命ドメインモデル設計 (100%)
+- [x] リポジトリインターフェース定義 (100%)
+- [x] 四柱推命サービス実装 (100%)
+- [x] 十二運星（十二長生）計算実装 (100%)
+- [x] 蔵干（地蔵干）抽出実装 (100%)
+- [x] 十二運星マッピング精度向上 (100%)
 
-## 現在のディレクトリ構造
-```
-patrolmanagement/
-├── .env                      # 開発環境用環境変数
-├── .env.development          # 開発環境詳細設定
-├── .env.test                 # テスト環境設定
-├── .env.production           # 本番環境設定テンプレート
-├── .env.example              # 環境変数設定例
-├── .github/                  # GitHub関連ファイル
-│   └── workflows/            # GitHub Actions設定
-│       ├── ci.yml            # 継続的インテグレーションワークフロー
-│       └── cd.yml            # 継続的デプロイワークフロー
-├── Dockerfile                # Dockerコンテナ定義
-├── docker-compose.yml        # Docker Compose設定
-├── scripts/                  # スクリプトファイル
-│   ├── setup.sh              # 環境セットアップスクリプト
-│   ├── deploy.sh             # デプロイスクリプト
-│   ├── create-admin.js       # 管理者ユーザー作成スクリプト
-│   ├── create-test-user.js   # テストユーザー作成スクリプト
-│   └── test-conversation-api.sh # 会話APIテストスクリプト
-├── test-login.js             # 認証フロー検証テスト
-├── start-dev.sh              # 開発サーバー起動スクリプト
-├── README.md                 # プロジェクト説明
-├── docs/                     # ドキュメント
-│   ├── requirements.md       # 要件定義書
-│   ├── CURRENT_STATUS.md     # 開発状況
-│   ├── deploy.md             # デプロイ戦略
-│   ├── env.md                # 環境変数リスト
-│   ├── auth-system.md        # 認証システム詳細
-│   └── auth_architecture.md  # 認証システム設計
-├── backend/                  # バックエンドアプリケーション
-│   ├── src/                  # ソースコード
-│   │   ├── models/           # データモデル
-│   │   │   ├── user.model.ts     # ユーザーモデル
-│   │   │   ├── token.model.ts    # トークンモデル
-│   │   │   └── ...
-│   │   ├── api/              # APIエンドポイント
-│   │   │   ├── routes/       # ルーティング
-│   │   │   │   ├── auth.routes.ts # 認証ルート
-│   │   │   │   └── ...
-│   │   │   ├── controllers/  # コントローラー
-│   │   │   │   ├── auth.controller.ts # 認証コントローラー
-│   │   │   │   └── ...
-│   │   │   └── middlewares/  # ミドルウェア
-│   │   │       ├── auth.middleware.ts # 認証ミドルウェア
-│   │   │       ├── role.middleware.ts # ロールミドルウェア
-│   │   │       ├── validation.middleware.ts # バリデーションミドルウェア
-│   │   │       └── ...
-│   │   ├── services/         # ビジネスロジック
-│   │   │   ├── auth.service.ts # 認証サービス
-│   │   │   ├── claude.service.ts # モックAI対話サービス
-│   │   │   └── ...
-│   │   ├── config/           # 設定ファイル
-│   │   │   ├── auth.config.ts # 認証設定
-│   │   │   └── ...
-│   │   ├── utils/            # ユーティリティ
-│   │   │   ├── mock-claude-responses.ts # モックレスポンス
-│   │   │   └── ...
-│   │   ├── tests/            # テストファイル
-│   │   │   ├── conversation.test.js # 会話APIテスト
-│   │   │   └── ...
-│   │   └── index.ts          # エントリーポイント
-│   ├── package.json          # 依存関係
-│   └── tsconfig.json         # TypeScript設定
-├── frontend/                 # フロントエンドアプリケーション
-│   ├── public/               # 静的ファイル
-│   │   └── index.html        # HTMLテンプレート
-│   ├── src/                  # ソースコード
-│   │   ├── components/       # UIコンポーネント
-│   │   │   └── common/       # 共通コンポーネント
-│   │   │       ├── ProtectedRoute.tsx # 保護されたルート
-│   │   │       └── ...
-│   │   ├── contexts/         # Reactコンテキスト
-│   │   │   ├── AuthContext.tsx # 認証コンテキスト
-│   │   │   └── ...
-│   │   ├── pages/            # ページコンポーネント
-│   │   │   ├── AuthPage.tsx  # 認証ページ
-│   │   │   └── ...
-│   │   ├── services/         # APIサービス
-│   │   │   ├── auth.service.ts # 認証サービス
-│   │   │   └── ...
-│   │   ├── tests/            # テストファイル
-│   │   │   ├── conversation.test.tsx # 会話機能テスト
-│   │   │   └── ...
-│   │   ├── styles/           # スタイル定義
-│   │   ├── utils/            # ユーティリティ関数
-│   │   ├── App.js            # メインアプリケーション
-│   │   └── index.js          # エントリーポイント
-│   ├── package.json          # 依存関係
-│   ├── firebase.json         # Firebase設定
-│   └── .firebaserc           # Firebaseプロジェクト設定
-└── shared/                   # 共有コード
-    └── index.ts              # 共通型定義
-```
+### プロフィール機能拡張
+- [x] ユーザープロフィールに四柱推命情報フィールド追加 (100%)
+- [x] 出生地情報の追加と処理 (100%)
+- [x] プロフィール表示UI更新 (100%)
+- [x] プロフィール編集機能拡張 (100%)
+- [x] UI検証とフィードバック収集 (100%)
 
-## 実装完了ファイル
-- ✅ backend/src/services/claude.service.ts (AI対話システム)
-- ✅ backend/src/models/conversation.model.ts (AI対話システム)
-- ✅ backend/src/api/routes/conversation.routes.ts (AI対話システム)
-- ✅ backend/src/api/controllers/conversation.controller.ts (AI対話システム)
-- ✅ backend/src/services/conversation.service.ts (AI対話システム)
-- ✅ backend/src/utils/prompt-templates.ts (AI対話システム)
-- ✅ frontend/src/components/conversation/ChatInterface.tsx (AI対話システム)
-- ✅ frontend/src/components/conversation/PromptQuestion.tsx (AI対話システム)
-- ✅ frontend/src/components/conversation/ConversationHistory.tsx (AI対話システム)
-- ✅ frontend/src/pages/ConversationPage.tsx (AI対話システム)
-- ✅ frontend/src/services/conversation.service.ts (AI対話システム)
-- ✅ frontend/src/hooks/useConversation.ts (AI対話システム)
-- ✅ frontend/src/serviceWorker.js (PWA対応とオフラインモード)
-- ✅ frontend/public/service-worker.js (PWA対応とオフラインモード)
-- ✅ frontend/src/utils/offline.utils.ts (PWA対応とオフラインモード)
-- ✅ frontend/src/contexts/OfflineContext.tsx (PWA対応とオフラインモード)
-- ✅ frontend/src/utils/api.utils.ts (PWA対応とオフラインモード)
-- ✅ frontend/src/components/common/OfflineIndicator.tsx (PWA対応とオフラインモード)
-- ✅ backend/src/models/user.model.ts (認証システム検証)
-- ✅ backend/src/models/token.model.ts (認証システム検証)
-- ✅ backend/src/services/auth.service.ts (認証システム検証)
-- ✅ backend/src/api/controllers/auth.controller.ts (認証システム検証)
-- ✅ backend/src/api/routes/auth.routes.ts (認証システム検証)
-- ✅ frontend/src/contexts/AuthContext.tsx (認証システム検証)
-- ✅ frontend/src/services/auth.service.ts (認証システム検証)
-- ✅ frontend/src/components/common/ProtectedRoute.tsx (認証システム検証)
-- ✅ test-login.js (認証システム検証)
-- ✅ shared/index.ts (TypeScriptエラー修正)
-- ✅ backend/tsconfig.json (TypeScriptエラー修正)
-- ✅ frontend/tsconfig.json (TypeScriptエラー修正)
-- ✅ shared/utils/typeHelpers.ts (TypeScriptエラー修正)
-- ✅ backend/src/utils/mock-claude-responses.ts (テストとモック実装)
-- ✅ backend/src/tests/conversation.test.js (テストとモック実装)
-- ✅ frontend/src/tests/conversation.test.tsx (テストとモック実装)
-- ✅ scripts/test-conversation-api.sh (テストとモック実装)
-- ✅ scripts/create-test-user.js (テストとモック実装)
-- ✅ backend/src/api/middlewares/validation.middleware.ts (テストとモック実装)
-- ✅ backend/src/api/middlewares/role.middleware.ts (テストとモック実装)
+### サブスクリプションシステム
+- [x] サブスクリプションドメインモデル設計 (100%)
+- [x] サブスクリプションリポジトリ実装 (100%)
+- [x] サブスクリプションサービス実装 (100%)
+- [x] AIモデル切替機能実装 (100%)
 
-## 実装中ファイル
-- [ ] backend/src/api/controllers/analytics.controller.e2e.test.ts (エンドポイント検証)
-- [x] frontend/src/services/analytics.service.test.ts (フロントエンド連携)
+### 管理者ダッシュボード
+- [ ] チーム管理機能 (0%)
+- [ ] メンバー管理機能 (0%)
+- [ ] チーム目標設定機能 (0%)
+- [x] サブスクリプション管理機能 (100%)
+- [ ] チーム分析機能 (0%)
 
-## 引継ぎ情報
+### デイリーフォーチュン機能
+- [ ] デイリーフォーチュンドメインサービス実装 (0%)
+- [ ] 基本運勢表示機能 (0%)
+- [ ] チーム目標連携機能 (0%)
+- [ ] 運勢履歴表示機能 (0%)
+- [ ] フロントエンドAPI統合 (0%)
 
-### 完了したスコープ: テストとモック実装
-**スコープID**: scope-test-mock-implementation  
-**説明**: AI対話システムのテスト環境整備とモック機能実装  
-**含まれる機能**:
-1. モックレスポンス生成機能
-2. バックエンドAPIテスト
-3. フロントエンドテスト
-4. テストユーザー作成スクリプト
-5. 必要なミドルウェアの追加
+### チームメンバー機能
+- [x] メンバー一覧表示 (100%) 
+- [x] メンバー間相性計算サービス実装 (100%)
+- [x] 相性情報表示 (100%)
 
-**実装したファイル**: 
-- [x] backend/src/utils/mock-claude-responses.ts
-- [x] backend/src/tests/conversation.test.js
-- [x] frontend/src/tests/conversation.test.tsx
-- [x] scripts/test-conversation-api.sh
-- [x] scripts/create-test-user.js
-- [x] backend/src/api/middlewares/validation.middleware.ts
-- [x] backend/src/api/middlewares/role.middleware.ts
+### AI会話サービス
+- [x] AI運勢生成サービス実装 (100%)
+- [x] AI対話機能実装 (100%)
+- [x] コンテキスト管理 (100%)
 
-**特記事項**:
-- モックレスポンスを使用してClaudeのAPIキーなしでもテスト可能
-- カテゴリ別（運勢、成長、チーム、キャリア）の応答セットを実装
-- APIテストが正常に完了
-- フロントエンドテストはJest設定の調整が必要
-- テストユーザー（test@example.com / password123）を自動作成
-- ロールベースのアクセス制御ミドルウェアを追加
-- 会話関連のバリデーションミドルウェアを追加
+### 統合とテスト
+- [ ] E2Eテスト実装 (0%)
+- [ ] パフォーマンス最適化 (0%)
+- [ ] デプロイパイプライン設定 (0%)
 
-### 完了したスコープ: TypeScriptエラー修正
-**スコープID**: scope-typescript-error-fix  
-**説明**: プロジェクト全体のTypeScriptエラーを修正し、ビルドを成功させる  
-**重要度**: 高  
-**担当者**: Claude  
+## 詳細実装計画 (修正版: 2025/04/01)
 
-**含まれる機能**:
-1. 共有型定義の修正（shared/index.ts）
-2. バックエンドモデルの修正
-3. バックエンドサービスの修正
-4. フロントエンド連携と最終検証
+### Phase 1: 四柱推命エンジンの構築と統合 (日程: 2025/04/02-04/04)
+- `@repo/saju-engine` パッケージの作成
+- 四柱推命計算ロジックの移植
+- ドメインモデルとリポジトリインターフェースの設計
+- サービス層の実装
 
-**進捗状況**:
-- ✅ フロントエンドのformatTimestamp関数修正完了
-- ✅ バックエンドの重要エラーの特定と修正完了
-- ✅ 実践的解決戦略の作成と適用完了
-- ✅ バックエンド・フロントエンドのビルドエラー解消完了
+### Phase 2: プロフィール機能拡張 (日程: 2025/04/05-04/07)
+- ユーザープロフィールに四柱推命情報フィールドの追加
+- 出生地情報の追加と地理的データ処理
+- プロフィール表示UIの更新（五行属性、陰陽表示）
+- プロフィール編集機能の拡張
+- UI検証とユーザーフィードバックの収集
 
-**実装完了ファイル**:
-- [x] shared/index.ts - 型定義の互換性強化
-- [x] backend/src/types/mongoose-extensions.d.ts - MongooseとTypeScriptの型互換性向上
-- [x] backend/src/services/team.service.ts - 構文エラー修正
-- [x] backend/src/services/user.service.ts - 型不一致修正
-- [x] backend/src/services/fortune.service.ts - 戻り値型の一貫性確保
-- [x] backend/src/services/analytics.service.ts - データ変換関数修正
-- [x] backend/src/utils/model-converters.ts - ドキュメント変換の柔軟性向上
-- [x] frontend/src/types/shared.d.ts - 共有型へのアクセス改善
-- [x] frontend/src/pages/ManagerDashboardPage.tsx - ElementalType型の整合性向上
-- [x] frontend/src/components/conversation/PromptQuestion.tsx - 認証情報連携強化
+### Phase 3: サブスクリプションシステムの実装 (日程: 2025/04/08-04/10)
+- サブスクリプションドメインモデルの設計
+- リポジトリとサービスの実装
+- AIモデル切替ロジックの実装
 
-**主な修正内容**:
-1. **バックエンド**:
-   - Mongoose型とTypeScript型の互換性問題を解決
-   - 構文エラーと不適切な型変換の修正
-   - documentToInterface関数の改良と非ドキュメント値対応
+### Phase 4: チームメンバー相性機能と会話サービスの実装 (日程: 2025/04/04-04/07) - 完了
+- チームエンティティとリポジトリの実装
+- メンバー間相性計算サービスの実装
+- チーム五行バランス分析機能の実装
+- AI対話機能の実装
+- 会話履歴の管理と検索機能の実装
 
-2. **フロントエンド**:
-   - 共有型定義へのアクセス方法の標準化
-   - ElementalType型の完全実装
-   - 型安全なコード変換（配列の値選択をタイプセーフな方式に変更）
-   - 認証情報の連携改善
+### Phase 5: 管理者ダッシュボード実装 (日程: 2025/04/08-04/10)
+- チーム管理機能の実装
+- メンバー管理機能の実装
+- チーム目標設定機能
+- サブスクリプション管理機能のUI改善
+- チーム五行分析UI実装
 
-**関連ドキュメント**:
-- [TypeScriptエラー修正スコープ](./scopes/typescript-error-fix.md)
-- [実践的修正戦略](./scopes/typescript-error-fix-pragmatic.md)
+### Phase 6: デイリーフォーチュン機能 (日程: 2025/04/11-04/13)
+- デイリーフォーチュンドメインサービスの実装
+- 基本的な運勢計算と表示機能
+- チーム目標と役割に基づく運勢アドバイス生成
+- 運勢履歴表示機能
+- フロントエンドAPI統合
 
-### 完了したスコープ: 認証システム検証
-**スコープID**: scope-1743092573588  
-**説明**: JWT認証システムの検証とモック認証からの移行  
-**含まれる機能**:
-1. MongoDB接続テスト
-2. 管理者ユーザー確認・作成
-3. JWTトークン生成・検証フロー
-4. リフレッシュトークン機能
-5. 保護されたルートでの認証
-6. フロントエンド-バックエンド認証統合
+### Phase 7: 統合とテスト (日程: 2025/04/20-04/22)
+- E2Eテストの実装
+- パフォーマンス最適化
+- デプロイパイプラインの設定
+- 最終調整
 
-**実装したファイル**: 
-- [x] backend/src/models/user.model.ts
-- [x] backend/src/models/token.model.ts
-- [x] backend/src/services/auth.service.ts
-- [x] backend/src/api/controllers/auth.controller.ts
-- [x] backend/src/api/routes/auth.routes.ts
-- [x] frontend/src/contexts/AuthContext.tsx
-- [x] frontend/src/services/auth.service.ts
-- [x] frontend/src/components/common/ProtectedRoute.tsx
-- [x] test-login.js
-- [x] start-dev.sh
-- [x] docs/auth-system.md
+## 主要コンポーネント詳細
 
-**特記事項**:
-- 管理者ユーザー（kazutofukushima1202@gmail.com）の作成に成功
-- JWTベースの認証フローが正常に動作
-- トークンのHTTPOnlyクッキーとローカルストレージの両方による保存に対応
-- MongoDB接続とデータ取得の確認済み
+### 四柱推命エンジン
+- SajuCalculator: 基本四柱推命計算
+- SajuProfile: ユーザーの四柱推命プロファイル
+- DailyFortune: 日次運勢情報
+- CompatibilityService: 相性計算サービス
+- TwelveFortuneSpiritCalculator: 十二運星（十二長生）計算
+- HiddenStemExtractor: 蔵干（地蔵干）抽出
 
-### 完了したスコープ: チーム連携機能
-**スコープID**: scope-1743000794677  
-**説明**: チーム連携機能の実装  
-**含まれる機能**:
-1. チームデータモデル設計と実装
-2. チーム管理APIs実装
-3. チームダッシュボード
-4. メンターシップマネージャー
-5. キャリアコンパス機能
+### プロフィール機能
+- UserSajuProfile: ユーザーの四柱推命プロフィール情報
+- BirthLocationService: 出生地情報処理サービス
+- ProfileUIComponents: 四柱推命情報表示コンポーネント
+- ElementalVisualization: 五行バランス可視化コンポーネント
+- ProfileEditForm: 拡張プロフィール編集フォーム
 
-**実装したファイル**: 
-- [x] backend/src/models/team.model.ts
-- [x] backend/src/models/goal.model.ts
-- [x] backend/src/api/routes/team.routes.ts
-- [x] backend/src/api/controllers/team.controller.ts
-- [x] backend/src/api/routes/goal.routes.ts
-- [x] backend/src/api/controllers/goal.controller.ts
-- [x] backend/src/services/goal.service.ts
-- [x] frontend/src/components/team/TeamContribution.tsx
-- [x] frontend/src/components/team/MentorshipManager.tsx
-- [x] frontend/src/components/career/CareerPath.tsx
-- [x] frontend/src/components/career/GoalTracker.tsx
-- [x] frontend/src/pages/TeamValuePage.tsx
-- [x] frontend/src/pages/CareerCompassPage.tsx
-- [x] frontend/src/services/team.service.ts
+### サブスクリプションシステム
+- Subscription: サブスクリプション情報
+- Plan: プラン種別（スタンダード/プレミアム）
+- AiModel: AIモデル種別（Haiku/Sonnet）
+- AiModelSelectorService: 状況に応じたモデル選択
+- SubscriptionController: サブスクリプション管理API
 
-## エンドポイント検証とフロントエンド連携
-**スコープID**: scope-1743092573590  
-**説明**: バックエンドAPIエンドポイントの検証とフロントエンド連携テスト  
-**重要度**: 高  
-**担当者**: AIチーム  
+### 管理者ダッシュボード
+- TeamManagementService: チーム管理サービス
+- TeamGoalService: チーム目標管理サービス
+- MemberManagementService: メンバー管理サービス
+- SubscriptionManagementService: サブスクリプション管理
+- TeamAnalyticsService: チーム分析サービス
+- TeamElementalAnalysis: 五行分析結果
 
-**含まれる機能**:
-1. 認証機能検証
-2. ユーザープロフィール管理機能検証
-3. 運勢予測機能検証
-4. チーム連携機能検証
-5. AI対話システム検証
-6. 経営分析ダッシュボード検証
-7. フロントエンド連携テスト
+### デイリーフォーチュン
+- FortuneGenerationService: 運勢生成基盤サービス
+- TeamGoalIntegrationService: チーム目標連携サービス
+- FortuneHistoryComponent: 運勢履歴表示
+- FortuneDetailView: 詳細運勢表示
+- FortuneController: 運勢情報API
 
-**実装ファイル**:
-- [x] scripts/create-admin-user.js
-- [x] scripts/simple-auth-test.js
-- [x] frontend/.env.development (モック使用設定の変更)
-- [x] docs/scopes/endpoint-verification.md
-- [x] docs/scopes/endpoint-verification-summary.md
-- [ ] scripts/test-user-endpoints.js
-- [ ] scripts/test-fortune-endpoints.js
-- [x] scripts/test-team-endpoints.js
-- [x] scripts/test-analytics-endpoints.js
-- [ ] scripts/test-conversation-endpoints.js
+### チームメンバー機能
+- TeamMemberListComponent: メンバー一覧表示
+- TeamCompatibilityService: メンバー間相性計算
+- CompatibilityVisualization: 相性可視化コンポーネント
+- MemberRoleService: メンバー役割管理
 
-**前提条件の確認**:
-- [x] MongoDB接続の確認
-- [x] テストユーザーの作成
-- [x] 管理者ユーザーの作成
-- [x] 認証フローの確認
+### AI会話サービス
+- AiFortuneGenerationService: AI運勢アドバイス生成
+- AiChatService: AIチャットサービス
+- ConversationController: 会話管理API
+- ConversationContextManager: 会話コンテキスト管理
 
-**依存するスコープ**:
-- TypeScriptエラー修正
-- 認証システム検証
-- チーム連携機能
-- PWA対応とオフラインモード
-- 経営者ダッシュボード
-- AI対話システム
-- デイリーフォーチュン機能
-- ユーザープロフィール管理
+## リスクと対策
 
-### 参考資料
-- [エンドポイント検証ガイドライン](./scopes/endpoint-verification.md)
-- [エンドポイント検証進捗サマリー](./scopes/endpoint-verification-summary.md)
-- [エンドポイントテスト実施ガイド](./scopes/endpoint-test-guide.md) ← 重複作業を避けるためのガイド
-- [API検証の問題と解決策](./scopes/api-verification-issues.md) ← 既知の問題と解決策
-- [API仕様書](./api-docs.md)
+1. **四柱推命計算の移植リスク**
+   - リスク: 複雑な計算ロジックの移植ミス
+   - 対策: 詳細な単体テストの実装と結果検証
 
-**進捗状況**:
-- ✅ MongoDB接続の確認済み 
-- ✅ 管理者ユーザーの作成完了
-- ✅ 認証エンドポイントの動作確認完了
-- ✅ フロントエンド環境設定の更新完了
-- ✅ ユーザープロフィール管理機能検証 - 完了
-- ⚠️ 運勢予測機能検証 - 部分的に完了
-- ✅ チーム連携機能検証 - 完了
-- ✅ AI対話システム検証 - 正常に動作
-- ✅ 経営分析ダッシュボード検証 - 完了
-- ✅ フロントエンド連携テスト - 基本実装完了
+2. **AI統合リスク**
+   - リスク: Claude APIの接続問題やモデル切替失敗
+   - 対策: フォールバックメカニズムとエラーハンドリング強化
 
-**改善済みの問題**:
-1. ✅ 通知設定更新エンドポイントを修正（ユーザーID取得方法を修正）
-2. ✅ AI対話システムのAPIルートを有効化（index.tsのルート設定を更新）
-3. ✅ ユーザープロフィール関連API認証問題を解決
+3. **パフォーマンスリスク**
+   - リスク: 運勢計算やAI生成のレスポンス遅延
+   - 対策: キャッシュ戦略とバックグラウンド処理の導入
 
-**残存する問題**:
-1. ⚠️ 運勢予測API関連の認証エラー - サーバー接続問題
-2. ✅ チーム連携API関連の認証エラー - 解決済み
-3. ⚠️ テスト環境設定（NODE_ENV=test）が一部スクリプトで反映されない
-4. ⚠️ バックエンドサーバーの起動と停止の不安定性
+4. **UX整合性リスク**
+   - リスク: 異なるページ間での情報の一貫性の欠如
+   - 対策: 共通コンポーネントの利用とUXレビュー
 
-## 次回実装予定
+## 次のステップ
 
-### 次のスコープ: テストとデプロイ
-**スコープID**: scope-1743092573589  
-**説明**: 単体テスト、E2Eテスト、およびデプロイパイプラインの実装  
-**含まれる機能**:
-1. バックエンドの単体テスト
-2. フロントエンドのコンポーネントテスト
-3. E2Eテスト
-4. CI/CDパイプライン設定
-5. デプロイスクリプトの改善
+- ✓ ~~`@repo/saju-engine` パッケージの初期設定~~
+- ✓ ~~ドメインモデルとリポジトリインターフェースの設計~~
+- ✓ ~~四柱推命計算ロジックの移植完了~~
+- ✓ ~~四柱推命計算サービス（SajuEngine）の実装~~
+- ✓ ~~四柱推命エンジンの拡張機能実装~~
+  - ✓ ~~十二運星（十二長生）計算の実装~~
+  - ✓ ~~十二神殺計算の実装~~
+  - ✓ ~~蔵干（地蔵干）抽出の実装~~
+- ✓ ~~プロフィール機能拡張の設計と実装~~
+  - ✓ ~~ユーザーモデルの拡張設計~~
+  - ✓ ~~プロフィール表示UI設計~~
+  - ✓ ~~出生地データ処理の実装~~
+- ✓ ~~サブスクリプションシステムの設計と実装~~
+  - ✓ ~~プラン種別とAIモデル連携の仕様策定~~
+  - ✓ ~~サブスクリプションドメインモデルの実装~~
+  - ✓ ~~サブスクリプション管理UI実装~~
+- ✓ ~~チームメンバー相性機能と会話サービスの実装~~
+  - ✓ ~~チームエンティティとリポジトリの設計と実装~~
+  - ✓ ~~チーム相性計算サービスの実装~~
+  - ✓ ~~会話サービスと履歴管理の実装~~
+  - ✓ ~~AI対話機能の実装（Claude API統合）~~
+  - ✓ ~~チームメンバー相性チャットとデイリーフォーチュンチャットの実装~~
+- 管理者ダッシュボードの実装
+  - チーム管理機能の設計と実装
+  - メンバー管理機能の設計と実装
+  - チーム五行分析UIの設計と実装
 
-**依存するスコープ**:
-- TypeScriptエラー修正
-- 認証システム検証
-- チーム連携機能
-- PWA対応とオフラインモード
-- 経営者ダッシュボード
-- AI対話システム
-- デイリーフォーチュン機能
-- ユーザープロフィール管理
-- エンドポイント検証とフロントエンド連携
+## 実装状況詳細
 
-**実装予定ファイル**:
-- [ ] backend/src/tests/auth.test.ts
-- [ ] backend/src/tests/user.test.ts
-- [ ] backend/src/tests/team.test.ts
-- [ ] frontend/src/tests/auth.test.tsx
-- [ ] frontend/src/tests/team.test.tsx
-- [ ] frontend/src/tests/profile.test.tsx
-- [ ] e2e/login.test.js
-- [ ] e2e/fortune.test.js
-- [ ] e2e/conversation.test.js
-- [ ] .github/workflows/ci.yml
-- [ ] .github/workflows/cd.yml
-- [ ] scripts/deploy.sh
+第一〜第四フェーズの実装が完了しました。また、四柱推命エンジンの拡張（十二運星、十二神殺、蔵干計算）も実装しました。以下は実装したことの概要です：
+
+### リファクタリング計画に基づく新実装
+
+1. **DateTimeProcessor クラス**:
+   - 生年月日と出生地から地方時調整を行う機能
+   - 旧暦変換機能を一元管理
+   - 節気情報の取得と処理
+   - 日時データの前処理を担当
+
+2. **SajuEngine クラス**:
+   - 四柱推命計算のコアエンジン
+   - 明確なデータフロー（入力→前処理→計算→出力）
+   - 堅牢なエラー処理とフォールバックメカニズム
+   - シンプルなAPI（`calculate`と`getCurrentSaju`）
+
+3. **四柱計算プロセスの改善**:
+   - 日時処理と四柱計算の明確な分離
+   - 年柱→日柱→月柱→時柱の計算順序の適正化
+   - 陰陽五行属性のプロファイル生成機能
+
+4. **拡張計算モジュールの追加**:
+   - **TwelveLifeCycleCalculator**: 十二運星（十二長生）計算
+     - 日主の五行に基づく十二運星順序の決定
+     - 12段階の生命周期（長生〜養）の計算
+   - **TwelveGodKillCalculator**: 十二神殺計算
+     - 年支と日支の組み合わせに基づく神殺特定
+     - 運気への特殊な影響の計算
+   - **HiddenStemExtractor**: 蔵干（地蔵干）抽出
+     - 各地支に隠れた天干の抽出ロジック
+     - 複数の蔵干を持つ地支の処理
+
+5. **テスト環境の整備**:
+   - `testSajuEngine.ts`によるテストケース
+   - 実際の生年月日時データを使った検証
+   - パフォーマンスと精度のテスト
+   - 韓国式四柱推命サンプルとの照合
+
+### 既存機能からの拡張
+
+Sajuエンジンのリポジトリ層の実装も完了しました：
+
+1. MongoDB用のベースリポジトリ：共通のCRUD操作を提供するBaseMongoRepositoryクラス
+2. データベース接続管理：DatabaseConnectionクラスによるMongoDBへの接続管理
+3. ドメインリポジトリの実装：
+   - MongoSajuProfileRepository - 四柱推命プロファイルの永続化
+   - MongoDailyFortuneRepository - デイリーフォーチュンの永続化
+4. リポジトリファクトリー：依存性注入システムと連携してリポジトリを提供
+5. モックリポジトリサポート：テストやモック環境用のインメモリリポジトリ
+
+### 実装された計算フロー
+
+新しいSajuEngineでは、以下のフローで四柱を計算します：
+
+1. **入力処理**:
+   - 生年月日、出生時間、性別、出生地の情報を受け取る
+
+2. **時間調整**:
+   - `DateTimeProcessor`が出生地の経度に基づき地方時調整を実施
+   - 調整された日時データを生成
+
+3. **旧暦変換**:
+   - 調整された日時を旧暦に変換
+   - 節気情報も同時に取得
+
+4. **四柱計算**:
+   - 年柱: 調整日時の年から計算
+   - 日柱: 調整日時から60干支サイクルで計算
+   - 月柱: 年干と節気情報から計算
+   - 時柱: 日干と時間から計算
+
+5. **五行プロファイル生成**:
+   - 日主の五行（主要な五行）と陰陽の抽出
+   - 月柱からの副次的五行の抽出
+   - 五行プロファイルの構成
+
+6. **十二運星（十二長生）計算**:
+   - sample.mdとcalender.mdのデータ分析に基づくマッピング方式を採用
+   - 干支60組合せに対する十二運星の直接マッピングテーブルを実装
+   - 各柱（年、月、日、時）の地支に対応する十二運星を計算
+   - 「長生、沐浴、冠帯、臨官、帝王、衰、病、死、墓、絶、胎、養」の12段階を正確に算出
+
+7. **蔵干（地蔵干）抽出**:
+   - 各柱の地支に隠れた天干（蔵干）を抽出
+   - 地支と蔵干の関係に基づいた潜在的影響を分析
+
+### テスト方法
+
+`backend/src/utils/saju/refactored/testSajuEngine.ts`を使ってSajuEngineの精度とパフォーマンスをテストします。
+
+### サブスクリプションシステムの実装
+
+第三フェーズでは、サブスクリプションシステムを実装しました：
+
+1. **サブスクリプションドメインモデル**:
+   - `Plan` 列挙型：スタンダードとプレミアムプランの定義
+   - `AiModel` 列挙型：HaikuとSonnetモデルの定義
+   - `SubscriptionStatus` 列挙型：アクティブ、一時停止、キャンセルなどの状態
+   - `ISubscription` インターフェース：サブスクリプションの基本プロパティとメソッド
+   - `Subscription` エンティティ：サブスクリプションの永続化可能な表現
+
+2. **サブスクリプションリポジトリ**:
+   - `ISubscriptionRepository` インターフェース：標準的なCRUD操作と特殊なクエリ
+   - `MongoSubscriptionRepository` クラス：MongoDBを使用した実装
+   - `SubscriptionModel` スキーマ：データベースマッピング定義
+
+3. **サブスクリプションサービス**:
+   - `SubscriptionService` クラス：ビジネスロジックとリポジトリの仲介
+   - 新規サブスクリプション作成、更新、ステータス変更機能
+   - プラン変更と履歴管理機能
+
+4. **AIモデル切替機能**:
+   - `AiModelSelectorService` クラス：サブスクリプションプランに基づいたAIモデル選択
+   - コンテキスト依存モデル選択：運勢生成用とAI対話用で異なる基準
+   - フォールバックメカニズム：エラー時にデフォルトモデルを使用
+
+5. **管理者ダッシュボード統合**:
+   - サブスクリプション管理UI用の `SubscriptionManagement` コンポーネント
+   - プラン変更、ステータス管理、履歴表示機能
+   - 権限ベースのアクセス制御との統合
+
+6. **フロントエンドAPI統合**:
+   - REST APIとの通信を行う `subscription.service.ts`
+   - 型安全なデータモデルの共有 (`models.ts`)
+   - エラーハンドリングとローディング状態の管理
+
+サブスクリプションシステムによって、標準プラン（運勢生成にSonnet、AI対話にHaiku）とプレミアムプラン（両方にSonnet）の切り替えが可能になり、AI対話の質とパフォーマンスをユーザーのニーズに合わせて最適化できるようになりました。
+
+### チームメンバー相性機能と会話サービスの実装
+
+第四フェーズでは、チームメンバー相性機能と会話サービスを実装しました：
+
+1. **チーム関連のエンティティとリポジトリ**:
+   - `Team` エンティティ：チーム情報とメンバー管理機能を実装
+   - `ITeamRepository` インターフェース：チームの永続化と検索操作を定義
+   - `MongoTeamRepository` クラス：MongoDBを使用した実装
+   - チームメンバーの役割と状態の管理機能
+
+2. **チーム相性計算サービス**:
+   - `TeamCompatibilityService` クラス：メンバー間の相性計算を実装
+   - 五行相性（相生・相剋関係）の分析
+   - 陰陽バランスの評価
+   - 十神関係に基づく役割相性の分析
+   - チーム全体の五行バランス分析と最適化提案機能
+   - 個人特性に基づく役割推奨機能
+
+3. **会話エンティティとリポジトリ**:
+   - `Conversation` エンティティ：会話とメッセージの管理
+   - `IConversationRepository` インターフェース：会話の永続化と検索操作
+   - `MongoConversationRepository` クラス：MongoDB実装
+   - 会話タイプ（一般、運勢、チームメンバー相性）の識別と特化処理
+   - お気に入り機能とアーカイブ機能
+
+4. **会話サービス**:
+   - `ConversationService` クラス：会話の作成と管理を実装
+   - 会話セッションの維持と履歴管理
+   - コンテキスト維持のためのシステムメッセージ構築
+   - 四柱推命情報やチーム情報を含むパーソナライズされたプロンプト生成
+   - デイリーフォーチュンチャットとチームメンバー相性チャットの特殊化
+
+5. **AI統合**:
+   - `ClaudeAIService` クラス：Claude APIとの連携
+   - サブスクリプションに基づくAIモデル（Haiku/Sonnet）の動的選択
+   - フォールバックメカニズムとエラーハンドリング
+   - メッセージフォーマットの変換とレスポンス処理
+
+6. **会話コントローラーとルート**:
+   - REST APIエンドポイントの実装
+   - 認証とアクセス制御
+   - 会話の作成、取得、アーカイブ、お気に入り機能
+   - 会話履歴の最適化とページネーション
+   - 呼び水質問生成機能
+
+これにより、ユーザーは自分の四柱推命情報に基づいたパーソナライズされたAI対話を利用でき、デイリーフォーチュンの詳細を理解したり、チームメンバーとの相性について深い洞察を得たりできるようになりました。AIモデル選択機能との統合により、ユーザーのサブスクリプションに応じた適切なAIモデルが自動的に使用され、コストと品質のバランスが最適化されます。
+
+

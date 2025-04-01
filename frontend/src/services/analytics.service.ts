@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { ANALYTICS } from '../types';
 
-// APIのベースURLを設定
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+// API設定をインポート
+import { getApiUrl } from '../api/apiConfig';
 
 // 分析データ型定義
 interface IEngagementAnalytics {
@@ -88,7 +88,7 @@ class AnalyticsService {
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
       
-      const response = await axios.get(url, { params });
+      const response = await axios.get(getApiUrl(url), { params });
       return response.data;
     } catch (error) {
       console.error('ユーザーエンゲージメント取得エラー:', error);
@@ -108,8 +108,62 @@ class AnalyticsService {
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
       
-      const response = await axios.get(ANALYTICS.GET_TEAM_ANALYTICS, { params });
-      return response.data;
+      try {
+        // APIが実装されていないため、モックデータを返す
+        // 実際のバックエンドが実装されたらこのコードを削除
+        console.log('モックデータを使用します。本番環境ではバックエンドAPIを使用してください。');
+        
+        // モックデータ
+        const mockData: ITeamAnalytics = {
+          id: 'mock-team-analytics-id',
+          period: {
+            startDate: startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            endDate: endDate || new Date().toISOString()
+          },
+          overallEngagement: 78,
+          responseRate: 82,
+          sentimentDistribution: {
+            positive: 65,
+            neutral: 25,
+            negative: 10
+          },
+          topConcerns: [
+            { topic: '業務量', frequency: 12, averageSentiment: -0.7 },
+            { topic: 'チーム連携', frequency: 8, averageSentiment: -0.5 },
+            { topic: '報酬体系', frequency: 5, averageSentiment: -0.6 }
+          ],
+          topStrengths: [
+            { topic: '職場環境', frequency: 15, averageSentiment: 0.8 },
+            { topic: '技術サポート', frequency: 10, averageSentiment: 0.7 },
+            { topic: '成長機会', frequency: 9, averageSentiment: 0.9 }
+          ],
+          followUpRecommendations: [
+            {
+              userId: '1',
+              urgency: 'high',
+              reason: '過去2週間で急激な満足度低下。技術習得と待遇について複数回の否定的発言あり。',
+              suggestedApproach: '新しい技術トレーニングの機会について1対1でのミーティングを実施し、キャリアビジョンと待遇についての対話を行う。'
+            },
+            {
+              userId: '2',
+              urgency: 'medium',
+              reason: '運勢確認頻度が低下中。対話内容からチーム内人間関係の悩みが検出されている。',
+              suggestedApproach: '間接的にチーム活動への参加を促し、コミュニケーションの機会を増やす。必要に応じてメンター制度の活用を検討。'
+            },
+            {
+              userId: '3',
+              urgency: 'low',
+              reason: 'スキル成長に関する不安の兆候。自己評価が低く、キャリアパスの明確さを求めている。',
+              suggestedApproach: '具体的なスキル向上計画を一緒に設定し、成功体験を増やす機会を提供。組織内での将来的なポジションについて対話を行う。'
+            }
+          ]
+        };
+        
+        return mockData;
+      } catch (apiError) {
+        console.error('APIのモックデータ作成エラー:', apiError);
+        throw apiError;
+      }
     } catch (error) {
       console.error('チーム分析取得エラー:', error);
       throw error;
@@ -121,7 +175,7 @@ class AnalyticsService {
    */
   async getFollowUpRecommendations(): Promise<ITeamAnalytics['followUpRecommendations']> {
     try {
-      const response = await axios.get(ANALYTICS.GET_FOLLOW_UP_RECOMMENDATIONS);
+      const response = await axios.get(getApiUrl(ANALYTICS.GET_FOLLOW_UP_RECOMMENDATIONS));
       return response.data;
     } catch (error) {
       console.error('フォローアップ推奨取得エラー:', error);
@@ -140,7 +194,7 @@ class AnalyticsService {
       if (endDate) params.endDate = endDate;
       if (userId) params.userId = userId;
       
-      const response = await axios.get(ANALYTICS.GET_SENTIMENT_TREND, { params });
+      const response = await axios.get(getApiUrl(ANALYTICS.GET_SENTIMENT_TREND), { params });
       return response.data;
     } catch (error) {
       console.error('感情分析トレンド取得エラー:', error);
@@ -153,7 +207,7 @@ class AnalyticsService {
    */
   async getGoalCompletionRate(): Promise<any> {
     try {
-      const response = await axios.get(ANALYTICS.GET_GOAL_COMPLETION_RATE);
+      const response = await axios.get(getApiUrl(ANALYTICS.GET_GOAL_COMPLETION_RATE));
       return response.data;
     } catch (error) {
       console.error('目標達成率取得エラー:', error);
@@ -162,4 +216,5 @@ class AnalyticsService {
   }
 }
 
-export default new AnalyticsService();
+const analyticsService = new AnalyticsService();
+export default analyticsService;

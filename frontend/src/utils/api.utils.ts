@@ -12,8 +12,13 @@ import axios from 'axios';
 import { isOnline, addToOfflineQueue, getOfflineData, cacheOfflineData } from './offline.utils';
 // import { getStorageItem } from './storage.utils'; // Removed unused import
 
-// APIの基本URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+// API設定をインポート
+import { getApiUrl } from '../api/apiConfig';
+
+// 開発・本番環境用の共通URL
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://patrolmanagement-backend-235426778039.asia-northeast1.run.app'
+  : 'http://localhost:5001';
 
 // オフラインフォールバックが有効なエンドポイント
 const OFFLINE_ENABLED_ENDPOINTS = [
@@ -113,7 +118,7 @@ export const apiRequest = async <T>(
     // キューに追加してオフライン時に後で処理
     const token = localStorage.getItem('token') || '';
     addToOfflineQueue({
-      url: API_BASE_URL + endpoint,
+      url: getApiUrl(endpoint),
       method,
       body: data,
       headers: { 

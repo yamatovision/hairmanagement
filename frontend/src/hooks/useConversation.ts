@@ -5,7 +5,7 @@ import {
   SendMessageRequest, 
   GeneratePromptQuestionRequest 
 } from '../utils/sharedTypes';
-import { conversationService } from '../services/conversation.service';
+import conversationService from '../services/conversation.service';
 
 // トースト通知のカスタムフック（モック実装）
 export const useToast = () => {

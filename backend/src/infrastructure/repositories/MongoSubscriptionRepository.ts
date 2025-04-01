@@ -1,5 +1,5 @@
 import { injectable, inject } from 'tsyringe';
-import mongoose from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import ISubscriptionRepository from '../../domain/repositories/ISubscriptionRepository';
 import { Subscription, PlanType, SubscriptionStatus, PlanInfo, AiModelType } from '../../domain/entities/Subscription';
 import SubscriptionModel, { ISubscriptionDocument } from '../../domain/models/subscription.model';
@@ -14,18 +14,30 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
   constructor(
     @inject('DatabaseConnection') connection: mongoose.Connection
   ) {
-    super(SubscriptionModel);
+    // モデルがロードされているか確認
+    let model: Model<ISubscriptionDocument>;
+    if (mongoose.models.Subscription) {
+      model = mongoose.model('Subscription');
+    } else {
+      // モデルが未登録の場合は明示的に読み込む
+      require('../../domain/models/subscription.model');
+      model = mongoose.model('Subscription');
+    }
+    super(model as Model<mongoose.Document>);
   }
 
   /**
-   * ドキュメントからエンティティへの変換
-   * @param doc MongoDBドキュメント
+   * ドメインエンティティへのマッピング（BaseRepositoryの抽象メソッド実装）
+   * @param model MongoDBドキュメント
    * @returns サブスクリプションエンティティ
    */
-  protected toEntity(doc: ISubscriptionDocument): Subscription {
+  protected toDomainEntity(model: any): Subscription {
+    const doc = model.toObject ? model.toObject() : model;
+    
     return {
       id: doc._id.toString(),
       teamId: doc.teamId || '',  // teamIdがない場合は空文字列
+      userId: doc.userId,  // userIdがある場合のみ含める
       planType: doc.planType as PlanType,
       planInfo: {
         type: doc.planInfo.type as PlanType,
@@ -47,12 +59,12 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
   }
 
   /**
-   * エンティティからドキュメントへの変換（作成用）
+   * モデルデータへのマッピング（BaseRepositoryの抽象メソッド実装）
    * @param entity サブスクリプションエンティティ
-   * @returns MongoDBドキュメント
+   * @returns MongoDBドキュメントデータ
    */
-  protected toDocument(entity: Subscription): Partial<ISubscriptionDocument> {
-    return {
+  protected toModelData(entity: Subscription): any {
+    const modelData = {
       teamId: entity.teamId,
       planType: entity.planType,
       planInfo: {
@@ -70,8 +82,16 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
         fortuneGenerationCount: entity.usageStats.fortuneGenerationCount,
         aiConversationCount: entity.usageStats.aiConversationCount,
         lastUsedAt: entity.usageStats.lastUsedAt
-      } : undefined
+      } : undefined,
+      ...(entity.id && { _id: entity.id })
     };
+    
+    // userIdが存在する場合のみ追加
+    if (entity.userId) {
+      modelData.userId = entity.userId;
+    }
+    
+    return modelData;
   }
 
   /**
@@ -81,7 +101,7 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
    */
   async findByTeamId(teamId: string): Promise<Subscription | null> {
     const doc = await this.model.findOne({ teamId });
-    return doc ? this.toEntity(doc) : null;
+    return doc ? this.toDomainEntity(doc) : null;
   }
 
   /**
@@ -91,7 +111,7 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
    */
   async findByUserId(userId: string): Promise<Subscription | null> {
     const doc = await this.model.findOne({ userId });
-    return doc ? this.toEntity(doc) : null;
+    return doc ? this.toDomainEntity(doc) : null;
   }
 
   /**
@@ -156,7 +176,7 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
       { new: true }
     );
 
-    return updatedDoc ? this.toEntity(updatedDoc) : null;
+    return updatedDoc ? this.toDomainEntity(updatedDoc) : null;
   }
 
   /**

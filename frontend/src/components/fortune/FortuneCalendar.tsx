@@ -25,6 +25,12 @@ import {
 import { useFortune } from '../../hooks/useFortune';
 import { IFortune, ELEMENT_PROPERTIES } from '../../utils/sharedTypes';
 
+// エラーハンドリング用の拡張FortuneType
+type FortuneWithErrorType = IFortune & {
+  error?: boolean;
+  message?: string;
+};
+
 interface FortuneCalendarProps {
   onSelectDate: (fortune: IFortune) => void;
 }
@@ -94,6 +100,42 @@ const FortuneCalendar: React.FC<FortuneCalendarProps> = ({ onSelectDate }) => {
 
   // 現在の月表示
   const currentMonth = currentStartDate.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+
+  // エラーを検出
+  const hasError = weeklyFortunes.length === 1 && weeklyFortunes[0]?.error === true;
+  const errorMessage = hasError ? weeklyFortunes[0]?.message : null;
+
+  // エラーがある場合はエラーメッセージを表示
+  if (hasError) {
+    return (
+      <Box sx={{ mt: 3, mb: 4 }}>
+        <Paper 
+          elevation={2}
+          sx={{ 
+            p: 3, 
+            bgcolor: '#fff3e0', 
+            borderLeft: '4px solid #ff9800',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <Typography variant="h6" color="error" gutterBottom>
+            運勢カレンダーの表示ができません
+          </Typography>
+          <Typography variant="body1" paragraph>
+            {errorMessage || '生年月日が設定されていません。プロフィール設定画面で生年月日を登録してください。'}
+          </Typography>
+          <Chip 
+            label="プロフィール設定へ" 
+            color="primary" 
+            onClick={() => window.location.href = '/profile'}
+            sx={{ cursor: 'pointer', mt: 1 }}
+          />
+        </Paper>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ mt: 3, mb: 4 }}>

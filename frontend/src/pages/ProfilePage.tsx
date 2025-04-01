@@ -4,6 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import ProfileForm from '../components/profile/ProfileForm';
 import NotificationSettings from '../components/profile/NotificationSettings';
 import AIPersonalization from '../components/profile/AIPersonalization';
+import SajuProfileDetails from '../components/profile/SajuProfileDetails';
 
 // タブコンテンツのインターフェース
 interface TabPanelProps {
@@ -109,8 +110,9 @@ const ProfilePage: React.FC = () => {
             }}
           >
             <Tab label="基本情報" {...a11yProps(0)} />
-            <Tab label="通知設定" {...a11yProps(1)} />
-            <Tab label="AIパーソナライズ" {...a11yProps(2)} />
+            <Tab label="四柱推命" {...a11yProps(1)} />
+            <Tab label="通知設定" {...a11yProps(2)} />
+            <Tab label="AIパーソナライズ" {...a11yProps(3)} />
           </Tabs>
 
           <TabPanel value={tabValue} index={0}>
@@ -118,12 +120,16 @@ const ProfilePage: React.FC = () => {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
+            <SajuProfileDetails user={user} />
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
             <NotificationSettings 
               notificationSettings={user.notificationSettings} 
             />
           </TabPanel>
 
-          <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={3}>
             <AIPersonalization />
           </TabPanel>
         </Paper>
