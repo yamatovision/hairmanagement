@@ -1,9 +1,31 @@
-FROM node:18
+# シンプルな Node.js Express サーバー用の Dockerfile（Cloud Run向け最適化）
+FROM node:18-slim
 
 WORKDIR /app
 
-RUN npm init -y && npm install express
+# 必要最小限のパッケージをインストール
+RUN npm init -y && \
+    npm install express cors
 
-COPY index.js .
+# シンプルサーバーをコピー
+COPY simple-server.js ./
 
-CMD ["node", "index.js"]
+# ログディレクトリを作成し、適切な権限を設定
+RUN mkdir -p /app/logs && \
+    chmod -R 777 /app/logs
+
+# 環境変数設定
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV SKIP_DB=true
+ENV SKIP_DB_ERRORS=true
+ENV ENABLE_HEALTHCHECK=true
+
+# Cloud Runで使用されるポートを公開
+EXPOSE 8080
+
+# 明示的にディレクトリ構造を確認
+RUN ls -la /app
+
+# サーバーを起動
+CMD ["node", "simple-server.js"]

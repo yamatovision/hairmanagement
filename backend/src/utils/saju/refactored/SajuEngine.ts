@@ -11,8 +11,13 @@ import { calculateKoreanHourPillar } from './hourPillarCalculator';
 import { 
   calculateTenGods, 
   getElementFromStem, 
-  isStemYin 
+  isStemYin,
+  getHiddenStems
 } from './tenGodCalculator';
+import {
+  calculateTwelveFortunes,
+  calculateTwelveSpirits
+} from './twelveFortuneSpiritCalculator';
 
 /**
  * 四柱推命計算結果の型
@@ -32,6 +37,14 @@ export interface SajuResult {
     yinYang: string;
   };
   processedDateTime: ProcessedDateTime;
+  twelveFortunes?: Record<string, string>; // 十二運星
+  twelveSpirits?: Record<string, string>;  // 十二神殺
+  hiddenStems?: {      // 蔵干
+    year: string[];
+    month: string[];
+    day: string[];
+    hour: string[];
+  };
 }
 
 /**
@@ -96,15 +109,54 @@ export class SajuEngine {
       const adjustedHour = adjustedDate.getHours();
       const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
       
-      // 7. 四柱を構成
-      const fourPillars: FourPillars = {
-        yearPillar,
-        monthPillar,
-        dayPillar,
-        hourPillar
+      // 7. 十二運星と十二神殺を計算
+      const { fortunes: twelveFortunes, spirits: twelveSpirits } = calculateFortuneSpiritInfo(
+        dayPillar.stem,
+        yearPillar.branch,
+        monthPillar.branch,
+        dayPillar.branch,
+        hourPillar.branch,
+        adjustedDate,
+        adjustedHour
+      );
+      
+      // 8. 蔵干（地支に内包される天干）を計算
+      const hiddenStems = {
+        year: getHiddenStems(yearPillar.branch),
+        month: getHiddenStems(monthPillar.branch),
+        day: getHiddenStems(dayPillar.branch),
+        hour: getHiddenStems(hourPillar.branch)
       };
       
-      // 8. 十神関係を計算
+      // 9. 四柱を拡張情報で構成
+      const fourPillars: FourPillars = {
+        yearPillar: {
+          ...yearPillar,
+          fortune: twelveFortunes.year,
+          spirit: twelveSpirits.year,
+          hiddenStems: hiddenStems.year
+        },
+        monthPillar: {
+          ...monthPillar,
+          fortune: twelveFortunes.month,
+          spirit: twelveSpirits.month,
+          hiddenStems: hiddenStems.month
+        },
+        dayPillar: {
+          ...dayPillar,
+          fortune: twelveFortunes.day,
+          spirit: twelveSpirits.day,
+          hiddenStems: hiddenStems.day
+        },
+        hourPillar: {
+          ...hourPillar,
+          fortune: twelveFortunes.hour,
+          spirit: twelveSpirits.hour,
+          hiddenStems: hiddenStems.hour
+        }
+      };
+      
+      // 10. 十神関係を計算
       const tenGods = calculateTenGods(
         dayPillar.stem, 
         yearPillar.stem, 
@@ -112,16 +164,19 @@ export class SajuEngine {
         hourPillar.stem
       );
       
-      // 9. 五行属性を計算
+      // 11. 五行属性を計算
       const elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
       
-      // 10. 結果を返す
+      // 12. 結果を返す
       return {
         fourPillars,
         lunarDate: processedDateTime.lunarDate,
         tenGods,
         elementProfile,
-        processedDateTime
+        processedDateTime,
+        twelveFortunes,
+        twelveSpirits,
+        hiddenStems
       };
     } catch (error) {
       console.error('SajuEngine計算エラー:', error);

@@ -67,26 +67,24 @@ function calculateMonthPillar(date, yearStem, options = {}) {
     lunarMonth = date.getMonth() + 1;
   }
   
-  // 年干に基づく月干の基準値を計算
+  // 年干に基づく月干の基準値を計算 - 2025年4月更新: 天干数パターン実装
   const yearStemIndex = STEMS.indexOf(yearStem);
-  const yearGroup = yearStemIndex % 5;
   
-  // 各年干グループに対応する月干基準値
-  // 基本: 甲己年→甲(0), 乙庚年→丙(2), 丙辛年→戊(4), 丁壬年→庚(6), 戊癸年→壬(8)
-  let monthStemBaseIndices = [0, 2, 4, 6, 8];
-
-  // 韓国式の特殊調整 (癸年の場合)
-  if (yearStem === "癸" && options.useKoreanMethod !== false) {
-    monthStemBaseIndices[4] = 9; // 壬(8)→癸(9)に調整
-  }
+  // 天干数パターンに基づく月干基準値
+  // 甲年: +1、乙年: +3、丙年: +5、丁年: +7、戊年: +9
+  // 己年: +1、庚年: +3、辛年: +5、壬年: +7、癸年: +9
+  const tianGanOffsets = {
+    '甲': 1, '乙': 3, '丙': 5, '丁': 7, '戊': 9,
+    '己': 1, '庚': 3, '辛': 5, '壬': 7, '癸': 9
+  };
   
-  const monthStemBase = monthStemBaseIndices[yearGroup];
+  const monthStemBase = tianGanOffsets[yearStem];
   
-  // 月ごとに2ずつ増加、10で循環
-  const monthStemIndex = (monthStemBase + ((lunarMonth - 1) * 2) % 10) % 10;
+  // 2025年4月更新: 月干は毎月1つずつ進む（+1ルール）
+  const monthStemIndex = (yearStemIndex + monthStemBase + (lunarMonth - 1)) % 10;
   
-  // 月の地支インデックス（寅月=1から始まる）
-  const monthBranchIndex = (lunarMonth + 1) % 12;
+  // 2025年4月更新: 月支のマッピング修正（1月→子(0), 2月→丑(1), ...）
+  const monthBranchIndex = (lunarMonth - 1) % 12;
   
   const stem = STEMS[monthStemIndex];
   const branch = BRANCHES[monthBranchIndex];

@@ -1,0 +1,33 @@
+# 最小限のNode.js Express サーバー用の Dockerfile（Cloud Run向け最適化）
+FROM node:18-slim
+
+WORKDIR /app
+
+# ビルド引数として機能セットを受け取る
+ARG FEATURES=all
+ENV FEATURES=${FEATURES}
+
+# 必要最小限のパッケージをインストール
+RUN npm init -y && \
+    npm install express cors
+
+# 最小限のサーバーをコピー
+COPY server-minimal.js ./
+
+# ログディレクトリを作成し、適切な権限を設定
+RUN mkdir -p /app/logs && \
+    chmod -R 777 /app/logs
+
+# 環境変数設定
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV CORS_ORIGIN=https://dailyfortune-app.web.app
+
+# Cloud Runで使用されるポートを公開
+EXPOSE 8080
+
+# 明示的にディレクトリ構造を確認
+RUN ls -la /app
+
+# サーバーを起動
+CMD ["node", "server-minimal.js"]

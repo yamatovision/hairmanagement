@@ -1,13 +1,17 @@
 /**
- * 韓国式四柱推命計算モジュール
- * サンプルデータに基づいた改善実装
+ * 韓国式四柱推命計算システム
+ * リファクタリング計画に基づいた改善実装
  */
 
 // 型定義のエクスポート
 export * from './types';
 
-// メインのSajuCalculatorクラスをエクスポート
-export { SajuCalculator, SajuResult } from './sajuCalculator';
+// 新しい実装 - SajuEngineとDateTimeProcessor
+export { SajuEngine } from './SajuEngine';
+export { DateTimeProcessor } from './DateTimeProcessor';
+
+// 旧来の実装 - 互換性のため残す
+export { SajuCalculator } from './sajuCalculator';
 
 // 四柱計算モジュール（韓国式）
 export { 
@@ -56,8 +60,33 @@ export {
   calculateTwelveSpirits 
 } from './twelveFortuneSpiritCalculator';
 
-// テスト用関数
-export { testSajuCalculator } from './sajuCalculator';
+/**
+ * 簡易インターフェース：生年月日時から四柱を計算
+ * @param birthDate 生年月日
+ * @param birthHour 生まれた時間（0-23）
+ * @param gender 性別（'M'=男性, 'F'=女性）
+ * @param location 位置情報（都市名または経度・緯度）
+ * @returns 四柱推命計算結果
+ */
+export function calculateSaju(
+  birthDate: Date, 
+  birthHour: number, 
+  gender?: 'M' | 'F',
+  location?: string | { longitude: number, latitude: number }
+) {
+  // 新しいエンジンを使用
+  const engine = new SajuEngine();
+  return engine.calculate(birthDate, birthHour, gender, location);
+}
+
+/**
+ * 現在時刻の四柱を計算
+ * @returns 現在の四柱推命計算結果
+ */
+export function getCurrentSaju() {
+  const engine = new SajuEngine();
+  return engine.getCurrentSaju();
+}
 
 /**
  * 全てのテストを実行する関数
@@ -94,10 +123,21 @@ export function runAllTests(): void {
     }
   });
   
-  console.log('\n### 四柱推命総合テスト ###');
+  console.log('\n### 旧来の四柱計算テスト ###');
   import('./sajuCalculator').then(module => {
     if (module.testSajuCalculator) {
       module.testSajuCalculator();
     }
   });
+  
+  console.log('\n### 新しいSajuEngineテスト ###');
+  // エンジンによる計算結果のテスト
+  const engine = new SajuEngine();
+  const testDate = new Date(1986, 4, 26); // 1986年5月26日
+  const result = engine.calculate(testDate, 5, 'M', '東京');
+  console.log('SajuEngine計算結果:');
+  console.log(`年柱: ${result.fourPillars.yearPillar.fullStemBranch}`);
+  console.log(`月柱: ${result.fourPillars.monthPillar.fullStemBranch}`);
+  console.log(`日柱: ${result.fourPillars.dayPillar.fullStemBranch}`);
+  console.log(`時柱: ${result.fourPillars.hourPillar.fullStemBranch}`);
 }

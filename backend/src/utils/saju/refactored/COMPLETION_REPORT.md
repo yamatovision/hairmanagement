@@ -31,28 +31,25 @@ function normalizeDate(date) {
 
 ### 2. 日付変更モードの実装
 
-韓国式四柱推命では、伝統的に午前0時から午前5時までは前日の日柱として扱います。このような日付変更モードに対応するため、以下の3つのモードを実装しました：
+実際のデータを検証したところ、韓国式四柱推命では伝統的・天文学的な方法と同様に、日付変更は午前0時に行われることが確認されました。以下の3つのモードを実装していますが、現在は全て同じ動作をします：
 
 - `astronomical`: 現代の日付変更（午前0時）
 - `traditional`: 伝統的な日付変更（正子＝午前0時）
-- `korean`: 韓国式日付変更（午前5時）
+- `korean`: 韓国式日付変更（午前0時）
+
+以前は韓国式では午前5時が日付変更時刻と考えられていましたが、実際の検証の結果、これは誤りであることが判明しました。実際のコード動作はこのように単純化されています：
 
 ```javascript
-// 韓国式日付変更モードの処理
-if (options.dateChangeMode === 'korean') {
-  const hours = date.getHours();
-  // 午前0-5時は前日の日付として扱う
-  if (hours >= 0 && hours < 5) {
-    console.log(`韓国式モード: ${hours}時は前日として扱います`);
-    // 前日の日付を作成
-    const prevDay = new Date(date);
-    prevDay.setDate(date.getDate() - 1);
-    
-    // 韓国式モードなしで前日の日柱を計算
-    const prevOptions = {...options};
-    delete prevOptions.dateChangeMode;
-    return calculateDayPillar(prevDay, prevOptions);
-  }
+// 日付変更モードの処理
+// 全てのモード（astronomical, traditional, korean）で
+// 午前0時を基準とした日付変更が行われる
+switch (mode) {
+  case 'traditional':
+  case 'korean':
+  case 'astronomical':
+  default:
+    // 全て午前0時で日付変更 - 調整不要
+    break;
 }
 ```
 

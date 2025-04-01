@@ -34,7 +34,7 @@ app.get('/api/v1/fortune/daily', (req, res) => {
   });
 });
 
-const port = parseInt(process.env.PORT) || 8080;
+const port = parseInt(process.env.PORT) || 5001;
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });

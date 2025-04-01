@@ -5,17 +5,17 @@
 /**
  * 天干（十干）
  */
-const STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+export const STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
 
 /**
  * 地支（十二支）
  */
-const BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+export const BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 
 /**
  * 干支の60組合せ
  */
-const STEM_BRANCHES = [
+export const STEM_BRANCHES = [
   "甲子", "乙丑", "丙寅", "丁卯", "戊辰", "己巳", "庚午", "辛未", "壬申", "癸酉",
   "甲戌", "乙亥", "丙子", "丁丑", "戊寅", "己卯", "庚辰", "辛巳", "壬午", "癸未",
   "甲申", "乙酉", "丙戌", "丁亥", "戊子", "己丑", "庚寅", "辛卯", "壬辰", "癸巳",
@@ -27,7 +27,7 @@ const STEM_BRANCHES = [
 /**
  * 十二運星
  */
-const TWELVE_FORTUNES = [
+export const TWELVE_FORTUNES = [
   "長生", "沐浴", "冠帯", "臨官", "帝旺", "衰", 
   "病", "死", "墓", "絶", "胎", "養"
 ];
@@ -35,7 +35,7 @@ const TWELVE_FORTUNES = [
 /**
  * 十二神殺
  */
-const TWELVE_SPIRITS = [
+export const TWELVE_SPIRITS = [
   "天殺", "地殺", "年殺", "月殺", "日殺", "時殺", 
   "歳破", "五鬼", "災殺", "大耗", "伏兵", "白虎"
 ];
@@ -43,64 +43,60 @@ const TWELVE_SPIRITS = [
 /**
  * 四柱の柱
  */
-class Pillar {
-  stem; // 天干
-  branch; // 地支
-  fullStemBranch; // 天干地支の組み合わせ
-  hiddenStems; // 蔵干（地支に内包される天干）
-  fortune; // 十二運星
-  spirit; // 十二神殺
+export interface Pillar {
+  stem: string; // 天干
+  branch: string; // 地支
+  fullStemBranch: string; // 天干地支の組み合わせ
+  hiddenStems?: string[]; // 蔵干（地支に内包される天干）
+  fortune?: string; // 十二運星
+  spirit?: string; // 十二神殺
 }
 
 /**
  * 四柱情報
  */
-class FourPillars {
-  yearPillar; // 年柱
-  monthPillar; // 月柱
-  dayPillar; // 日柱
-  hourPillar; // 時柱
+export interface FourPillars {
+  yearPillar: Pillar; // 年柱
+  monthPillar: Pillar; // 月柱
+  dayPillar: Pillar; // 日柱
+  hourPillar: Pillar; // 時柱
 }
 
 /**
  * 計算オプション
  */
-class SajuOptions {
-  gender; // 性別（M=男性, F=女性）
-  location; // 場所の座標（経度・緯度）
-  useLocalTime; // 地方時を使用するか
-  useKoreanMethod; // 韓国式計算法を使用するか
+export interface SajuOptions {
+  gender?: 'M' | 'F'; // 性別（M=男性, F=女性）
+  location?: string | { // 場所（都市名または座標）
+    longitude: number; // 経度
+    latitude: number; // 緯度
+  };
+  useLocalTime?: boolean; // 地方時を使用するか
+  useKoreanMethod?: boolean; // 韓国式計算法を使用するか
+  sampleDate?: Date; // サンプルデータの日付（テスト用）
+  useDST?: boolean; // 夏時間を考慮するか（デフォルトはtrue）
 }
 
 /**
  * 旧暦日付情報
  */
-class LunarDate {
-  lunarYear; // 旧暦年
-  lunarMonth; // 旧暦月
-  lunarDay; // 旧暦日
-  isLeapMonth; // 閏月かどうか
-  stemBranch; // 日の干支
+export interface LunarDate {
+  lunarYear: number; // 旧暦年
+  lunarMonth: number; // 旧暦月
+  lunarDay: number; // 旧暦日
+  isLeapMonth: boolean; // 閏月かどうか
+  stemBranch?: string; // 日の干支
 }
 
 /**
  * 旧暦と干支のカレンダーデータ
  */
-class CalendarDay {
-  solarDate; // 新暦日付（YYYY-MM-DD）
-  lunarDate; // 旧暦日付（例: 3/4）
-  stemBranch; // 干支（例: 庚子）
-  lunarMonth; // 旧暦月
-  lunarDay; // 旧暦日
-  isLeapMonth; // 閏月かどうか
-  solarTerm; // 節気（該当する場合のみ）
+export interface CalendarDay {
+  solarDate: string; // 新暦日付（YYYY-MM-DD）
+  lunarDate: string; // 旧暦日付（例: 3/4）
+  stemBranch: string; // 干支（例: 庚子）
+  lunarMonth: number; // 旧暦月
+  lunarDay: number; // 旧暦日
+  isLeapMonth: boolean; // 閏月かどうか
+  solarTerm?: string; // 節気（該当する場合のみ）
 }
-
-// モジュールをエクスポート
-module.exports = {
-  STEMS,
-  BRANCHES,
-  STEM_BRANCHES,
-  TWELVE_FORTUNES,
-  TWELVE_SPIRITS
-};

@@ -25,14 +25,19 @@
    - `sajuCalculator.ts` - メインの計算クラス
    - `index.ts` - 外部向けAPIの定義
 
-2. **四柱計算モジュール**
-   - `koreanYearPillarCalculator.ts` - 年柱計算
-   - `koreanMonthPillarCalculator.ts` - 月柱計算
-   - `dayPillarCalculator.ts` - 日柱計算
-   - `hourPillarCalculator.ts` - 時柱計算
+2. **四柱計算モジュール（8つの分離モジュール）**
+   - `yearStemCalculator.ts` - 年柱の天干計算
+   - `yearBranchCalculator.ts` - 年柱の地支計算
+   - `monthStemCalculator.ts` - 月柱の天干計算
+   - `monthBranchCalculator.ts` - 月柱の地支計算
+   - `dayStemCalculator.ts` - 日柱の天干計算
+   - `dayBranchCalculator.ts` - 日柱の地支計算
+   - `hourStemCalculator.ts` - 時柱の天干計算
+   - `hourBranchCalculator.ts` - 時柱の地支計算
   
 3. **支援モジュール**
    - `lunarDateCalculator.ts` - 旧暦変換
+   - `lunarConverter.ts` - 旧暦変換補助
    - `tenGodCalculator.ts` - 十神計算
    - `twelveFortuneSpiritCalculator.ts` - 十二運星・十二神殺計算
 
@@ -62,53 +67,114 @@ console.log('四柱：',
 console.log('五行属性：', 
   `${result.elementProfile.yinYang}${result.elementProfile.mainElement}(主)`,
   `/ ${result.elementProfile.secondaryElement}(副)`);
-
-// 十神関係
-console.log('十神関係：');
-Object.entries(result.tenGods).forEach(([pillar, god]) => {
-  console.log(`  ${pillar}: ${god}`);
-});
 ```
 
-より高度な使用例：
+## 個別の天干地支計算
+
+各柱の天干・地支を個別に計算する例（新しい8つのモジュール）：
 
 ```typescript
-// 特定のオプションを指定
+import { calculateYearStem } from './yearStemCalculator';
+import { calculateYearBranch } from './yearBranchCalculator';
+import { calculateMonthStem } from './monthStemCalculator';
+import { calculateMonthBranch } from './monthBranchCalculator';
+import { calculateDayStem } from './dayStemCalculator';
+import { calculateDayBranch } from './dayBranchCalculator';
+import { calculateHourStem } from './hourStemCalculator';
+import { calculateHourBranch } from './hourBranchCalculator';
+
+// 計算対象の日時
+const birthDate = new Date(1986, 11, 20); // 1986年12月20日
+const birthHour = 3; // 午前3時
+
+// 年柱の計算
+const yearStem = calculateYearStem(birthDate.getFullYear());
+const yearBranch = calculateYearBranch(birthDate.getFullYear());
+
+// 月柱の計算
+const monthStem = calculateMonthStem(birthDate, yearStem);
+const monthBranch = calculateMonthBranch(birthDate);
+
+// 日柱の計算（地方時調整あり）
 const options = {
-  useLocalTime: true, // 地方時を使用
+  useLocalTime: true,
   location: { longitude: 126.9779, latitude: 37.5665 } // ソウルの座標
 };
+const dayStem = calculateDayStem(birthDate, options);
+const dayBranch = calculateDayBranch(birthDate, options);
 
-// 四柱推命計算（オプション指定）
-const result = SajuCalculator.calculate(birthDate, birthHour, gender, options);
+// 時柱の計算
+const hourStem = calculateHourStem(birthHour, dayStem);
+const hourBranch = calculateHourBranch(birthHour);
+
+// 結果表示
+console.log(`年柱: ${yearStem}${yearBranch}`);
+console.log(`月柱: ${monthStem}${monthBranch}`);
+console.log(`日柱: ${dayStem}${dayBranch}`);
+console.log(`時柱: ${hourStem}${hourBranch}`);
 ```
 
-## アルゴリズム
+## 旧暦変換の使用例
 
-各モジュールの詳細なアルゴリズムは以下のファイルに記載されています：
+```typescript
+// 新暦から旧暦への変換
+import { getLunarDate } from './lunarDateCalculator';
 
-- 年柱計算：`README_YEAR_PILLAR.md`
-- 月柱計算：`README_MONTH_PILLAR.md`
-- 日柱計算：`README_DAY_PILLAR.md`
-- 時柱計算：`README_HOUR_PILLAR.md`（このファイルは未作成）
+// 新暦日付
+const solarDate = new Date(1986, 11, 20); // 1986年12月20日
+
+// 旧暦情報を取得
+const lunarDate = getLunarDate(solarDate);
+if (lunarDate) {
+  console.log(`旧暦: ${lunarDate.lunarYear}年${lunarDate.lunarMonth}月${lunarDate.lunarDay}日 ${lunarDate.isLeapMonth ? '(閏月)' : ''}`);
+}
+
+// lunar-javascriptライブラリを使用した直接変換
+// より精度の高い結果を得られます
+import * as fs from 'fs';
+import * as path from 'path';
+
+// 該当するスクリプトを実行
+const scriptPath = path.join(__dirname, 'lunarcalc.js');
+const result = require('child_process').execSync(`node ${scriptPath}`).toString();
+console.log(result);
+```
 
 ## テスト実行方法
 
-統合テストの実行方法：
+個々のモジュールのテスト実行方法：
 
 ```bash
-# TypeScriptコンパイル
-npx tsc
+# 年干の計算テスト
+node yearStemCalculator.js
 
-# テスト実行
-node -e "require('./index').runAllTests()"
+# 年支の計算テスト
+node yearBranchCalculator.js
+
+# 月干の計算テスト
+node monthStemCalculator.js
+
+# 月支の計算テスト
+node monthBranchCalculator.js
+
+# 日干の計算テスト
+node dayStemCalculator.js
+
+# 日支の計算テスト
+node dayBranchCalculator.js
+
+# 時干の計算テスト
+node hourStemCalculator.js
+
+# 時支の計算テスト
+node hourBranchCalculator.js
 ```
 
-または、個別のテストスクリプトを使用：
+特定の日付の旧暦変換のテスト：
 
 ```bash
-# テストスクリプト実行
-./test-runner.sh
+# 旧暦変換テスト
+node lunarcalc.js
 ```
 
 ## 参考資料

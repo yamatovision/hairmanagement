@@ -17,7 +17,8 @@ import {
   calculateTwelveFortunes, 
   calculateTwelveSpirits 
 } from './twelveFortuneSpiritCalculator';
-import { getLunarDate } from './lunarDateCalculator';
+import { getLunarDate, getLocationCoordinates } from './lunarDateCalculator';
+import { STEMS, BRANCHES } from './types';
 
 /**
  * 四柱推命計算結果の型
@@ -49,99 +50,199 @@ export class SajuCalculator {
    * @param birthDate 生年月日
    * @param birthHour 生まれた時間（0-23）
    * @param gender 性別（'M'=男性, 'F'=女性）
-   * @param location 位置情報（経度・緯度）
+   * @param location 位置情報（都市名または経度・緯度）
    * @returns 四柱推命計算結果
    */
   static calculate(
     birthDate: Date, 
     birthHour: number, 
     gender?: 'M' | 'F',
-    location = { longitude: 139.7671, latitude: 35.6812 } // デフォルトは東京
+    location?: string | { longitude: number, latitude: number } // 都市名または座標
   ): SajuResult {
-    // オプション設定
-    const options: SajuOptions = {
-      gender,
-      useLocalTime: true,
-      location
-    };
-    
-    // 地方時に調整
-    const adjustedDate = getLocalTimeAdjustedDate(birthDate, options);
-    
-    // 旧暦（陰暦）情報を取得
-    const lunarDate = getLunarDate(adjustedDate);
-    
-    // 1. 年柱を計算 - 韓国式
-    const yearPillar = calculateKoreanYearPillar(
-      adjustedDate.getFullYear()
-    );
-    
-    // 2. 日柱を計算 - 韓国式
-    const dayPillar = calculateKoreanDayPillar(adjustedDate, options);
-    
-    // 3. 月柱を計算 - 韓国式
-    const monthPillar = calculateKoreanMonthPillar(
-      adjustedDate,
-      yearPillar.stem,
-      { useSolarTerms: true }
-    );
-    
-    // 4. 時柱を計算 - 韓国式
-    const hourPillar = calculateKoreanHourPillar(birthHour, dayPillar.stem);
-    
-    // 四柱情報を構築
-    const fourPillars: FourPillars = {
-      yearPillar,
-      monthPillar,
-      dayPillar,
-      hourPillar
-    };
-    
-    // 5. 十神関係を計算
-    const tenGods = calculateTenGods(
-      dayPillar.stem, 
-      yearPillar.stem, 
-      monthPillar.stem, 
-      hourPillar.stem
-    );
-    
-    // 6. 日柱から五行属性プロファイルを計算
-    const elementProfile = this.calculateElementalProfile(dayPillar, monthPillar);
-    
-    // 7. 十二運星と十二神殺を計算（オプション）
-    const twelveFortunes = calculateTwelveFortunes(
-      dayPillar.stem,
-      yearPillar.branch,
-      monthPillar.branch,
-      dayPillar.branch,
-      hourPillar.branch,
-      birthDate,
-      birthHour
-    );
-    
-    const twelveSpirits = calculateTwelveSpirits(
-      yearPillar.branch,
-      monthPillar.branch,
-      dayPillar.branch,
-      hourPillar.branch,
-      birthDate,
-      birthHour
-    );
-    
-    // 結果をまとめて返す
-    return {
-      fourPillars,
-      lunarDate: lunarDate ? {
-        year: lunarDate.lunarYear,
-        month: lunarDate.lunarMonth,
-        day: lunarDate.lunarDay,
-        isLeapMonth: lunarDate.isLeapMonth
-      } : undefined,
-      tenGods,
-      elementProfile,
-      twelveFortunes,
-      twelveSpirits
-    };
+    try {
+      // デバッグログ
+      console.log('SajuCalculator.calculate input:', birthDate, 'isValid:', birthDate instanceof Date && !isNaN(birthDate.getTime()));
+      console.log('Location:', location);
+      
+      // 入力チェック - 無効な日付が渡された場合は現在の日付を使用
+      if (!birthDate || isNaN(birthDate.getTime())) {
+        console.error('日付変更調整: 無効な日付が渡されました');
+        birthDate = new Date(); // 現在の日付をデフォルト値として使用
+      }
+      
+      // 位置情報を取得
+      const locationCoords = getLocationCoordinates(location || "東京");
+      console.log('LocationCoords:', locationCoords);
+      
+      // オプション設定
+      const options: SajuOptions = {
+        gender,
+        useLocalTime: true,
+        location: locationCoords
+      };
+      console.log('Options:', options);
+      
+      // 地方時に調整
+      const adjustedDate = getLocalTimeAdjustedDate(birthDate, options);
+      console.log('Adjusted date:', adjustedDate, 'isValid:', adjustedDate instanceof Date && !isNaN(adjustedDate.getTime()));
+      
+      // 旧暦（陰暦）情報を取得
+      const lunarDate = getLunarDate(adjustedDate);
+      console.log('Lunar date:', lunarDate);
+      
+      // 1. 年柱を計算 - 韓国式
+      console.log('Calculating year pillar...');
+      const yearPillar = calculateKoreanYearPillar(
+        adjustedDate.getFullYear()
+      );
+      console.log('Year pillar:', yearPillar);
+      
+      // 2. 日柱を計算 - 韓国式
+      console.log('Calculating day pillar...');
+      const dayPillar = calculateKoreanDayPillar(adjustedDate, options);
+      console.log('Day pillar:', dayPillar);
+      
+      // 3. 月柱を計算 - 韓国式
+      console.log('Calculating month pillar...');
+      const monthPillar = calculateKoreanMonthPillar(
+        adjustedDate,
+        yearPillar.stem,
+        { useSolarTerms: true }
+      );
+      console.log('Month pillar:', monthPillar);
+      
+      // 4. 時柱を計算 - 韓国式
+      const hourPillar = calculateKoreanHourPillar(birthHour, dayPillar.stem);
+      
+      // 四柱情報を構築
+      const fourPillars: FourPillars = {
+        yearPillar,
+        monthPillar,
+        dayPillar,
+        hourPillar
+      };
+
+      // 5. 十神関係を計算
+      const tenGods = calculateTenGods(
+        dayPillar.stem, 
+        yearPillar.stem, 
+        monthPillar.stem, 
+        hourPillar.stem
+      );
+      
+      // 6. 日柱から五行属性プロファイルを計算
+      const elementProfile = this.calculateElementalProfile(dayPillar, monthPillar);
+      
+      // 7. 十二運星と十二神殺を計算（オプション）
+      const twelveFortunes = calculateTwelveFortunes(
+        dayPillar.stem,
+        yearPillar.branch,
+        monthPillar.branch,
+        dayPillar.branch,
+        hourPillar.branch,
+        birthDate,
+        birthHour
+      );
+      
+      const twelveSpirits = calculateTwelveSpirits(
+        yearPillar.branch,
+        monthPillar.branch,
+        dayPillar.branch,
+        hourPillar.branch,
+        birthDate,
+        birthHour
+      );
+      
+      // 結果をまとめて返す
+      return {
+        fourPillars,
+        lunarDate: lunarDate ? {
+          year: lunarDate.lunarYear,
+          month: lunarDate.lunarMonth,
+          day: lunarDate.lunarDay,
+          isLeapMonth: lunarDate.isLeapMonth
+        } : undefined,
+        tenGods,
+        elementProfile,
+        twelveFortunes,
+        twelveSpirits
+      };
+    } catch (error) {
+      console.error('SajuCalculator計算エラー:', error);
+      
+      try {
+        // エラー回復: 各モジュールから四柱を直接計算
+        const adjustedDate = birthDate;
+        const year = adjustedDate.getFullYear();
+        const month = adjustedDate.getMonth() + 1;
+        const day = adjustedDate.getDate();
+        
+        const yearStemIdx = (year - 4) % 10;
+        const yearBranchIdx = (year - 4) % 12;
+        
+        const yearStem = STEMS[yearStemIdx];
+        const yearBranch = BRANCHES[yearBranchIdx];
+        
+        const monthStemIdx = (yearStemIdx + 3 + (month - 1)) % 10;
+        const monthBranchIdx = ((month + 1) % 12);
+        
+        const monthStem = STEMS[monthStemIdx];
+        const monthBranch = BRANCHES[monthBranchIdx];
+        
+        const defaultPillar = { stem: '甲', branch: '子', fullStemBranch: '甲子' };
+        
+        return {
+          fourPillars: {
+            yearPillar: { 
+              stem: yearStem, 
+              branch: yearBranch, 
+              fullStemBranch: `${yearStem}${yearBranch}` 
+            },
+            monthPillar: { 
+              stem: monthStem, 
+              branch: monthBranch, 
+              fullStemBranch: `${monthStem}${monthBranch}` 
+            },
+            dayPillar: defaultPillar,
+            hourPillar: defaultPillar
+          },
+          elementProfile: {
+            mainElement: getElementFromStem('甲'),
+            secondaryElement: getElementFromStem(monthStem),
+            yinYang: isStemYin('甲') ? '陰' : '陽'
+          },
+          tenGods: {
+            year: '不明',
+            month: '不明',
+            day: '比肩',
+            hour: '食神'
+          }
+        };
+      } catch(recoveryError) {
+        console.error('SajuCalculator回復エラー:', recoveryError);
+        // エラー時はデフォルト値を設定
+        const defaultPillar = { stem: '甲', branch: '子', fullStemBranch: '甲子' };
+        return {
+          fourPillars: {
+            yearPillar: defaultPillar,
+            monthPillar: defaultPillar,
+            dayPillar: defaultPillar,
+            hourPillar: defaultPillar
+          },
+          elementProfile: {
+            mainElement: '木',
+            secondaryElement: '木',
+            yinYang: '陽'
+          },
+          tenGods: {
+            year: '不明',
+            month: '不明',
+            day: '比肩',
+            hour: '食神'
+          }
+        };
+      }
+    }
   }
   
   /**

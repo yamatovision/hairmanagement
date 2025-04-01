@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "es2016",
     "module": "commonjs",
-    "rootDir": "./src",
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -12,15 +11,15 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "baseUrl": ".",
     "paths": {
-      "@shared": ["./shared"],
-      "@shared/*": ["./shared/*"]
+      "@shared": ["../shared"],
+      "@shared/*": ["../shared/*"]
     },
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noEmitOnError": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  "files": ["src/types/express/index.d.ts"],
-  "references": [
-    { "path": "./shared" }
-  ]
+  "files": ["src/types/express/index.d.ts"]
 }

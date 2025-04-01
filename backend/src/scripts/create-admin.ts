@@ -8,7 +8,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import UserModel from '../models/user.model';
+import UserModel from '../domain/models/user.model';
 
 // 環境変数の読み込み
 dotenv.config();
