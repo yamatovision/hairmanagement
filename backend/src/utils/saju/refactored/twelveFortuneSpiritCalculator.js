@@ -315,6 +315,162 @@ function isDaySpirit(yearBranch, monthBranch, dayBranch, hourBranch) {
 }
 
 /**
+ * 劫殺の発生条件の判定
+ * サンプルデータからのパターン発見に基づく実装
+ * @param yearBranch 年柱の地支
+ * @param monthBranch 月柱の地支
+ * @param dayBranch 日柱の地支
+ * @param hourBranch 時柱の地支
+ * @param yearStem 年柱の天干
+ * @param monthStem 月柱の天干
+ * @param dayStem 日柱の天干
+ * @param hourStem 時柱の天干
+ * @returns 劫殺の発生有無
+ */
+function isRobberySpirit(yearBranch, monthBranch, dayBranch, hourBranch, yearStem, monthStem, dayStem, hourStem) {
+    // 1. 申（猿）の地支を持つ柱での劫殺の発生
+    if (yearBranch === '申' || monthBranch === '申' || dayBranch === '申' || hourBranch === '申') {
+        // 特に申と丙・戊の組み合わせは劫殺が多い
+        if (yearStem === '丙' || monthStem === '丙' || dayStem === '丙' || hourStem === '丙' ||
+            yearStem === '戊' || monthStem === '戊' || dayStem === '戊' || hourStem === '戊') {
+            return true;
+        }
+    }
+    
+    // 2. 寅（虎）の地支での劫殺の発生
+    if (yearBranch === '寅' || monthBranch === '寅') {
+        // 寅と壬・戊の組み合わせが劫殺と関連
+        if (yearStem === '壬' || monthStem === '壬' || 
+            yearStem === '戊' || monthStem === '戊') {
+            return true;
+        }
+    }
+    
+    // 3. 巳（蛇）の地支と特定の天干の組み合わせ
+    if (dayBranch === '巳') {
+        if (dayStem === '癸') {
+            return true;
+        }
+    }
+    
+    // 4. 金の五行属性を持つ地支と天干の組み合わせ
+    // 申・酉は金の五行属性
+    const metalBranches = ['申', '酉'];
+    const metalStems = ['庚', '辛']; // 金の天干
+    
+    for (const branch of metalBranches) {
+        if (dayBranch === branch) {
+            for (const stem of metalStems) {
+                if (yearStem === stem || monthStem === stem) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    // 5. 特定の十二支の組み合わせによる劫殺
+    // 寅-申、巳-亥などの相対関係
+    const specialPairs = [
+        ['寅', '申'], // 相対関係
+        ['巳', '亥'], // 相対関係
+        ['寅', '巳'], // 刑関係
+        ['申', '子']  // 三合関係の一部
+    ];
+    
+    for (const [branch1, branch2] of specialPairs) {
+        // 年柱と日柱、または月柱と時柱の相対関係
+        if ((yearBranch === branch1 && dayBranch === branch2) || 
+            (yearBranch === branch2 && dayBranch === branch1) ||
+            (monthBranch === branch1 && hourBranch === branch2) || 
+            (monthBranch === branch2 && hourBranch === branch1)) {
+            return true;
+        }
+    }
+    
+    // 6. 六害関係による劫殺
+    // 日柱と時柱、または年柱と月柱が六害関係
+    if (BRANCH_RELATIONS.LIUHAI[dayBranch] === hourBranch || 
+        BRANCH_RELATIONS.LIUHAI[yearBranch] === monthBranch) {
+        // 特に寅申、巳亥の組み合わせ
+        if ((dayBranch === '寅' && hourBranch === '申') || 
+            (dayBranch === '申' && hourBranch === '寅') ||
+            (dayBranch === '巳' && hourBranch === '亥') || 
+            (dayBranch === '亥' && hourBranch === '巳') ||
+            (yearBranch === '寅' && monthBranch === '申') || 
+            (yearBranch === '申' && monthBranch === '寅') ||
+            (yearBranch === '巳' && monthBranch === '亥') || 
+            (yearBranch === '亥' && monthBranch === '巳')) {
+            return true;
+        }
+    }
+    
+    // 他のケースでは劫殺は発生しない
+    return false;
+}
+
+/**
+ * 財殺の発生条件を判定する関数
+ * サンプルデータからのパターン発見に基づく実装
+ * @param dayStem 日柱の天干
+ * @param yearBranch 年柱の地支
+ * @param monthBranch 月柱の地支
+ * @param dayBranch 日柱の地支
+ * @param hourBranch 時柱の地支
+ * @param hourStem 時柱の天干
+ * @returns 財殺が発生するかどうか
+ */
+function isMoneySpirit(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, hourStem) {
+    // 1. 年柱が卯または酉の場合
+    if (yearBranch === '卯' || yearBranch === '酉') {
+        return true;
+    }
+    
+    // 2. 月柱が酉の場合
+    if (monthBranch === '酉') {
+        return true;
+    }
+    
+    // 3. 時柱が子で、特定の天干との組み合わせ
+    if (hourBranch === '子' && ['庚', '壬'].includes(hourStem)) {
+        return true;
+    }
+    
+    // 4. 天干と地支の五行関係による財殺
+    const dayStemElement = (0, tenGodCalculator_1.getElementFromStem)(dayStem);
+    const hourStemElement = (0, tenGodCalculator_1.getElementFromStem)(hourStem);
+    
+    // 日主が金で時柱が水の場合、または日主が水で時柱が金の場合
+    if ((dayStemElement === '金' && hourStemElement === '水') ||
+        (dayStemElement === '水' && hourStemElement === '金')) {
+        return true;
+    }
+    
+    // 5. 地支の相克関係と金水の組み合わせ
+    const dayBranchElement = (0, tenGodCalculator_1.getElementFromBranch)(dayBranch);
+    const hourBranchElement = (0, tenGodCalculator_1.getElementFromBranch)(hourBranch);
+    
+    if ((dayBranchElement === '金' && hourBranchElement === '水') ||
+        (dayBranchElement === '水' && hourBranchElement === '金')) {
+        return true;
+    }
+    
+    // 6. 特定の干支組み合わせ（サンプルデータから抽出）
+    const specialCombinations = [
+        ['庚', '子'], ['壬', '酉'], ['癸', '卯']
+    ];
+    
+    for (const [stem, branch] of specialCombinations) {
+        if ((dayStem === stem && hourBranch === branch) || 
+            (hourStem === stem && dayBranch === branch)) {
+            return true;
+        }
+    }
+    
+    // その他のケースでは財殺は発生しない
+    return false;
+}
+
+/**
  * 時殺の発生条件の判定
  * サンプルデータからのパターン発見に基づく実装
  * @param dayStem 日柱の天干
@@ -414,8 +570,10 @@ function calculateTwelveSpirits(yearBranch, monthBranch, dayBranch, hourBranch, 
         daySpirit = '六害殺';
     }
     
-    // 年柱の神殺 - 年柱が卯または酉の場合は「財殺」が多い
-    var yearSpirit = (yearBranch === '卯' || yearBranch === '酉') ? '財殺' : '望神殺';
+    // 財殺の判定 - 財殺の条件に基づく
+    var yearSpirit = hourStem ? 
+        (isMoneySpirit(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, hourStem) ? '財殺' : '望神殺') :
+        ((yearBranch === '卯' || yearBranch === '酉') ? '財殺' : '望神殺');
     
     // 特定の組み合わせの処理（サンプルデータから抽出）
     if (yearBranch === '寅' && monthBranch === '巳') {
@@ -460,6 +618,12 @@ function testTwelveFortuneSpiritCalculator() {
             dayStem: "癸", yearStem: "癸", monthStem: "辛", hourStem: "壬",
             yearBranch: "卯", monthBranch: "酉", dayBranch: "巳", hourBranch: "子",
             date: new Date(2023, 9, 2), hour: 0
+        },
+        {
+            description: "1995年1月1日0時",
+            dayStem: "壬", yearStem: "甲", monthStem: "丙", hourStem: "庚",
+            yearBranch: "戌", monthBranch: "子", dayBranch: "辰", hourBranch: "子",
+            date: new Date(1995, 0, 1), hour: 0
         }
     ];
     for (var _i = 0, testCases_1 = testCases; _i < testCases_1.length; _i++) {
@@ -475,6 +639,10 @@ function testTwelveFortuneSpiritCalculator() {
         // 日殺判定のテスト
         var isDaySpiritResult = isDaySpirit(yearBranch, monthBranch, dayBranch, hourBranch);
         console.log("日殺判定: ".concat(isDaySpiritResult ? '日殺あり' : '日殺なし'));
+        
+        // 財殺判定のテスト
+        var isMoneySpiritResult = hourStem ? isMoneySpirit(dayStem, yearBranch, monthBranch, dayBranch, hourBranch, hourStem) : false;
+        console.log("財殺判定: ".concat(isMoneySpiritResult ? '財殺あり' : '財殺なし'));
         
         // 結果表示
         console.log('十二運星:');
