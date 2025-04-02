@@ -141,7 +141,7 @@ const SajuProfileDetails: React.FC<SajuProfileDetailsProps> = ({ user }) => {
     );
   }
 
-  const { fourPillars, mainElement, yinYang, tenGods } = sajuProfile;
+  const { fourPillars, mainElement, yinYang, tenGods, branchTenGods } = sajuProfile;
 
   return (
     <Box>
@@ -300,8 +300,8 @@ const SajuProfileDetails: React.FC<SajuProfileDetailsProps> = ({ user }) => {
                         </TableCell>
                         <TableCell>
                           <Chip 
-                            label={tenGods['yearBranch'] || '-'} 
-                            color={getTenGodColor(tenGods['yearBranch'])}
+                            label={branchTenGods?.year || '-'} 
+                            color={getTenGodColor(branchTenGods?.year)}
                             variant="outlined"
                           />
                         </TableCell>
@@ -327,8 +327,8 @@ const SajuProfileDetails: React.FC<SajuProfileDetailsProps> = ({ user }) => {
                         </TableCell>
                         <TableCell>
                           <Chip 
-                            label={tenGods['monthBranch'] || '-'} 
-                            color={getTenGodColor(tenGods['monthBranch'])} 
+                            label={branchTenGods?.month || '-'} 
+                            color={getTenGodColor(branchTenGods?.month)} 
                             variant="outlined"
                           />
                         </TableCell>
@@ -354,8 +354,8 @@ const SajuProfileDetails: React.FC<SajuProfileDetailsProps> = ({ user }) => {
                         </TableCell>
                         <TableCell>
                           <Chip 
-                            label={tenGods['dayBranch'] || '-'} 
-                            color={getTenGodColor(tenGods['dayBranch'])}
+                            label={branchTenGods?.day || '-'} 
+                            color={getTenGodColor(branchTenGods?.day)}
                             variant="outlined"
                           />
                         </TableCell>
@@ -381,8 +381,8 @@ const SajuProfileDetails: React.FC<SajuProfileDetailsProps> = ({ user }) => {
                         </TableCell>
                         <TableCell>
                           <Chip 
-                            label={tenGods['hourBranch'] || '-'} 
-                            color={getTenGodColor(tenGods['hourBranch'])}
+                            label={branchTenGods?.hour || '-'} 
+                            color={getTenGodColor(branchTenGods?.hour)}
                             variant="outlined"
                           />
                         </TableCell>

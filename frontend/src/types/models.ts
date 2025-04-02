@@ -102,6 +102,7 @@ export interface ISajuProfile {
   secondaryElement?: string;
   yinYang?: string;
   tenGods?: Record<string, string>;
+  branchTenGods?: Record<string, string>;
 }
 
 // ユーザー基本情報
