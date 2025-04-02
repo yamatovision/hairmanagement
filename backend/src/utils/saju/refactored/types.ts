@@ -50,6 +50,7 @@ export interface Pillar {
   hiddenStems?: string[]; // 蔵干（地支に内包される天干）
   fortune?: string; // 十二運星
   spiritKiller?: string; // 十二神殺
+  branchTenGod?: string; // 地支の十神関係
 }
 
 /**

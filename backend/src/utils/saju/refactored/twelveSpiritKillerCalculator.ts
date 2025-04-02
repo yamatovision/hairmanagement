@@ -741,11 +741,12 @@ export function calculateTwelveSpirits(
     hourSpirit = '財殺';
   }
   
+  // 空の値を「無し」に変換する
   return {
-    year: yearSpirit,
-    month: monthSpirit,
-    day: daySpirit,
-    hour: hourSpirit
+    year: yearSpirit || '無し',
+    month: monthSpirit || '無し',
+    day: daySpirit || '無し',
+    hour: hourSpirit || '無し'
   };
 }
 

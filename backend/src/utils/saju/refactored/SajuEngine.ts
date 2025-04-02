@@ -177,31 +177,31 @@ export class SajuEngine {
           yearPillar: {
             ...yearPillar,
             fortune: twelveFortunes.year,
-            spiritKiller: twelveSpiritKillers.year,
+            spiritKiller: twelveSpiritKillers.year || '無し',
             hiddenStems: hiddenStems.year
           },
           monthPillar: {
             ...monthPillar,
             fortune: twelveFortunes.month,
-            spiritKiller: twelveSpiritKillers.month,
+            spiritKiller: twelveSpiritKillers.month || '無し',
             hiddenStems: hiddenStems.month
           },
           dayPillar: {
             ...dayPillar,
             fortune: twelveFortunes.day,
-            spiritKiller: twelveSpiritKillers.day,
+            spiritKiller: twelveSpiritKillers.day || '無し',
             hiddenStems: hiddenStems.day
           },
           hourPillar: {
             ...hourPillar,
             fortune: twelveFortunes.hour,
-            spiritKiller: twelveSpiritKillers.hour,
+            spiritKiller: twelveSpiritKillers.hour || '無し',
             hiddenStems: hiddenStems.hour
           }
         };
       
         // 10. 十神関係を計算（天干と地支の両方）
-        tenGods = calculateTenGods(
+        const tenGodResult = calculateTenGods(
           dayPillar.stem, 
           yearPillar.stem, 
           monthPillar.stem, 
@@ -211,6 +211,20 @@ export class SajuEngine {
           dayPillar.branch,
           hourPillar.branch
         );
+        
+        // 天干と地支の十神関係を分離
+        tenGods = {
+          year: tenGodResult.year,
+          month: tenGodResult.month,
+          day: tenGodResult.day,
+          hour: tenGodResult.hour
+        };
+        
+        // 地支の十神関係を各柱に関連付け
+        fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch;
+        fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch;
+        fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch;
+        fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch;
       
         // 11. 五行属性を計算
         elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
@@ -268,31 +282,31 @@ export class SajuEngine {
           yearPillar: {
             ...yearPillar,
             fortune: twelveFortunes.year,
-            spiritKiller: twelveSpiritKillers.year,
+            spiritKiller: twelveSpiritKillers.year || '無し',
             hiddenStems: hiddenStems.year
           },
           monthPillar: {
             ...monthPillar,
             fortune: twelveFortunes.month,
-            spiritKiller: twelveSpiritKillers.month,
+            spiritKiller: twelveSpiritKillers.month || '無し',
             hiddenStems: hiddenStems.month
           },
           dayPillar: {
             ...dayPillar,
             fortune: twelveFortunes.day,
-            spiritKiller: twelveSpiritKillers.day,
+            spiritKiller: twelveSpiritKillers.day || '無し',
             hiddenStems: hiddenStems.day
           },
           hourPillar: {
             ...hourPillar,
             fortune: twelveFortunes.hour,
-            spiritKiller: twelveSpiritKillers.hour,
+            spiritKiller: twelveSpiritKillers.hour || '無し',
             hiddenStems: hiddenStems.hour
           }
         };
       
         // 10. 十神関係を計算（天干と地支の両方）
-        tenGods = calculateTenGods(
+        const tenGodResult = calculateTenGods(
           dayPillar.stem, 
           yearPillar.stem, 
           monthPillar.stem, 
@@ -302,6 +316,20 @@ export class SajuEngine {
           dayPillar.branch,
           hourPillar.branch
         );
+        
+        // 天干と地支の十神関係を分離
+        tenGods = {
+          year: tenGodResult.year,
+          month: tenGodResult.month,
+          day: tenGodResult.day,
+          hour: tenGodResult.hour
+        };
+        
+        // 地支の十神関係を各柱に関連付け
+        fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch;
+        fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch;
+        fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch;
+        fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch;
       
         // 11. 五行属性を計算
         elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
