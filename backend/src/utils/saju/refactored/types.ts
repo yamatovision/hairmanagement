@@ -41,6 +41,14 @@ export const TWELVE_SPIRIT_KILLERS = [
 ];
 
 /**
+ * 隠された天干の十神関係情報
+ */
+export interface HiddenStemTenGod {
+  stem: string; // 蔵干
+  tenGod: string; // 十神関係
+}
+
+/**
  * 四柱の柱
  */
 export interface Pillar {
@@ -51,6 +59,7 @@ export interface Pillar {
   fortune?: string; // 十二運星
   spiritKiller?: string; // 十二神殺
   branchTenGod?: string; // 地支の十神関係
+  hiddenStemsTenGods?: HiddenStemTenGod[]; // 蔵干の十神関係情報
 }
 
 /**
