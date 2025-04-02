@@ -23,23 +23,24 @@ export class SajuCalculatorService {
 
   /**
    * 四柱推命プロファイルを計算する
-   * @param userId ユーザーID
    * @param birthDate 生年月日
    * @param birthHour 出生時間（0-23の時間、省略可）
    * @param birthLocation 出生地（省略可）
+   * @param useKoreanMethod 韓国式計算を使用するかどうか
    * @returns 四柱推命プロファイル
    */
   async calculateSajuProfile(
-    userId: string, 
     birthDate: Date, 
     birthHour?: number, 
-    birthLocation?: string
+    birthLocation?: string,
+    useKoreanMethod?: boolean
   ): Promise<SajuProfile> {
     // パラメータのログ記録
-    console.log(`SajuCalculatorService: Calculating profile for ${userId}`);
+    console.log(`SajuCalculatorService: Calculating profile`);
     console.log(`- date: ${birthDate.toISOString()}`);
     console.log(`- hour: ${birthHour !== undefined ? birthHour : 'unspecified'}`);
     console.log(`- location: ${birthLocation || 'unspecified'}`);
+    console.log(`- useKoreanMethod: ${useKoreanMethod}`);
     
     try {
       // 地理的情報の処理（birthLocationの処理）
@@ -192,7 +193,7 @@ export class SajuCalculatorService {
    * @param useKoreanMethod 韓国式計算を使用するかどうか
    * @returns 四柱情報
    */
-  calculateDayFourPillars(date?: string, useKoreanMethod?: boolean): any {
+  calculateDayFourPillars(date?: Date | string, useKoreanMethod?: boolean): any {
     try {
       console.log(`Calculate day four pillars for date: ${date || 'today'}, useKoreanMethod: ${useKoreanMethod}`);
       

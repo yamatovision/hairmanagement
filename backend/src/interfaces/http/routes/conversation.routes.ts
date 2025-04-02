@@ -17,8 +17,8 @@ export const registerConversationRoutes = (router: Router): void => {
    */
   // 依存性を遅延解決
   try {
-    const authMiddleware = container.resolve('AuthMiddleware');
-    const conversationController = container.resolve('ConversationController');
+    const authMiddleware = container.resolve<any>('AuthMiddleware');
+    const conversationController = container.resolve<any>('ConversationController');
     
     conversationRouter.post(
       '/message',
@@ -43,8 +43,8 @@ export const registerConversationRoutes = (router: Router): void => {
    */
   // 依存性を避遣解決
   try {
-    const authMiddleware = container.resolve('AuthMiddleware');
-    const conversationController = container.resolve('ConversationController');
+    const authMiddleware = container.resolve<any>('AuthMiddleware');
+    const conversationController = container.resolve<any>('ConversationController');
     
     conversationRouter.get(
       '/',
@@ -69,8 +69,8 @@ export const registerConversationRoutes = (router: Router): void => {
    */
   // 依存性を避遣解決
   try {
-    const authMiddleware = container.resolve('AuthMiddleware');
-    const conversationController = container.resolve('ConversationController');
+    const authMiddleware = container.resolve<any>('AuthMiddleware');
+    const conversationController = container.resolve<any>('ConversationController');
     
     conversationRouter.get(
       '/:id',
@@ -95,8 +95,8 @@ export const registerConversationRoutes = (router: Router): void => {
    */
   // 依存性を避遣解決
   try {
-    const authMiddleware = container.resolve('AuthMiddleware');
-    const conversationController = container.resolve('ConversationController');
+    const authMiddleware = container.resolve<any>('AuthMiddleware');
+    const conversationController = container.resolve<any>('ConversationController');
     
     conversationRouter.post(
       '/generate-prompt',
@@ -121,8 +121,8 @@ export const registerConversationRoutes = (router: Router): void => {
    */
   // 依存性を避遣解決
   try {
-    const authMiddleware = container.resolve('AuthMiddleware');
-    const conversationController = container.resolve('ConversationController');
+    const authMiddleware = container.resolve<any>('AuthMiddleware');
+    const conversationController = container.resolve<any>('ConversationController');
     
     conversationRouter.put(
       '/:id/archive',
@@ -147,8 +147,8 @@ export const registerConversationRoutes = (router: Router): void => {
    */
   // 依存性を避遣解決
   try {
-    const authMiddleware = container.resolve('AuthMiddleware');
-    const conversationController = container.resolve('ConversationController');
+    const authMiddleware = container.resolve<any>('AuthMiddleware');
+    const conversationController = container.resolve<any>('ConversationController');
     
     conversationRouter.put(
       '/:id/favorite',
@@ -173,8 +173,8 @@ export const registerConversationRoutes = (router: Router): void => {
    */
   // 依存性を避遣解決
   try {
-    const authMiddleware = container.resolve('AuthMiddleware');
-    const conversationController = container.resolve('ConversationController');
+    const authMiddleware = container.resolve<any>('AuthMiddleware');
+    const conversationController = container.resolve<any>('ConversationController');
     
     conversationRouter.post(
       '/team-member-chat',
@@ -199,8 +199,8 @@ export const registerConversationRoutes = (router: Router): void => {
    */
   // 依存性を避遣解決
   try {
-    const authMiddleware = container.resolve('AuthMiddleware');
-    const conversationController = container.resolve('ConversationController');
+    const authMiddleware = container.resolve<any>('AuthMiddleware');
+    const conversationController = container.resolve<any>('ConversationController');
     
     conversationRouter.post(
       '/fortune-chat',

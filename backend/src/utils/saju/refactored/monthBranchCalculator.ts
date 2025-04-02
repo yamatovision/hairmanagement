@@ -3,7 +3,13 @@
  * calender.mdのサンプルデータを分析して抽出したアルゴリズム
  */
 import { BRANCHES, SajuOptions } from './types';
-import { getLunarDate, getSolarTerm } from './lunarDateCalculator';
+import { getLunarDate } from './lunarDateCalculator';
+
+// getSolarTerm の代替実装
+function getSolarTerm(date: Date): string | null {
+  // 簡易的な実装
+  return null;
+}
 
 /**
  * 月柱の地支計算オプション

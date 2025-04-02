@@ -143,8 +143,7 @@ export class UpdateUserProfileUseCase {
         try {
           // 四柱推命プロファイルを計算
           const sajuProfile = await this.sajuCalculatorService.calculateSajuProfile(
-            userId,
-            updatedUser.birthDate,
+            new Date(updatedUser.birthDate),
             updatedUser.birthHour,
             updatedUser.birthLocation
           );

@@ -101,8 +101,7 @@ export class UserController {
       
       // 四柱推命プロファイル計算（出生地も渡す）
       const sajuProfile = await this.sajuCalculatorService.calculateSajuProfile(
-        userEntity.id,
-        birthDate,
+        new Date(birthDate),
         birthHour,
         birthLocation
       );

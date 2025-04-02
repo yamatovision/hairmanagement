@@ -63,10 +63,20 @@ export interface FourPillars {
 }
 
 /**
+ * 性別の型
+ */
+export type Gender = 'M' | 'F';
+
+/**
+ * 十神関係の型
+ */
+export type TenGodRelation = string;
+
+/**
  * 計算オプション
  */
 export interface SajuOptions {
-  gender?: 'M' | 'F'; // 性別（M=男性, F=女性）
+  gender?: Gender; // 性別（M=男性, F=女性）
   location?: string | { // 場所（都市名または座標）
     longitude: number; // 経度
     latitude: number; // 緯度
@@ -75,6 +85,9 @@ export interface SajuOptions {
   useKoreanMethod?: boolean; // 韓国式計算法を使用するか
   sampleDate?: Date; // サンプルデータの日付（テスト用）
   useDST?: boolean; // 夏時間を考慮するか（デフォルトはtrue）
+  useLunarMonth?: boolean; // 旧暦月を使用するか
+  useSolarTerms?: boolean; // 節気を使用するか
+  ignoreSpecialCases?: boolean; // 特殊ケースを無視するか
 }
 
 /**

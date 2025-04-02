@@ -149,8 +149,7 @@ export class SajuEngine {
           yearPillar.branch,
           monthPillar.branch,
           dayPillar.branch,
-          hourPillar.branch,
-          0 // ハードコードされた値を使用（精度優先）
+          hourPillar.branch
         );
         
         // 7.5. 十二神殺を計算
@@ -241,8 +240,7 @@ export class SajuEngine {
           yearPillar.branch,
           monthPillar.branch,
           dayPillar.branch,
-          hourPillar.branch,
-          0 // ハードコードされた値を使用（精度優先）
+          hourPillar.branch
         );
         
         // 7.5. 十二神殺を計算

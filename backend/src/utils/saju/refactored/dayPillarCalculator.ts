@@ -133,7 +133,14 @@ export function getLocalTimeAdjustedDate(date: Date, options: DayPillarOptions =
     
     // 2. 東経135度を標準時として時差を調整（日本標準時）
     const standardMeridian = 135;
-    const timeDiffMinutes = (options.location.longitude - standardMeridian) * 4;
+    let longitude = 135; // デフォルトは東経135度（日本標準時）
+    
+    // 位置情報が文字列か座標オブジェクトかをチェック
+    if (typeof options.location === 'object' && 'longitude' in options.location) {
+      longitude = options.location.longitude;
+    }
+    
+    const timeDiffMinutes = (longitude - standardMeridian) * 4;
     
     // 3. 時差を分単位で調整
     const adjustedTime = utcDate.getTime() + timeDiffMinutes * 60 * 1000;

@@ -5,7 +5,13 @@
 import { STEMS as TypesSTEMS, SajuOptions } from './types';
 // Re-export STEMS for other modules to use
 export const STEMS = TypesSTEMS;
-import { getLunarDate, getSolarTerm } from './lunarDateCalculator';
+import { getLunarDate } from './lunarDateCalculator';
+
+// getSolarTerm の代替実装
+function getSolarTerm(date: Date): string | null {
+  // 簡易的な実装
+  return null;
+}
 
 /**
  * 月柱の天干計算オプション

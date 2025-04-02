@@ -22,7 +22,7 @@ async function runServiceTest() {
     
     // 四柱推命プロファイルを計算（韓国式）
     console.log('【韓国式計算】');
-    const profile = await service.calculateProfile(testDate, testHour, undefined, true);
+    const profile = await service.calculateSajuProfile(new Date(testDate), testHour, undefined, true);
     
     console.log('四柱:', formatFourPillars(profile.fourPillars));
     console.log('基本属性:', `${profile.yinYang}${profile.mainElement}`);
@@ -31,7 +31,7 @@ async function runServiceTest() {
     
     // その日の四柱を計算
     console.log('\n【その日の四柱】');
-    const dayPillars = await service.calculateDayFourPillars(testDate, true);
+    const dayPillars = await service.calculateDayFourPillars(new Date(testDate), true);
     console.log('その日の四柱:', formatFourPillars(dayPillars));
     
   } catch (error) {

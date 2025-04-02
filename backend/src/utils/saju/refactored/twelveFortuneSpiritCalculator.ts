@@ -44,13 +44,97 @@ const STEM_YIN_YANG = {
 
 /**
  * 各天干の長生地支（十二運星の起点）
+ * サンプルデータからの分析に基づいて改良
  */
 const LONG_LIFE_START_BRANCHES = {
-  '甲': '寅', '乙': '寅', // 木の天干は寅から
-  '丙': '巳', '丁': '巳', // 火の天干は巳から
-  '戊': '寅', '己': '卯', // 土の天干は特殊（陽陰で異なる）
-  '庚': '丑', '辛': '子', // 金の天干は特殊（陽陰で異なる）
-  '壬': '卯', '癸': '卯'  // 水の天干は卯から
+  '甲': '寅', // 木の陽
+  '乙': '酉', // 木の陰
+  '丙': '寅', // 火の陽
+  '丁': '酉', // 火の陰
+  '戊': '寅', // 土の陽
+  '己': '酉', // 土の陰
+  '庚': '寅', // 金の陽 
+  '辛': '巳', // 金の陰
+  '壬': '申', // 水の陽
+  '癸': '卯'  // 水の陰
+};
+
+/**
+ * 各天干の衰地支（長生から数えて5つ目）
+ * サンプルデータからの分析に基づいて作成
+ * 
+ * 衰（すい）とは十二運星の帝旺の次、病の前に位置し、
+ * 盛んな勢いが衰え始めた状態を意味する。
+ */
+const DECLINE_BRANCHES = {
+  '甲': '辰', // 木の陽
+  '乙': '丑', // 木の陰
+  '丙': '未', // 火の陽 (推定)
+  '丁': '卯', // 火の陰 (推定)
+  '戊': '未', // 土の陽
+  '己': '未', // 土の陰
+  '庚': '未', // 金の陽 (推定)
+  '辛': '未', // 金の陰
+  '壬': '戌', // 水の陽 (推定)
+  '癸': '丑'  // 水の陰
+};
+
+/**
+ * 各天干の病地支（サンプルデータからの分析に基づいて作成）
+ * 
+ * 病（びょう）は十二運星の衰の次、死の前に位置し、
+ * 勢いが衰えて病の状態になったことを意味する。
+ */
+const ILLNESS_BRANCHES = {
+  '甲': '巳', // 木の陽
+  '乙': '子', // 木の陰
+  '丙': '申', // 火の陽
+  '丁': '寅', // 火の陰
+  '戊': '申', // 土の陽
+  '己': '申', // 土の陰
+  '庚': '申', // 金の陽
+  '辛': '申', // 金の陰
+  '壬': '亥', // 水の陽
+  '癸': '子'  // 水の陰
+};
+
+/**
+ * 各天干の死地支（サンプルデータからの分析に基づいて作成）
+ * 
+ * 死（し）は十二運星の病の次、墓の前に位置し、
+ * 勢いが完全に尽きた状態を意味する。
+ */
+const DEATH_BRANCHES = {
+  '甲': '午', // 木の陽
+  '乙': '亥', // 木の陰
+  '丙': '酉', // 火の陽
+  '丁': '丑', // 火の陰
+  '戊': '酉', // 土の陽
+  '己': '酉', // 土の陰
+  '庚': '子', // 金の陽
+  '辛': '巳', // 金の陰
+  '壬': '寅', // 水の陽
+  '癸': '申'  // 水の陰
+};
+
+/**
+ * 各天干の墓地支（サンプルデータからの分析に基づいて作成）
+ * 
+ * 墓（ぼ）は十二運星の死の次、絶の前に位置し、
+ * 勢いが完全に尽きて墓所に入った状態を意味する。
+ * 暦注では「死-墓-絶」の順序で進行する。
+ */
+const GRAVE_BRANCHES = {
+  '甲': '未', // 木の陽
+  '乙': '戌', // 木の陰
+  '丙': '丑', // 火の陽
+  '丁': '戌', // 火の陰
+  '戊': '丑', // 土の陽 - サンプルから判断
+  '己': '丑', // 土の陰
+  '庚': '丑', // 金の陽
+  '辛': '丑', // 金の陰
+  '壬': '辰', // 水の陽
+  '癸': '未'  // 水の陰
 };
 
 /**
@@ -58,97 +142,88 @@ const LONG_LIFE_START_BRANCHES = {
  * true: 順行、false: 逆行
  */
 const PROGRESSION_DIRECTION = {
-  '甲': true,  '乙': true,  // 木の天干は順行
-  '丙': false, '丁': false, // 火の天干は逆行
-  '戊': true,  '己': true,  // 土の天干は順行
-  '庚': false, '辛': false, // 金の天干は逆行
-  '壬': true,  '癸': true   // 水の天干は順行
+  '甲': true,  '乙': false, // 木の天干
+  '丙': true,  '丁': false, // 火の天干
+  '戊': true,  '己': false, // 土の天干
+  '庚': true,  '辛': false, // 金の天干
+  '壬': true,  '癸': false  // 水の天干
 };
 
 /**
- * 韓国式十二運星マッピング
- * 日主（日柱の天干）ごとに、各地支に対応する十二運星を定義します
- * サンプルデータとの検証に基づいて調整
+ * 衰の十二運星かどうかを判定する
+ * @param stem 天干
+ * @param branch 地支 
+ * @returns 衰かどうか
  */
-const KOREAN_TWELVE_FORTUNE_MAP: Record<string, Record<string, string>> = {
-  // 甲日の十二運星
-  '甲': {
-    '子': '沐浴', '丑': '衰', '寅': '長生', '卯': '病', 
-    '辰': '冠帯', '巳': '帝旺', '午': '死', '未': '養', 
-    '申': '絶', '酉': '胎', '戌': '墓', '亥': '養'
-  },
-  // 乙日の十二運星
-  '乙': {
-    '子': '衰', '丑': '冠帯', '寅': '長生', '卯': '病', 
-    '辰': '養', '巳': '建禄', '午': '死', '未': '沐浴', 
-    '申': '絶', '酉': '胎', '戌': '墓', '亥': '養'
-  },
-  // 丙日の十二運星
-  '丙': {
-    '子': '死', '丑': '墓', '寅': '絶', '卯': '胎', 
-    '辰': '養', '巳': '長生', '午': '帝旺', '未': '冠帯', 
-    '申': '病', '酉': '衰', '戌': '沐浴', '亥': '建禄'
-  },
-  // 丁日の十二運星
-  '丁': {
-    '子': '死', '丑': '墓', '寅': '絶', '卯': '胎', 
-    '辰': '養', '巳': '長生', '午': '帝旺', '未': '冠帯', 
-    '申': '病', '酉': '衰', '戌': '沐浴', '亥': '建禄'
-  },
-  // 戊日の十二運星
-  '戊': {
-    '子': '胎', '丑': '墓', '寅': '長生', '卯': '沐浴', 
-    '辰': '冠帯', '巳': '臨官', '午': '帝旺', '未': '衰', 
-    '申': '病', '酉': '死', '戌': '養', '亥': '絶'
-  },
-  // 己日の十二運星
-  '己': {
-    '子': '胎', '丑': '墓', '寅': '沐浴', '卯': '長生', 
-    '辰': '冠帯', '巳': '臨官', '午': '帝旺', '未': '衰', 
-    '申': '病', '酉': '死', '戌': '養', '亥': '絶'
-  },
-  // 庚日の十二運星
-  '庚': {
-    '子': '死', '丑': '長生', '寅': '養', '卯': '絶', 
-    '辰': '墓', '巳': '死', '午': '沐浴', '未': '衰', 
-    '申': '帝旺', '酉': '冠帯', '戌': '墓', '亥': '胎'
-  },
-  // 辛日の十二運星
-  '辛': {
-    '子': '長生', '丑': '養', '寅': '養', '卯': '絶', 
-    '辰': '墓', '巳': '死', '午': '沐浴', '未': '衰', 
-    '申': '帝旺', '酉': '建禄', '戌': '墓', '亥': '胎'
-  },
-  // 壬日の十二運星
-  '壬': {
-    '子': '建禄', '丑': '冠帯', '寅': '病', '卯': '長生', 
-    '辰': '墓', '巳': '胎', '午': '死', '未': '墓', 
-    '申': '養', '酉': '絶', '戌': '養', '亥': '帝旺'
-  },
-  // 癸日の十二運星
-  '癸': {
-    '子': '建禄', '丑': '冠帯', '寅': '病', '卯': '長生', 
-    '辰': '墓', '巳': '胎', '午': '死', '未': '墓', 
-    '申': '養', '酉': '絶', '戌': '衰', '亥': '帝旺'
-  }
-};
+function isDeclineFortune(stem: string, branch: string): boolean {
+  // 各天干の衰地支との一致を確認
+  return DECLINE_BRANCHES[stem] === branch;
+}
+
+/**
+ * 病の十二運星かどうかを判定する
+ * @param stem 天干
+ * @param branch 地支
+ * @returns 病かどうか
+ */
+function isIllnessFortune(stem: string, branch: string): boolean {
+  // 各天干の病地支との一致を確認
+  return ILLNESS_BRANCHES[stem] === branch;
+}
+
+/**
+ * 死の十二運星かどうかを判定する
+ * @param stem 天干
+ * @param branch 地支
+ * @returns 死かどうか
+ */
+function isDeathFortune(stem: string, branch: string): boolean {
+  // 各天干の死地支との一致を確認
+  return DEATH_BRANCHES[stem] === branch;
+}
+
+/**
+ * 墓の十二運星かどうかを判定する
+ * @param stem 天干
+ * @param branch 地支
+ * @returns 墓かどうか
+ */
+function isGraveFortune(stem: string, branch: string): boolean {
+  // 各天干の墓地支との一致を確認
+  return GRAVE_BRANCHES[stem] === branch;
+}
 
 /**
  * アルゴリズムに基づいて特定の天干と地支の組み合わせから十二運星を計算する
  * @param stem 天干
  * @param branch 地支
- * @param skipHardcodedMap ハードコードされたマップをスキップするかどうか
  * @returns 対応する十二運星
  */
-export function calculateTwelveFortuneForBranch(stem: string, branch: string, skipHardcodedMap: boolean = false): string {
-  // ハードコードされたマップをチェック（最も正確）- スキップフラグが立っていない場合のみ
-  if (!skipHardcodedMap && KOREAN_TWELVE_FORTUNE_MAP[stem]?.[branch]) {
-    return KOREAN_TWELVE_FORTUNE_MAP[stem][branch];
-  }
-  
+export function calculateTwelveFortuneForBranch(stem: string, branch: string): string {
   // パラメータの検証
   if (!STEMS.includes(stem) || !BRANCHES.includes(branch)) {
     return '不明';
+  }
+  
+  // 特殊なパターンの判定
+  // 1. 衰（すい）の判定
+  if (isDeclineFortune(stem, branch)) {
+    return '衰';
+  }
+  
+  // 2. 病（びょう）の判定
+  if (isIllnessFortune(stem, branch)) {
+    return '病';
+  }
+  
+  // 3. 死（し）の判定
+  if (isDeathFortune(stem, branch)) {
+    return '死';
+  }
+  
+  // 4. 墓（ぼ）の判定
+  if (isGraveFortune(stem, branch)) {
+    return '墓';
   }
   
   // 天干に対応する長生の始点地支を取得
@@ -176,72 +251,18 @@ export function calculateTwelveFortuneForBranch(stem: string, branch: string, sk
     position = (startIndex - branchIndex + 12) % 12;
   }
   
-  // 基本的な十二運星順序で取得（例外を除く）
-  const basicFortune = position < TWELVE_FORTUNE_ORDER.length ? TWELVE_FORTUNE_ORDER[position] : '不明';
-  
-  // ========== 特殊パターンと例外の処理 ==========
-  
-  // 建禄の特殊パターン
-  const isKenrokuPattern = (
-    (stem === '辛' && branch === '酉') ||
-    ((stem === '壬' || stem === '癸') && branch === '子') ||
-    (stem === '乙' && branch === '巳')
-  );
-  if (isKenrokuPattern) {
-    return '建禄';
-  }
-  
-  // 墓の特殊パターン（複数回出現）
-  const isGravePattern = (
-    (stem === '庚' && (branch === '辰' || branch === '戌')) ||
-    (stem === '壬' && (branch === '辰' || branch === '未')) ||
-    (stem === '癸' && (branch === '辰' || branch === '未'))
-  );
-  if (isGravePattern) {
-    return '墓';
-  }
-  
-  // 養の特殊パターン（複数回出現）
-  const isNurturePattern = (
-    (stem === '甲' && (branch === '未' || branch === '亥')) ||
-    (stem === '乙' && (branch === '辰' || branch === '亥')) ||
-    (stem === '丙' && branch === '辰') ||
-    (stem === '丁' && branch === '辰') ||
-    (stem === '戊' && branch === '戌') ||
-    (stem === '壬' && (branch === '申' || branch === '戌'))
-  );
-  if (isNurturePattern) {
-    return '養';
-  }
-  
-  // 五行に基づく特殊パターン
-  // 火の天干（丙丁）の逆行パターンと特殊表記
-  if ((stem === '丙' || stem === '丁') && branch === '亥') {
-    return '建禄';
-  }
-  
-  // 庚日の特殊パターン
-  if (stem === '庚') {
-    if (branch === '子') return '死';
-    if (branch === '午') return '沐浴';
-    if (branch === '未') return '衰';
-    if (branch === '申') return '帝旺';
-    if (branch === '酉') return '冠帯';
-    if (branch === '亥') return '胎';
-  }
-  
-  // 基本的な十二運星を返す
-  return basicFortune;
+  // 十二運星順序から結果を取得
+  const fortune = position < TWELVE_FORTUNE_ORDER.length ? TWELVE_FORTUNE_ORDER[position] : '不明';
+  return fortune;
 }
 
 /**
- * 十二運星を計算 - 様々な計算方法を提供
+ * 十二運星を計算
  * @param dayStem 日主（日柱の天干）
  * @param yearBranch 年柱の地支
  * @param monthBranch 月柱の地支
  * @param dayBranch 日柱の地支
  * @param hourBranch 時柱の地支
- * @param calculationMethod 計算方法: 0=ハードコードマップ, 1=アルゴリズム(ハードコードマップも使用), 2=純粋なアルゴリズムのみ
  * @returns 四柱の十二運星を含むオブジェクト
  */
 export function calculateTwelveFortunes(
@@ -250,53 +271,23 @@ export function calculateTwelveFortunes(
   monthBranch: string,
   dayBranch: string,
   hourBranch: string,
-  calculationMethod: number = 0
+  date?: Date,
+  hour?: number
 ): Record<string, string> {
-  // 計算方法に応じた処理
-  if (calculationMethod === 0) {
-    // 従来のハードコードされたマッピングを使用
-    const fortuneMap = KOREAN_TWELVE_FORTUNE_MAP[dayStem];
-    if (!fortuneMap) {
-      console.warn(`天干「${dayStem}」に対する十二運星マッピングが見つかりません`);
-      return {
-        year: '不明',
-        month: '不明',
-        day: '不明',
-        hour: '不明'
-      };
-    }
-
-    // 各柱の地支に対応する十二運星を取得
-    return {
-      year: fortuneMap[yearBranch] || '不明',
-      month: fortuneMap[monthBranch] || '不明',
-      day: fortuneMap[dayBranch] || '不明',
-      hour: fortuneMap[hourBranch] || '不明'
-    };
-  } else if (calculationMethod === 1) {
-    // アルゴリズム計算（ハードコードマップも使用）
-    return {
-      year: calculateTwelveFortuneForBranch(dayStem, yearBranch),
-      month: calculateTwelveFortuneForBranch(dayStem, monthBranch),
-      day: calculateTwelveFortuneForBranch(dayStem, dayBranch),
-      hour: calculateTwelveFortuneForBranch(dayStem, hourBranch)
-    };
-  } else {
-    // 純粋なアルゴリズムのみ使用（ハードコードマップは使わない）
-    return {
-      year: calculateTwelveFortuneForBranch(dayStem, yearBranch, true),
-      month: calculateTwelveFortuneForBranch(dayStem, monthBranch, true),
-      day: calculateTwelveFortuneForBranch(dayStem, dayBranch, true),
-      hour: calculateTwelveFortuneForBranch(dayStem, hourBranch, true)
-    };
-  }
+  // 各柱の地支に対応する十二運星を計算
+  return {
+    year: calculateTwelveFortuneForBranch(dayStem, yearBranch),
+    month: calculateTwelveFortuneForBranch(dayStem, monthBranch),
+    day: calculateTwelveFortuneForBranch(dayStem, dayBranch),
+    hour: calculateTwelveFortuneForBranch(dayStem, hourBranch)
+  };
 }
 
 /**
  * 十二運星のテスト関数
  */
 function testTwelveFortuneCalculator(): void {
-  console.log('--- 十二運星計算テスト (ハードコード版) ---');
+  console.log('--- 十二運星計算テスト (新アルゴリズム版) ---');
   
   // 1986年5月26日5時のテスト
   const test1 = calculateTwelveFortunes('庚', '寅', '巳', '午', '卯');
@@ -307,7 +298,7 @@ function testTwelveFortuneCalculator(): void {
   console.log('2023-10-15-12 (丙午日): ', test2);
   
   // サンプルデータに基づくテスト
-  console.log('\n--- サンプルデータに基づく十二運星計算テスト (ハードコード版) ---');
+  console.log('\n--- サンプルデータに基づく十二運星計算テスト ---');
   
   // サンプル1: 1970年(陽暦1月1日, 00:00, 男性, ソウル)
   // 四柱: 年柱[己酉], 月柱[丙子], 日柱[辛巳], 時柱[戊子]
@@ -325,7 +316,7 @@ function testTwelveFortuneCalculator(): void {
   // 四柱: 年柱[癸卯], 月柱[辛酉], 日柱[壬辰], 時柱[庚子]
   const sample3 = calculateTwelveFortunes('壬', '卯', '酉', '辰', '子');
   console.log('2023-10-1-0 (壬辰日): ', sample3);
-  // 期待値: 年[長生], 月[絶], 日[墓], 時[帝王]
+  // 期待値: 年[長生], 月[絶], 日[墓], 時[帝旺]
   
   // サンプル4: 2023年2月4日(立春, 00:00, 女性, ソウル)
   // 四柱: 年柱[壬寅], 月柱[癸丑], 日柱[癸巳], 時柱[壬子]
@@ -333,239 +324,26 @@ function testTwelveFortuneCalculator(): void {
   console.log('2023-2-4-0 (癸巳日): ', sample4);
   // 期待値: 年[沐浴], 月[冠帯], 日[胎], 時[建禄]
   
-  // アルゴリズム版のテスト (ハードコードマップ併用)
-  console.log('\n--- 十二運星計算テスト (アルゴリズム版 - ハードコードマップ併用) ---');
+  // 天干と地支の組み合わせテスト
+  console.log('\n--- 天干ごとの長生地支とその十二運星 ---');
   
-  // 同じテストケースをアルゴリズム版でテスト
-  const algo1 = calculateTwelveFortunes('庚', '寅', '巳', '午', '卯', 1);
-  console.log('1986-5-26-5 (庚午日): ', algo1);
+  // すべての天干について長生地支の検証
+  const stems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
   
-  const algo2 = calculateTwelveFortunes('丙', '卯', '戌', '午', '午', 1);
-  console.log('2023-10-15-12 (丙午日): ', algo2);
-  
-  const algo3 = calculateTwelveFortunes('辛', '酉', '子', '巳', '子', 1);
-  console.log('1970-1-1-0 (辛巳日): ', algo3);
-  
-  const algo4 = calculateTwelveFortunes('庚', '子', '子', '子', '子', 1);
-  console.log('1985-1-1-0 (庚子日): ', algo4);
-  
-  const algo5 = calculateTwelveFortunes('壬', '卯', '酉', '辰', '子', 1);
-  console.log('2023-10-1-0 (壬辰日): ', algo5);
-  
-  const algo6 = calculateTwelveFortunes('癸', '寅', '丑', '巳', '子', 1);
-  console.log('2023-2-4-0 (癸巳日): ', algo6);
-  
-  // 純粋なアルゴリズム版のテスト (ハードコードマップを使わない)
-  console.log('\n--- 十二運星計算テスト (純粋なアルゴリズム版) ---');
-  
-  // 同じテストケースを純粋アルゴリズム版でテスト
-  const pureAlgo1 = calculateTwelveFortunes('庚', '寅', '巳', '午', '卯', 2);
-  console.log('1986-5-26-5 (庚午日): ', pureAlgo1);
-  
-  const pureAlgo2 = calculateTwelveFortunes('丙', '卯', '戌', '午', '午', 2);
-  console.log('2023-10-15-12 (丙午日): ', pureAlgo2);
-  
-  const pureAlgo3 = calculateTwelveFortunes('辛', '酉', '子', '巳', '子', 2);
-  console.log('1970-1-1-0 (辛巳日): ', pureAlgo3);
-  
-  const pureAlgo4 = calculateTwelveFortunes('庚', '子', '子', '子', '子', 2);
-  console.log('1985-1-1-0 (庚子日): ', pureAlgo4);
-  
-  const pureAlgo5 = calculateTwelveFortunes('壬', '卯', '酉', '辰', '子', 2);
-  console.log('2023-10-1-0 (壬辰日): ', pureAlgo5);
-  
-  const pureAlgo6 = calculateTwelveFortunes('癸', '寅', '丑', '巳', '子', 2);
-  console.log('2023-2-4-0 (癸巳日): ', pureAlgo6);
-  
-  // 一致率の評価
-  console.log('\n--- ハードコード版と各アルゴリズム版の比較 ---');
-  const testCases = [
-    { stem: '庚', yearBranch: '寅', monthBranch: '巳', dayBranch: '午', hourBranch: '卯' },
-    { stem: '丙', yearBranch: '卯', monthBranch: '戌', dayBranch: '午', hourBranch: '午' },
-    { stem: '辛', yearBranch: '酉', monthBranch: '子', dayBranch: '巳', hourBranch: '子' },
-    { stem: '庚', yearBranch: '子', monthBranch: '子', dayBranch: '子', hourBranch: '子' },
-    { stem: '壬', yearBranch: '卯', monthBranch: '酉', dayBranch: '辰', hourBranch: '子' },
-    { stem: '癸', yearBranch: '寅', monthBranch: '丑', dayBranch: '巳', hourBranch: '子' },
-  ];
-  
-  // ハードコード版とアルゴリズム版(ハードコードマップ併用)の比較
-  let matches1 = 0;
-  let total1 = 0;
-  
-  console.log('\n1. ハードコード版 vs アルゴリズム版(ハードコードマップ併用):');
-  
-  for (const testCase of testCases) {
-    const hard = calculateTwelveFortunes(
-      testCase.stem, 
-      testCase.yearBranch, 
-      testCase.monthBranch, 
-      testCase.dayBranch, 
-      testCase.hourBranch,
-      0
-    );
+  for (const stem of stems) {
+    // 長生地支の取得
+    const longLifeBranch = LONG_LIFE_START_BRANCHES[stem];
+    // 長生地支での十二運星の計算
+    const fortune = calculateTwelveFortuneForBranch(stem, longLifeBranch);
+    console.log(`${stem}日の長生地支: ${longLifeBranch} - 十二運星: ${fortune}`);
     
-    const algo = calculateTwelveFortunes(
-      testCase.stem, 
-      testCase.yearBranch, 
-      testCase.monthBranch, 
-      testCase.dayBranch, 
-      testCase.hourBranch, 
-      1
-    );
-    
-    // 各柱ごとに比較
-    const branches = [testCase.yearBranch, testCase.monthBranch, testCase.dayBranch, testCase.hourBranch];
-    ['year', 'month', 'day', 'hour'].forEach((key, i) => {
-      total1++;
-      if (hard[key] === algo[key]) {
-        matches1++;
-      } else {
-        console.log(`不一致: ${testCase.stem}日 ${branches[i]} - ハードコード: ${hard[key]}, アルゴリズム: ${algo[key]}`);
-      }
-    });
+    // 各天干について地支全体の十二運星をテスト
+    console.log(`${stem}日の十二運星パターン:`);
+    const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    const fortunes = branches.map(branch => calculateTwelveFortuneForBranch(stem, branch));
+    console.log(`順序: ${branches.map((b, i) => `${b}[${fortunes[i]}]`).join(' → ')}`);
+    console.log('------');
   }
-  
-  console.log(`一致率: ${matches1}/${total1} (${Math.round(matches1/total1*100)}%)`);
-  
-  // ハードコード版と純粋なアルゴリズム版の比較
-  let matches2 = 0;
-  let total2 = 0;
-  
-  console.log('\n2. ハードコード版 vs 純粋なアルゴリズム版:');
-  
-  for (const testCase of testCases) {
-    const hard = calculateTwelveFortunes(
-      testCase.stem, 
-      testCase.yearBranch, 
-      testCase.monthBranch, 
-      testCase.dayBranch, 
-      testCase.hourBranch,
-      0
-    );
-    
-    const pureAlgo = calculateTwelveFortunes(
-      testCase.stem, 
-      testCase.yearBranch, 
-      testCase.monthBranch, 
-      testCase.dayBranch, 
-      testCase.hourBranch, 
-      2
-    );
-    
-    // 各柱ごとに比較
-    const branches = [testCase.yearBranch, testCase.monthBranch, testCase.dayBranch, testCase.hourBranch];
-    ['year', 'month', 'day', 'hour'].forEach((key, i) => {
-      total2++;
-      if (hard[key] === pureAlgo[key]) {
-        matches2++;
-      } else {
-        console.log(`不一致: ${testCase.stem}日 ${branches[i]} - ハードコード: ${hard[key]}, 純粋アルゴリズム: ${pureAlgo[key]}`);
-      }
-    });
-  }
-  
-  console.log(`一致率: ${matches2}/${total2} (${Math.round(matches2/total2*100)}%)`);
-  
-  // 十二運星のパターン分析
-  console.log('\n--- 十二運星パターン分析 ---');
-  
-  // 天干ごとの十二運星パターンを分析
-  analyzePattern('甲');
-  analyzePattern('乙');
-  analyzePattern('丙');
-  analyzePattern('丁');
-  analyzePattern('戊');
-  analyzePattern('己');
-  analyzePattern('庚');
-  analyzePattern('辛');
-  analyzePattern('壬');
-  analyzePattern('癸');
-  
-  // 五行と陰陽による分類も表示
-  console.log('\n--- 五行と陰陽による分類 ---');
-  console.log('木(陽): 甲 - 寅から始まる');
-  console.log('木(陰): 乙 - 寅から始まる');
-  console.log('火(陽): 丙 - 巳から始まる');
-  console.log('火(陰): 丁 - 巳から始まる');
-  console.log('土(陽): 戊 - 寅から始まる'); 
-  console.log('土(陰): 己 - 卯から始まる');
-  console.log('金(陽): 庚 - 丑から始まる');
-  console.log('金(陰): 辛 - 子から始まる');
-  console.log('水(陽): 壬 - 卯から始まる');
-  console.log('水(陰): 癸 - 卯から始まる');
-  
-  // アルゴリズム改良のためのデータ収集
-  console.log('\n--- アルゴリズム改良のためのデータ収集 ---');
-  
-  // 1. ハードコード版とアルゴリズム版(ハードコードマップ併用)の比較
-  console.log('1. ハードコード版 vs アルゴリズム版(ハードコードマップ併用):');
-  
-  let totalMatches1 = 0;
-  const totalCombinations = STEMS.length * BRANCHES.length;
-  
-  for (const stem of STEMS) {
-    for (const branch of BRANCHES) {
-      const hardcoded = KOREAN_TWELVE_FORTUNE_MAP[stem]?.[branch] || '不明';
-      const algorithm = calculateTwelveFortuneForBranch(stem, branch);
-      
-      if (hardcoded === algorithm) {
-        totalMatches1++;
-      } else {
-        console.log(`- 不一致: ${stem}日 ${branch} - ハードコード: ${hardcoded}, アルゴリズム: ${algorithm}`);
-      }
-    }
-  }
-  
-  console.log(`ハードコードマップ併用の一致率: ${totalMatches1}/${totalCombinations} (${Math.round(totalMatches1/totalCombinations*100)}%)`);
-  
-  // 2. ハードコード版と純粋なアルゴリズム版の比較
-  console.log('\n2. ハードコード版 vs 純粋なアルゴリズム版:');
-  
-  let totalMatches2 = 0;
-  let mismatchCount = 0;
-  
-  for (const stem of STEMS) {
-    for (const branch of BRANCHES) {
-      const hardcoded = KOREAN_TWELVE_FORTUNE_MAP[stem]?.[branch] || '不明';
-      const pureAlgorithm = calculateTwelveFortuneForBranch(stem, branch, true);
-      
-      if (hardcoded === pureAlgorithm) {
-        totalMatches2++;
-      } else {
-        mismatchCount++;
-        // 最初の50件の不一致のみ表示（出力が多すぎないように）
-        if (mismatchCount <= 50) {
-          console.log(`- 不一致: ${stem}日 ${branch} - ハードコード: ${hardcoded}, 純粋アルゴリズム: ${pureAlgorithm}`);
-        }
-      }
-    }
-  }
-  
-  if (mismatchCount > 50) {
-    console.log(`... 他に${mismatchCount - 50}件の不一致があります`);
-  }
-  
-  console.log(`純粋アルゴリズムの一致率: ${totalMatches2}/${totalCombinations} (${Math.round(totalMatches2/totalCombinations*100)}%)`);
-}
-
-/**
- * 特定の天干の十二運星パターンを分析して表示
- */
-function analyzePattern(stem: string): void {
-  const fortuneMap = KOREAN_TWELVE_FORTUNE_MAP[stem];
-  if (!fortuneMap) return;
-  
-  // 全地支に対する十二運星を配列化
-  const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-  const fortunes = branches.map(branch => fortuneMap[branch] || '不明');
-  
-  // 長生の位置を特定
-  const longLifeIndex = fortunes.indexOf('長生');
-  const startBranch = longLifeIndex >= 0 ? branches[longLifeIndex] : '不明';
-  
-  console.log(`\n${stem}日の十二運星パターン:`);
-  console.log(`[長生]の位置: ${startBranch}`);
-  console.log(`順序: ${branches.map((b, i) => `${b}[${fortunes[i]}]`).join(' → ')}`);
 }
 
 // モジュールが直接実行されたときにテストを実行

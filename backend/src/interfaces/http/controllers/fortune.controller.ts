@@ -556,7 +556,6 @@ export class FortuneController {
       
       // 生年月日と時間から四柱推命プロファイルを計算
       const sajuProfile = await this.sajuCalculatorService.calculateSajuProfile(
-        'temp-user-id',
         new Date(birthDate), // 文字列日付をDate型に変換
         Number(birthHour)
       );
