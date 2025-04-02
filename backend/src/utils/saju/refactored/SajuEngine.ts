@@ -221,10 +221,18 @@ export class SajuEngine {
         };
         
         // 地支の十神関係を各柱に関連付け
-        fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch;
-        fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch;
-        fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch;
-        fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch;
+        // ※注意: tenGodCalculator.ts内では「yearBranch」という名前になっている
+        fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch || '未設定';
+        fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch || '未設定';
+        fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch || '未設定';
+        fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch || '未設定';
+        
+        // デバッグ出力
+        console.log('地支の十神関係:');
+        console.log('年柱:', tenGodResult.yearBranch);
+        console.log('月柱:', tenGodResult.monthBranch);
+        console.log('日柱:', tenGodResult.dayBranch);
+        console.log('時柱:', tenGodResult.hourBranch);
       
         // 11. 五行属性を計算
         elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
@@ -326,10 +334,18 @@ export class SajuEngine {
         };
         
         // 地支の十神関係を各柱に関連付け
-        fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch;
-        fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch;
-        fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch;
-        fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch;
+        // ※注意: tenGodCalculator.ts内では「yearBranch」という名前になっている
+        fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch || '未設定';
+        fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch || '未設定';
+        fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch || '未設定';
+        fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch || '未設定';
+        
+        // デバッグ出力
+        console.log('地支の十神関係:');
+        console.log('年柱:', tenGodResult.yearBranch);
+        console.log('月柱:', tenGodResult.monthBranch);
+        console.log('日柱:', tenGodResult.dayBranch);
+        console.log('時柱:', tenGodResult.hourBranch);
       
         // 11. 五行属性を計算
         elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
