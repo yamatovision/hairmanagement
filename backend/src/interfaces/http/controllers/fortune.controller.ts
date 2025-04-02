@@ -579,7 +579,11 @@ export class FortuneController {
         saju: {
           dayMaster: sajuProfile.dayMaster,
           fourPillars: sajuProfile.fourPillars,
-          todayPillars: todayFourPillars
+          todayPillars: todayFourPillars,
+          tenGods: sajuProfile.tenGods,
+          twelveFortunes: sajuProfile.twelveFortunes,
+          hiddenStems: sajuProfile.hiddenStems,
+          twelveSpiritKillers: sajuProfile.twelveSpiritKillers
         }
       });
     } catch (error: any) {

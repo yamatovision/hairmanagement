@@ -29,6 +29,7 @@ export class SajuProfile {
    * @param tenGods 十神関係
    * @param twelveFortunes 十二運星情報（オプション）
    * @param hiddenStems 蔵干情報（オプション）
+   * @param twelveSpiritKillers 十二神殺情報（オプション）
    * @param dayMaster 日主（日干）
    */
   constructor(
@@ -39,6 +40,7 @@ export class SajuProfile {
     public readonly secondaryElement?: string,
     public readonly twelveFortunes?: Record<string, string>,
     public readonly hiddenStems?: Record<string, string[]>,
+    public readonly twelveSpiritKillers?: Record<string, string>,
     public readonly dayMaster?: string
   ) {
     // 日主が指定されていない場合は、自動的に日干から取得
@@ -71,6 +73,7 @@ export class SajuProfile {
       tenGods: this.tenGods,
       twelveFortunes: this.twelveFortunes,
       hiddenStems: this.hiddenStems,
+      twelveSpiritKillers: this.twelveSpiritKillers,
       dayMaster: this.dayMaster
     };
   }

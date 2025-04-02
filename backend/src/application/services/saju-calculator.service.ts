@@ -77,7 +77,7 @@ export class SajuCalculatorService {
       }
       
       // 計算結果をSajuProfileに変換
-      const { fourPillars, tenGods, elementProfile, twelveFortunes, hiddenStems } = sajuResult;
+      const { fourPillars, tenGods, elementProfile, twelveFortunes, hiddenStems, twelveSpiritKillers } = sajuResult;
       
       // SajuProfile値オブジェクトを作成して返す
       return new SajuProfile(
@@ -87,7 +87,8 @@ export class SajuCalculatorService {
         tenGods,
         elementProfile.secondaryElement,
         twelveFortunes,
-        hiddenStems
+        hiddenStems,
+        twelveSpiritKillers
       );
     } catch (error) {
       console.error('四柱推命計算エラー:', error);
@@ -141,6 +142,12 @@ export class SajuCalculatorService {
           month: ['乙'],
           day: ['戊', '乙', '癸'],
           hour: ['丙', '庚', '戊']
+        },
+        {
+          year: '年殺',
+          month: '月殺',
+          day: '日殺',
+          hour: '劫殺'
         }
       );
     }
