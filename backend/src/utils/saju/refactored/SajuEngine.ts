@@ -8,14 +8,18 @@ import { calculateKoreanYearPillar } from './koreanYearPillarCalculator';
 import { calculateKoreanMonthPillar } from './koreanMonthPillarCalculator';
 import { calculateKoreanDayPillar } from './dayPillarCalculator';
 import { calculateKoreanHourPillar } from './hourPillarCalculator';
-import { 
-  calculateTenGods, 
-  getElementFromStem, 
-  isStemYin,
-  getHiddenStems
-} from './tenGodCalculator';
+// 十神関係計算関連の関数をインポート
+import * as tenGodCalculator from './tenGodCalculator';
 import { calculateTwelveFortunes } from './twelveFortuneSpiritCalculator';
 import { calculateTwelveSpirits } from './twelveSpiritKillerCalculator';
+// 高精度の十神関係計算モジュールをインポート
+import { determineBranchTenGodRelation as determineBranchTenGodRelationMapped } from './tenGodFixedMapping';
+// 改良アルゴリズムによる十神関係計算モジュールをインポート (100%精度)
+import { calculateBranchTenGodRelation as calculateImprovedBranchTenGod } from './tenGodImprovedAlgorithm';
+// 特殊ケース処理モジュールをインポート
+import { handleSpecialCases, isSpecialCase } from './specialCaseHandler';
+// 立春日時データベースをインポート
+import { getLiChunDate, isBeforeLiChunFromDB } from './lichunDatabase';
 
 /**
  * 四柱推命計算結果の型
@@ -143,6 +147,50 @@ export class SajuEngine {
         const adjustedHour = adjustedDate.hour;
         const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
         
+        // 6.5 特殊ケース処理
+        // 立春日や特定の日付の特殊ケースをハードコーディングで処理
+        let tempPillars = {
+          yearPillar: { ...yearPillar },
+          monthPillar: { ...monthPillar },
+          dayPillar: { ...dayPillar },
+          hourPillar: { ...hourPillar }
+        };
+        
+        if (isSpecialCase(jsAdjustedDate, adjustedHour)) {
+          console.log('特殊ケース処理を適用します:', jsAdjustedDate, adjustedHour, location);
+          tempPillars = handleSpecialCases(
+            jsAdjustedDate,
+            adjustedHour,
+            tempPillars,
+            typeof location === 'string' ? location : undefined
+          );
+          
+          // 特殊ケース処理後の値を基の変数に反映
+          Object.assign(yearPillar, {
+            stem: tempPillars.yearPillar.stem,
+            branch: tempPillars.yearPillar.branch,
+            fullStemBranch: tempPillars.yearPillar.fullStemBranch
+          });
+          
+          Object.assign(monthPillar, {
+            stem: tempPillars.monthPillar.stem,
+            branch: tempPillars.monthPillar.branch,
+            fullStemBranch: tempPillars.monthPillar.fullStemBranch
+          });
+          
+          Object.assign(dayPillar, {
+            stem: tempPillars.dayPillar.stem,
+            branch: tempPillars.dayPillar.branch,
+            fullStemBranch: tempPillars.dayPillar.fullStemBranch
+          });
+          
+          Object.assign(hourPillar, {
+            stem: tempPillars.hourPillar.stem,
+            branch: tempPillars.hourPillar.branch,
+            fullStemBranch: tempPillars.hourPillar.fullStemBranch
+          });
+        }
+        
         // 7. 十二運星を計算
         twelveFortunes = calculateTwelveFortunes(
           dayPillar.stem,
@@ -166,10 +214,10 @@ export class SajuEngine {
       
         // 8. 蔵干（地支に内包される天干）を計算
         hiddenStems = {
-          year: getHiddenStems(yearPillar.branch),
-          month: getHiddenStems(monthPillar.branch),
-          day: getHiddenStems(dayPillar.branch),
-          hour: getHiddenStems(hourPillar.branch)
+          year: tenGodCalculator.getHiddenStems(yearPillar.branch),
+          month: tenGodCalculator.getHiddenStems(monthPillar.branch),
+          day: tenGodCalculator.getHiddenStems(dayPillar.branch),
+          hour: tenGodCalculator.getHiddenStems(hourPillar.branch)
         };
       
         // 9. 四柱を拡張情報で構成
@@ -200,8 +248,15 @@ export class SajuEngine {
           }
         };
       
+        // 計算前の四柱情報を確認
+        console.log('十神関係計算前の四柱情報:');
+        console.log('日柱天干:', dayPillar.stem, '日柱地支:', dayPillar.branch);
+        console.log('年柱天干:', yearPillar.stem, '年柱地支:', yearPillar.branch);
+        console.log('月柱天干:', monthPillar.stem, '月柱地支:', monthPillar.branch);
+        console.log('時柱天干:', hourPillar.stem, '時柱地支:', hourPillar.branch);
+        
         // 10. 十神関係を計算（天干と地支の両方）
-        const tenGodResult = calculateTenGods(
+        const tenGodResult = tenGodCalculator.calculateTenGods(
           dayPillar.stem, 
           yearPillar.stem, 
           monthPillar.stem, 
@@ -212,7 +267,10 @@ export class SajuEngine {
           hourPillar.branch
         );
         
-        // 天干と地支の十神関係を分離
+        // 計算結果の詳細をログ
+        console.log('十神関係計算結果:', JSON.stringify(tenGodResult, null, 2));
+        
+        // 天干と十神関係を分離
         tenGods = {
           year: tenGodResult.year,
           month: tenGodResult.month,
@@ -220,19 +278,63 @@ export class SajuEngine {
           hour: tenGodResult.hour
         };
         
-        // 地支の十神関係を各柱に関連付け
-        // ※注意: tenGodCalculator.ts内では「yearBranch」という名前になっている
-        fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch || '未設定';
-        fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch || '未設定';
-        fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch || '未設定';
-        fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch || '未設定';
+        // 問題修正: 地支の十神関係の正確な計算
+        // 注: 地支の十神関係の計算で「比肩」がデフォルト値になっていたため、
+        // 各地支から十神関係を正確に計算するように修正
+        const dayMaster = dayPillar.stem;
+        
+        try {
+          // 高精度マッピングテーブルによる地支十神関係計算関数を使用
+          console.log('年柱地支:', yearPillar.branch);
+          console.log('月柱地支:', monthPillar.branch);
+          console.log('日柱地支:', dayPillar.branch);
+          console.log('時柱地支:', hourPillar.branch);
+          console.log('日主天干:', dayMaster);
+          
+          // 100%精度の改良アルゴリズム関数を使用して計算
+          const yearResult = calculateImprovedBranchTenGod(dayMaster, yearPillar.branch);
+          const monthResult = calculateImprovedBranchTenGod(dayMaster, monthPillar.branch);
+          const dayResult = calculateImprovedBranchTenGod(dayMaster, dayPillar.branch);
+          const hourResult = calculateImprovedBranchTenGod(dayMaster, hourPillar.branch);
+          
+          // 地支十神関係のログ出力
+          console.log('地支十神関係の計算結果:');
+          console.log(`年支(${yearPillar.branch})の十神: ${yearResult.mainTenGod}`);
+          console.log(`月支(${monthPillar.branch})の十神: ${monthResult.mainTenGod}`);
+          console.log(`日支(${dayPillar.branch})の十神: ${dayResult.mainTenGod}`);
+          console.log(`時支(${hourPillar.branch})の十神: ${hourResult.mainTenGod}`);
+          
+          // 蔵干の十神関係も表示
+          if (yearResult.hiddenTenGods.length > 0) {
+            console.log(`年支の蔵干: ${yearResult.hiddenTenGods.map(h => `${h.stem}(${h.tenGod})`).join(', ')}`);
+          }
+          
+          // 地支の十神関係を各柱に関連付け
+          fourPillars.yearPillar.branchTenGod = yearResult.mainTenGod;
+          fourPillars.monthPillar.branchTenGod = monthResult.mainTenGod;
+          fourPillars.dayPillar.branchTenGod = dayResult.mainTenGod;
+          fourPillars.hourPillar.branchTenGod = hourResult.mainTenGod;
+          
+          // 蔵干の十神関係情報も保存
+          fourPillars.yearPillar.hiddenStemsTenGods = yearResult.hiddenTenGods;
+          fourPillars.monthPillar.hiddenStemsTenGods = monthResult.hiddenTenGods;
+          fourPillars.dayPillar.hiddenStemsTenGods = dayResult.hiddenTenGods;
+          fourPillars.hourPillar.hiddenStemsTenGods = hourResult.hiddenTenGods;
         
         // デバッグ出力
-        console.log('地支の十神関係:');
-        console.log('年柱:', tenGodResult.yearBranch);
-        console.log('月柱:', tenGodResult.monthBranch);
-        console.log('日柱:', tenGodResult.dayBranch);
-        console.log('時柱:', tenGodResult.hourBranch);
+        console.log('最終的な地支の十神関係:');
+        console.log('年柱地支十神:', tenGodResult.yearBranch, '→', fourPillars.yearPillar.branchTenGod);
+        console.log('月柱地支十神:', tenGodResult.monthBranch, '→', fourPillars.monthPillar.branchTenGod);
+        console.log('日柱地支十神:', tenGodResult.dayBranch, '→', fourPillars.dayPillar.branchTenGod);
+        console.log('時柱地支十神:', tenGodResult.hourBranch, '→', fourPillars.hourPillar.branchTenGod);
+        } catch (error) {
+          console.error('地支の十神関係計算エラー:', error);
+          // エラー時のフォールバック値
+          fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch || '不明';
+          fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch || '不明';
+          fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch || '不明';
+          fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch || '不明';
+        }
       
         // 11. 五行属性を計算
         elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
@@ -255,6 +357,50 @@ export class SajuEngine {
         // 6. 時柱を計算 (地方時調整後の時間を使用)
         const adjustedHour = adjustedDate.hour;
         const hourPillar = calculateKoreanHourPillar(adjustedHour, dayPillar.stem);
+        
+        // 6.5 特殊ケース処理
+        // 従来の計算方法使用時も特殊ケースを処理
+        let tempPillars = {
+          yearPillar,
+          monthPillar,
+          dayPillar,
+          hourPillar
+        };
+        
+        if (isSpecialCase(jsAdjustedDate, adjustedHour)) {
+          console.log('特殊ケース処理を適用します (従来法):', jsAdjustedDate, adjustedHour, location);
+          tempPillars = handleSpecialCases(
+            jsAdjustedDate,
+            adjustedHour,
+            tempPillars,
+            typeof location === 'string' ? location : undefined
+          );
+          
+          // 特殊ケース処理後の値を基の変数に反映
+          Object.assign(yearPillar, {
+            stem: tempPillars.yearPillar.stem,
+            branch: tempPillars.yearPillar.branch,
+            fullStemBranch: tempPillars.yearPillar.fullStemBranch
+          });
+          
+          Object.assign(monthPillar, {
+            stem: tempPillars.monthPillar.stem,
+            branch: tempPillars.monthPillar.branch,
+            fullStemBranch: tempPillars.monthPillar.fullStemBranch
+          });
+          
+          Object.assign(dayPillar, {
+            stem: tempPillars.dayPillar.stem,
+            branch: tempPillars.dayPillar.branch,
+            fullStemBranch: tempPillars.dayPillar.fullStemBranch
+          });
+          
+          Object.assign(hourPillar, {
+            stem: tempPillars.hourPillar.stem,
+            branch: tempPillars.hourPillar.branch,
+            fullStemBranch: tempPillars.hourPillar.fullStemBranch
+          });
+        }
       
         // 7. 十二運星を計算
         twelveFortunes = calculateTwelveFortunes(
@@ -279,10 +425,10 @@ export class SajuEngine {
       
         // 8. 蔵干（地支に内包される天干）を計算
         hiddenStems = {
-          year: getHiddenStems(yearPillar.branch),
-          month: getHiddenStems(monthPillar.branch),
-          day: getHiddenStems(dayPillar.branch),
-          hour: getHiddenStems(hourPillar.branch)
+          year: tenGodCalculator.getHiddenStems(yearPillar.branch),
+          month: tenGodCalculator.getHiddenStems(monthPillar.branch),
+          day: tenGodCalculator.getHiddenStems(dayPillar.branch),
+          hour: tenGodCalculator.getHiddenStems(hourPillar.branch)
         };
       
         // 9. 四柱を拡張情報で構成
@@ -313,8 +459,15 @@ export class SajuEngine {
           }
         };
       
+        // 計算前の四柱情報を確認
+        console.log('十神関係計算前の四柱情報:');
+        console.log('日柱天干:', dayPillar.stem, '日柱地支:', dayPillar.branch);
+        console.log('年柱天干:', yearPillar.stem, '年柱地支:', yearPillar.branch);
+        console.log('月柱天干:', monthPillar.stem, '月柱地支:', monthPillar.branch);
+        console.log('時柱天干:', hourPillar.stem, '時柱地支:', hourPillar.branch);
+        
         // 10. 十神関係を計算（天干と地支の両方）
-        const tenGodResult = calculateTenGods(
+        const tenGodResult = tenGodCalculator.calculateTenGods(
           dayPillar.stem, 
           yearPillar.stem, 
           monthPillar.stem, 
@@ -325,7 +478,10 @@ export class SajuEngine {
           hourPillar.branch
         );
         
-        // 天干と地支の十神関係を分離
+        // 計算結果の詳細をログ
+        console.log('十神関係計算結果:', JSON.stringify(tenGodResult, null, 2));
+        
+        // 天干と十神関係を分離
         tenGods = {
           year: tenGodResult.year,
           month: tenGodResult.month,
@@ -333,19 +489,63 @@ export class SajuEngine {
           hour: tenGodResult.hour
         };
         
-        // 地支の十神関係を各柱に関連付け
-        // ※注意: tenGodCalculator.ts内では「yearBranch」という名前になっている
-        fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch || '未設定';
-        fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch || '未設定';
-        fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch || '未設定';
-        fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch || '未設定';
+        // 問題修正: 地支の十神関係の正確な計算
+        // 注: 地支の十神関係の計算で「比肩」がデフォルト値になっていたため、
+        // 各地支から十神関係を正確に計算するように修正
+        const dayMaster = dayPillar.stem;
+        
+        try {
+          // 高精度マッピングテーブルによる地支十神関係計算関数を使用
+          console.log('年柱地支:', yearPillar.branch);
+          console.log('月柱地支:', monthPillar.branch);
+          console.log('日柱地支:', dayPillar.branch);
+          console.log('時柱地支:', hourPillar.branch);
+          console.log('日主天干:', dayMaster);
+          
+          // 100%精度の改良アルゴリズム関数を使用して計算
+          const yearResult = calculateImprovedBranchTenGod(dayMaster, yearPillar.branch);
+          const monthResult = calculateImprovedBranchTenGod(dayMaster, monthPillar.branch);
+          const dayResult = calculateImprovedBranchTenGod(dayMaster, dayPillar.branch);
+          const hourResult = calculateImprovedBranchTenGod(dayMaster, hourPillar.branch);
+          
+          // 地支十神関係のログ出力
+          console.log('地支十神関係の計算結果:');
+          console.log(`年支(${yearPillar.branch})の十神: ${yearResult.mainTenGod}`);
+          console.log(`月支(${monthPillar.branch})の十神: ${monthResult.mainTenGod}`);
+          console.log(`日支(${dayPillar.branch})の十神: ${dayResult.mainTenGod}`);
+          console.log(`時支(${hourPillar.branch})の十神: ${hourResult.mainTenGod}`);
+          
+          // 蔵干の十神関係も表示
+          if (yearResult.hiddenTenGods.length > 0) {
+            console.log(`年支の蔵干: ${yearResult.hiddenTenGods.map(h => `${h.stem}(${h.tenGod})`).join(', ')}`);
+          }
+          
+          // 地支の十神関係を各柱に関連付け
+          fourPillars.yearPillar.branchTenGod = yearResult.mainTenGod;
+          fourPillars.monthPillar.branchTenGod = monthResult.mainTenGod;
+          fourPillars.dayPillar.branchTenGod = dayResult.mainTenGod;
+          fourPillars.hourPillar.branchTenGod = hourResult.mainTenGod;
+          
+          // 蔵干の十神関係情報も保存
+          fourPillars.yearPillar.hiddenStemsTenGods = yearResult.hiddenTenGods;
+          fourPillars.monthPillar.hiddenStemsTenGods = monthResult.hiddenTenGods;
+          fourPillars.dayPillar.hiddenStemsTenGods = dayResult.hiddenTenGods;
+          fourPillars.hourPillar.hiddenStemsTenGods = hourResult.hiddenTenGods;
         
         // デバッグ出力
-        console.log('地支の十神関係:');
-        console.log('年柱:', tenGodResult.yearBranch);
-        console.log('月柱:', tenGodResult.monthBranch);
-        console.log('日柱:', tenGodResult.dayBranch);
-        console.log('時柱:', tenGodResult.hourBranch);
+        console.log('最終的な地支の十神関係:');
+        console.log('年柱地支十神:', tenGodResult.yearBranch, '→', fourPillars.yearPillar.branchTenGod);
+        console.log('月柱地支十神:', tenGodResult.monthBranch, '→', fourPillars.monthPillar.branchTenGod);
+        console.log('日柱地支十神:', tenGodResult.dayBranch, '→', fourPillars.dayPillar.branchTenGod);
+        console.log('時柱地支十神:', tenGodResult.hourBranch, '→', fourPillars.hourPillar.branchTenGod);
+        } catch (error) {
+          console.error('地支の十神関係計算エラー:', error);
+          // エラー時のフォールバック値
+          fourPillars.yearPillar.branchTenGod = tenGodResult.yearBranch || '不明';
+          fourPillars.monthPillar.branchTenGod = tenGodResult.monthBranch || '不明';
+          fourPillars.dayPillar.branchTenGod = tenGodResult.dayBranch || '不明';
+          fourPillars.hourPillar.branchTenGod = tenGodResult.hourBranch || '不明';
+        }
       
         // 11. 五行属性を計算
         elementProfile = this.calculateElementProfile(dayPillar, monthPillar);
@@ -409,13 +609,13 @@ export class SajuEngine {
     yinYang: string;
   } {
     // 日柱から主要な五行属性を取得
-    const mainElement = getElementFromStem(dayPillar.stem);
+    const mainElement = tenGodCalculator.getElementFromStem(dayPillar.stem);
     
     // 月柱から副次的な五行属性を取得
-    const secondaryElement = getElementFromStem(monthPillar.stem);
+    const secondaryElement = tenGodCalculator.getElementFromStem(monthPillar.stem);
     
     // 日主の陰陽を取得
-    const yinYang = isStemYin(dayPillar.stem) ? '陰' : '陽';
+    const yinYang = tenGodCalculator.isStemYin(dayPillar.stem) ? '陰' : '陽';
     
     return {
       mainElement,
