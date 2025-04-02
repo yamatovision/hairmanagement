@@ -114,14 +114,32 @@ export class UserController {
           const updatedUser = userEntity.withUpdatedSajuProfile(sajuProfile);
           await this.userRepository.update(userEntity.id, updatedUser);
           console.log(`ユーザー ${userEntity.id} の四柱推命プロファイルを更新しました`);
+          
+          // 四柱に地支の十神関係が含まれるか確認
+          console.log('地支の十神関係の確認:');
+          console.log(`年柱地支十神: ${sajuProfile.fourPillars.yearPillar.branchTenGod || 'なし'}`);
+          console.log(`月柱地支十神: ${sajuProfile.fourPillars.monthPillar.branchTenGod || 'なし'}`);
+          console.log(`日柱地支十神: ${sajuProfile.fourPillars.dayPillar.branchTenGod || 'なし'}`);
+          console.log(`時柱地支十神: ${sajuProfile.fourPillars.hourPillar.branchTenGod || 'なし'}`);
         }
       } catch (updateError) {
         // 更新に失敗しても、計算結果は返す（エラーログのみ記録）
         console.error('四柱推命プロファイル更新エラー:', updateError);
       }
       
+      // branchTenGodをAPIレスポンスに明示的に含める
+      const response = {
+        ...sajuProfile,
+        branchTenGods: {
+          year: sajuProfile.fourPillars.yearPillar.branchTenGod || '不明',
+          month: sajuProfile.fourPillars.monthPillar.branchTenGod || '不明',
+          day: sajuProfile.fourPillars.dayPillar.branchTenGod || '不明',
+          hour: sajuProfile.fourPillars.hourPillar.branchTenGod || '不明'
+        }
+      };
+      
       // プロファイルをJSONとして返す
-      res.status(200).json(sajuProfile);
+      res.status(200).json(response);
     } catch (error: any) {
       console.error('四柱推命プロファイル取得エラー:', error);
       res.status(error.statusCode || 500).json({

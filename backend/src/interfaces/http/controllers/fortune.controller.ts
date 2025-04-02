@@ -583,7 +583,13 @@ export class FortuneController {
           tenGods: sajuProfile.tenGods,
           twelveFortunes: sajuProfile.twelveFortunes,
           hiddenStems: sajuProfile.hiddenStems,
-          twelveSpiritKillers: sajuProfile.twelveSpiritKillers
+          twelveSpiritKillers: sajuProfile.twelveSpiritKillers,
+          branchTenGods: {
+            year: sajuProfile.fourPillars.yearPillar.branchTenGod || '不明',
+            month: sajuProfile.fourPillars.monthPillar.branchTenGod || '不明',
+            day: sajuProfile.fourPillars.dayPillar.branchTenGod || '不明',
+            hour: sajuProfile.fourPillars.hourPillar.branchTenGod || '不明'
+          }
         }
       });
     } catch (error: any) {
