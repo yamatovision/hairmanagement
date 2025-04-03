@@ -7,7 +7,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { IFortune } from '../utils/sharedTypes';
+import { IFortune } from '../types/models';
 import { useAuth } from './AuthContext';
 import fortuneService from '../services/fortune.service';
 
@@ -56,7 +56,8 @@ export const FortuneProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const fortune = await fortuneService.getDailyFortune();
       setDailyFortune(fortune);
       // 選択されたフォーチュンがない場合のみ、デイリーフォーチュンを選択状態にする
-      if (!selectedFortune && fortune) {
+      if (fortune) {
+        // selectedFortuneを直接参照せず、常に最新の取得結果を使用
         setSelectedFortune(fortune);
       }
     } catch (err) {
@@ -65,7 +66,7 @@ export const FortuneProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, selectedFortune]);
+  }, [isAuthenticated, user]);
 
   // 週間フォーチュンを取得
   const fetchWeeklyFortunes = useCallback(async (startDate?: string): Promise<void> => {
@@ -75,11 +76,22 @@ export const FortuneProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setError(null);
     
     try {
-      // ユーザーの生年月日を取得（実際の実装ではユーザープロファイルから取得する）
-      const birthDate = user.birthDate || localStorage.getItem('userBirthDate');
+      // ユーザーの生年月日を取得（バックエンドがデフォルト値を提供するためオプショナル）
+      let birthDate = null;
+      
+      // APIレスポンスから直接データを取得
+      if (user && user.birthDate) {
+        birthDate = user.birthDate;
+      } else {
+        // ローカルストレージからの取得も試みる
+        birthDate = localStorage.getItem('userBirthDate');
+      }
+      
+      // デバッグ出力
+      console.debug('ユーザー生年月日:', birthDate || 'バックエンドがデフォルト値を使用');
       
       // サービスが例外をスローしない実装になっているが、念のためtry-catchで囲む
-      const fortunes = await fortuneService.getWeeklyFortunes(startDate, birthDate);
+      const fortunes = await fortuneService.getWeeklyFortunes(startDate, birthDate || undefined);
       
       // 受け取ったデータが有効か確認
       if (Array.isArray(fortunes)) {
@@ -131,39 +143,35 @@ export const FortuneProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [isAuthenticated, user, formatDate]);
 
-  // 運勢を閲覧済みとしてマーク
+  // 運勢を閲覧済みとしてマーク (クライアントサイドのみの実装)
   const markFortuneAsViewed = useCallback(async (fortuneId: string): Promise<void> => {
     if (!isAuthenticated || !user) return;
 
-    try {
-      await fortuneService.markAsViewed(fortuneId);
-      
-      // データを更新
-      if (dailyFortune && dailyFortune.id === fortuneId) {
-        setDailyFortune({
-          ...dailyFortune,
-          viewedAt: new Date().toISOString()
-        });
-      }
-      
-      if (selectedFortune && selectedFortune.id === fortuneId) {
-        setSelectedFortune({
-          ...selectedFortune,
-          viewedAt: new Date().toISOString()
-        });
-      }
-      
-      // 週間運勢も更新
-      setWeeklyFortunes(prevFortunes => 
-        prevFortunes.map(fortune => 
-          fortune.id === fortuneId 
-            ? { ...fortune, viewedAt: new Date().toISOString() } 
-            : fortune
-        )
-      );
-    } catch (err) {
-      console.error('運勢の閲覧状態更新エラー:', err);
+    // サーバーへのリクエストなしでクライアントサイドの状態のみ更新
+    
+    // データを更新
+    if (dailyFortune && dailyFortune.id === fortuneId) {
+      setDailyFortune({
+        ...dailyFortune,
+        viewedAt: new Date().toISOString()
+      });
     }
+    
+    if (selectedFortune && selectedFortune.id === fortuneId) {
+      setSelectedFortune({
+        ...selectedFortune,
+        viewedAt: new Date().toISOString()
+      });
+    }
+    
+    // 週間運勢も更新
+    setWeeklyFortunes(prevFortunes => 
+      prevFortunes.map(fortune => 
+        fortune.id === fortuneId 
+          ? { ...fortune, viewedAt: new Date().toISOString() } 
+          : fortune
+      )
+    );
   }, [isAuthenticated, user, dailyFortune, selectedFortune]);
 
   // 選択された運勢を設定

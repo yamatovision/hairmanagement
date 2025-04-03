@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { authService } from '../services/auth.service';
-import { IUser } from '../utils/sharedTypes';
+import { IUser } from '../types/models';
 
 // 認証コンテキストの状態の型
 interface AuthState {

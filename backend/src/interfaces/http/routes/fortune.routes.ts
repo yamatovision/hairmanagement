@@ -51,8 +51,5 @@ export const registerFortuneRoutes = (router: Router): void => {
     fortuneController.getSajuInfo(req, res)
   );
   
-  // 運勢閲覧済みマークエンドポイント
-  router.post('/fortune/:fortuneId/viewed', auth, (req, res) => 
-    fortuneController.markFortuneAsViewed(req, res)
-  );
+  // 運勢閲覧済みマーク機能は削除しました
 };

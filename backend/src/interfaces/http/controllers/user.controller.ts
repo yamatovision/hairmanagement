@@ -151,6 +151,53 @@ export class UserController {
   }
   
   /**
+   * 全ユーザーリストを取得する (管理者、マネージャー専用)
+   * @param req リクエスト
+   * @param res レスポンス
+   */
+  async getAllUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const user = req.user as TokenPayload;
+      
+      if (!user || !user.userId) {
+        res.status(401).json({
+          message: '認証されていません',
+          code: 'UNAUTHORIZED'
+        });
+        return;
+      }
+      
+      // 権限チェック (管理者、マネージャーのみ許可)
+      if (user.role !== 'admin' && user.role !== 'manager' && user.role !== 'superadmin') {
+        res.status(403).json({
+          message: '権限がありません。管理者またはマネージャー権限が必要です',
+          code: 'FORBIDDEN'
+        });
+        return;
+      }
+      
+      // 全ユーザーリストを取得
+      const users = await this.userRepository.findAll();
+      
+      // パスワードフィールドを除外
+      const safeUsers = users.map(user => {
+        const userObj = user.toJSON ? user.toJSON() : user;
+        const { password, ...safeUser } = userObj;
+        return safeUser;
+      });
+      
+      res.status(200).json(safeUsers);
+    } catch (error: any) {
+      console.error('全ユーザー取得エラー:', error);
+      res.status(error.statusCode || 500).json({
+        message: error.message || 'ユーザー一覧の取得に失敗しました',
+        code: error.code || 'INTERNAL_SERVER_ERROR',
+        details: error.details
+      });
+    }
+  }
+  
+  /**
    * ユーザープロフィールを取得する
    * @param req リクエスト
    * @param res レスポンス

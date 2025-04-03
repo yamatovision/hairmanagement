@@ -9,7 +9,8 @@ import {
   IconButton,
   CircularProgress,
   Tabs,
-  Tab
+  Tab,
+  Button
 } from '@mui/material';
 // TeamAnalytics will be imported directly in the render function to avoid circular dependencies
 import PeopleIcon from '@mui/icons-material/People';
@@ -19,6 +20,9 @@ import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import StaffStatusPanel from '../components/dashboard/StaffStatusPanel';
 import SubscriptionManagement from '../components/dashboard/SubscriptionManagement';
+import UserAddForm from '../components/dashboard/user/UserAddForm';
+import UserManagementTable from '../components/dashboard/user/UserManagementTable';
+import UserManagementAction from '../components/dashboard/user/UserManagementAction';
 import analyticsService from '../services/analytics.service';
 import { IUser, ITeamAnalytics } from '../utils/sharedTypes';
 
@@ -29,6 +33,11 @@ import { IUser, ITeamAnalytics } from '../utils/sharedTypes';
 const ManagerDashboardPage: React.FC = () => {
   // タブの状態管理
   const [currentTab, setCurrentTab] = useState<number>(0);
+  
+  // ユーザー管理状態
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
+  const [userActionDialogOpen, setUserActionDialogOpen] = useState(false);
   
   // 分析データの状態管理
   const [teamAnalytics, setTeamAnalytics] = useState<ITeamAnalytics | null>(null);
@@ -48,6 +57,38 @@ const ManagerDashboardPage: React.FC = () => {
   // タブ変更ハンドラー
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
+  };
+  
+  // ユーザー追加ダイアログ開閉ハンドラー
+  const handleOpenAddUserDialog = () => {
+    setAddUserDialogOpen(true);
+  };
+  
+  const handleCloseAddUserDialog = () => {
+    setAddUserDialogOpen(false);
+  };
+  
+  // ユーザー追加完了ハンドラー
+  const handleUserAdded = (user: IUser) => {
+    // ユーザーリストを更新（本来はAPIから再取得するが、ここではダミーのためスキップ）
+    console.log('新しいユーザーが追加されました:', user);
+  };
+  
+  // ユーザー編集ダイアログ開閉ハンドラー
+  const handleOpenUserActionDialog = (user: IUser) => {
+    setSelectedUser(user);
+    setUserActionDialogOpen(true);
+  };
+  
+  const handleCloseUserActionDialog = () => {
+    setUserActionDialogOpen(false);
+    setSelectedUser(null);
+  };
+  
+  // ユーザー更新完了ハンドラー
+  const handleUserUpdated = () => {
+    // ユーザーリストを更新（本来はAPIから再取得）
+    console.log('ユーザー情報が更新されました');
   };
 
   // チームIDを取得（実際の実装では認証済みユーザーのチーム情報から取得）
@@ -470,7 +511,7 @@ const ManagerDashboardPage: React.FC = () => {
               />
               チーム五行分析
             </>
-          ) : (
+          ) : currentTab === 2 ? (
             <>
               <SubscriptionsIcon 
                 sx={{ 
@@ -479,6 +520,16 @@ const ManagerDashboardPage: React.FC = () => {
                 }} 
               />
               サブスクリプション管理
+            </>
+          ) : (
+            <>
+              <PeopleIcon 
+                sx={{ 
+                  marginRight: 1.5, 
+                  color: '#e57373', // 人物管理
+                }} 
+              />
+              ユーザー管理
             </>
           )}
         </Typography>
@@ -507,6 +558,7 @@ const ManagerDashboardPage: React.FC = () => {
             <Tab label="スタッフ状態" />
             <Tab label="チーム分析" />
             <Tab label="サブスクリプション" />
+            <Tab label="ユーザー管理" />
           </Tabs>
         </Container>
       </Box>
@@ -536,9 +588,50 @@ const ManagerDashboardPage: React.FC = () => {
               />
             );
           })()
-        ) : (
+        ) : currentTab === 2 ? (
           // サブスクリプション管理タブ
           <SubscriptionManagement teamId={currentTeamId} />
+        ) : (
+          // ユーザー管理タブ
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                ユーザー管理
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                ユーザーを追加、編集、削除できます。サブスクリプションプランの変更も可能です。
+              </Typography>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                onClick={handleOpenAddUserDialog}
+                sx={{ mt: 1 }}
+              >
+                新規ユーザー追加
+              </Button>
+            </Box>
+            
+            <UserManagementTable 
+              onAddUser={handleOpenAddUserDialog}
+              onEditUser={handleOpenUserActionDialog}
+              onUserDeleted={() => console.log('ユーザーが削除されました')}
+            />
+            
+            {/* ユーザー追加フォーム */}
+            <UserAddForm 
+              open={addUserDialogOpen}
+              onClose={handleCloseAddUserDialog}
+              onUserAdded={handleUserAdded}
+            />
+            
+            {/* ユーザー編集・サブスクリプション管理ダイアログ */}
+            <UserManagementAction
+              user={selectedUser}
+              open={userActionDialogOpen}
+              onClose={handleCloseUserActionDialog}
+              onUserUpdated={handleUserUpdated}
+            />
+          </Paper>
         )}
       </Container>
     </Box>

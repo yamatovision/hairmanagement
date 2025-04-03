@@ -5,6 +5,7 @@
  * 
  * 変更履歴:
  * - 2025/03/27: 初期実装 (Claude)
+ * - 2025/04/02: 四柱推命情報表示とチーム目標コンサルティング機能を追加 (Claude)
  */
 
 import React, { useState } from 'react';
@@ -47,6 +48,9 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import GroupIcon from '@mui/icons-material/Group';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ForumIcon from '@mui/icons-material/Forum';
+import AutoGraphIcon from '@mui/icons-material/AutoGraph';
+import TeamSajuView from './TeamSajuView';
+import TeamConsultationButton from './TeamConsultationButton';
 // カスタム ITeam 型定義（コンポーネント内で使用）
 interface ITeam {
   id: string;
@@ -336,9 +340,15 @@ const TeamDetail: React.FC<TeamDetailProps> = ({
                   variant="outlined"
                   startIcon={<SettingsIcon />}
                   onClick={onEditTeam}
+                  sx={{ mr: 1 }}
                 >
                   設定
                 </Button>
+                <TeamConsultationButton 
+                  teamId={team.id}
+                  teamName={team.name}
+                  teamGoal={team.description}
+                />
               </>
             )}
           </Box>
@@ -355,6 +365,7 @@ const TeamDetail: React.FC<TeamDetailProps> = ({
           sx={{ borderBottom: 1, borderColor: 'divider' }}
         >
           <Tab label="メンバー" icon={<GroupIcon />} iconPosition="start" />
+          <Tab label="四柱推命情報" icon={<AutoGraphIcon />} iconPosition="start" />
           <Tab label="パフォーマンス" icon={<BarChartIcon />} iconPosition="start" />
           <Tab label="ディスカッション" icon={<ForumIcon />} iconPosition="start" />
         </Tabs>
@@ -484,9 +495,16 @@ const TeamDetail: React.FC<TeamDetailProps> = ({
             </Grid>
           </Box>
         )}
+
+        {/* 四柱推命情報タブ */}
+        {currentTab === 1 && (
+          <Box p={0}>
+            <TeamSajuView teamId={team.id} />
+          </Box>
+        )}
         
         {/* パフォーマンスタブ */}
-        {currentTab === 1 && (
+        {currentTab === 2 && (
           <Box p={3}>
             <Typography variant="body1">
               チームのパフォーマンス統計がここに表示されます。
@@ -495,7 +513,7 @@ const TeamDetail: React.FC<TeamDetailProps> = ({
         )}
         
         {/* ディスカッションタブ */}
-        {currentTab === 2 && (
+        {currentTab === 3 && (
           <Box p={3}>
             <Typography variant="body1">
               チームディスカッション機能はまだ実装されていません。

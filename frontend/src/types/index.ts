@@ -21,6 +21,10 @@ export type UserRegistrationRequest = {
   email: string;
   password: string;
   name: string;
-  birthDate: string;
-  role?: 'employee' | 'manager' | 'admin';
+  birthDate?: string;
+  birthHour?: number;
+  birthLocation?: string;
+  role?: 'employee' | 'manager' | 'admin' | 'custom';
+  customRole?: string;
+  subscriptionPlan?: 'standard' | 'premium';
 };

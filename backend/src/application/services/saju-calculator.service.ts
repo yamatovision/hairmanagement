@@ -168,13 +168,81 @@ export class SajuCalculatorService {
       // SajuEngineを使用して四柱推命情報を計算
       const sajuResult = this.sajuEngine.calculate(birthDate, hour);
       
+      // 日付を解析（運勢の日付）
+      const targetDate = fortune.date ? new Date(fortune.date) : new Date();
+      
+      // 当日の四柱を計算
+      const todayFourPillars = this.sajuEngine.calculate(targetDate, 12).fourPillars;
+      
+      // 日干（ユーザーの日柱天干）
+      const dayMaster = sajuResult.fourPillars.dayPillar.stem;
+      
+      // 今日の日柱の天干と地支
+      const todayStem = todayFourPillars.dayPillar.stem;
+      const todayBranch = todayFourPillars.dayPillar.branch;
+      
+      // 天干から五行要素を取得
+      const stemToElement: Record<string, string> = {
+        '甲': '木', '乙': '木',
+        '丙': '火', '丁': '火',
+        '戊': '土', '己': '土',
+        '庚': '金', '辛': '金',
+        '壬': '水', '癸': '水'
+      };
+      
+      // 地支から五行要素を取得
+      const branchToElement: Record<string, string> = {
+        '子': '水', '丑': '土',
+        '寅': '木', '卯': '木',
+        '辰': '土', '巳': '火',
+        '午': '火', '未': '土',
+        '申': '金', '酉': '金',
+        '戌': '土', '亥': '水'
+      };
+      
+      // 十神関係を取得
+      const tenGodMap: Record<string, Record<string, string>> = {
+        '甲': { '甲': '比肩', '乙': '劫財', '丙': '食神', '丁': '傷官', '戊': '偏財', '己': '正財', '庚': '偏官', '辛': '正官', '壬': '偏印', '癸': '正印' },
+        '乙': { '甲': '劫財', '乙': '比肩', '丙': '傷官', '丁': '食神', '戊': '正財', '己': '偏財', '庚': '正官', '辛': '偏官', '壬': '正印', '癸': '偏印' },
+        '丙': { '甲': '偏印', '乙': '正印', '丙': '比肩', '丁': '劫財', '戊': '食神', '己': '傷官', '庚': '偏財', '辛': '正財', '壬': '偏官', '癸': '正官' },
+        '丁': { '甲': '正印', '乙': '偏印', '丙': '劫財', '丁': '比肩', '戊': '傷官', '己': '食神', '庚': '正財', '辛': '偏財', '壬': '正官', '癸': '偏官' },
+        '戊': { '甲': '偏官', '乙': '正官', '丙': '偏印', '丁': '正印', '戊': '比肩', '己': '劫財', '庚': '食神', '辛': '傷官', '壬': '偏財', '癸': '正財' },
+        '己': { '甲': '正官', '乙': '偏官', '丙': '正印', '丁': '偏印', '戊': '劫財', '己': '比肩', '庚': '傷官', '辛': '食神', '壬': '正財', '癸': '偏財' },
+        '庚': { '甲': '偏財', '乙': '正財', '丙': '偏官', '丁': '正官', '戊': '偏印', '己': '正印', '庚': '比肩', '辛': '劫財', '壬': '食神', '癸': '傷官' },
+        '辛': { '甲': '正財', '乙': '偏財', '丙': '正官', '丁': '偏官', '戊': '正印', '己': '偏印', '庚': '劫財', '辛': '比肩', '壬': '傷官', '癸': '食神' },
+        '壬': { '甲': '食神', '乙': '傷官', '丙': '偏財', '丁': '正財', '戊': '偏官', '己': '正官', '庚': '偏印', '辛': '正印', '壬': '比肩', '癸': '劫財' },
+        '癸': { '甲': '傷官', '乙': '食神', '丙': '正財', '丁': '偏財', '戊': '正官', '己': '偏官', '庚': '正印', '辛': '偏印', '壬': '劫財', '癸': '比肩' }
+      };
+      
+      // 十神関係を計算
+      const tenGod = tenGodMap[dayMaster]?.[todayStem] || '不明';
+      
+      // 今日の日柱と地支の五行を取得
+      const dayElement = stemToElement[todayStem] || '木';
+      const branchElement = branchToElement[todayBranch] || '木';
+      
+      // 四柱を文字列形式に変換
+      const formatPillar = (pillar: any) => 
+        `${pillar.stem}${pillar.branch}`;
+      
+      const todayPillars = 
+        `年柱:${formatPillar(todayFourPillars.yearPillar)}, ` +
+        `月柱:${formatPillar(todayFourPillars.monthPillar)}, ` +
+        `日柱:${formatPillar(todayFourPillars.dayPillar)}, ` +
+        `時柱:${formatPillar(todayFourPillars.hourPillar)}`;
+      
       // 運勢情報に四柱推命データを追加
       return {
         ...fortune,
         sajuData: {
           mainElement: sajuResult.elementProfile.mainElement,
           yinYang: sajuResult.elementProfile.yinYang,
-          compatibility: this.calculateCompatibility(sajuResult)
+          compatibility: this.calculateCompatibility(sajuResult),
+          dayMaster,
+          tenGod,
+          earthBranch: todayBranch,
+          todayPillars,
+          dayElement // 天干に基づく五行要素を追加
         }
       };
     } catch (error) {
@@ -184,7 +252,12 @@ export class SajuCalculatorService {
       const simpleSajuProfile = {
         mainElement: '木',
         yinYang: '陽',
-        compatibility: 80
+        compatibility: 80,
+        dayMaster: '甲',
+        tenGod: '比肩',
+        earthBranch: '寅',
+        todayPillars: '年柱:癸卯, 月柱:甲辰, 日柱:丙午, 時柱:丁未',
+        dayElement: '火' // デフォルトの五行
       };
       
       return {

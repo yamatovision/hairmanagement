@@ -364,10 +364,26 @@ export interface IMessage {
   promptCategory?: 'growth' | 'team' | 'career' | 'organization';
 }
 
+// 会話タイプ
+export enum ConversationType {
+  GENERAL = 'general',                     // 一般的な対話
+  FORTUNE_RELATED = 'fortune_related',     // 運勢関連の対話
+  TEAM_COMPATIBILITY = 'team_compatibility', // チーム相性分析関連の対話
+  TEAM_CONSULTATION = 'team_consultation',  // チーム目標コンサルティング対話
+  PERSONAL_GROWTH = 'personal_growth'      // 個人の成長に関する対話
+}
+
 export type SendMessageRequest = {
   conversationId?: string; // 新規対話の場合は空
   content: string;
-  context?: {
+  conversationType?: ConversationType; // 対話のタイプ（新規会話の場合）
+  metadata?: {                     // メタデータ（コンテキスト情報）
+    fortuneId?: string;         // 関連する運勢ID
+    relatedGoalId?: string;      // 関連する目標ID
+    teamId?: string;           // 関連するチームID
+    userId?: string;           // 特定ユーザー関連の対話の場合
+  };
+  context?: {                     // 後方互換性のために残す
     fortuneId?: string;
     relatedGoalId?: string;
   };

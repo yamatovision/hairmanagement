@@ -1,0 +1,6 @@
+{
+  "name": "archive",
+  "version": "1.0.0",
+  "private": true,
+  "description": "This directory contains archived files that should be excluded from TypeScript checks."
+}

@@ -425,85 +425,21 @@ export class FortuneController {
   
   /**
    * 運勢を閲覧済みとしてマーク
-   * @param req リクエスト
-   * @param res レスポンス
+   * 
+   * 注意: この機能は削除されました。
+   * markFortuneAsViewedメソッドは互換性のために残していますが、
+   * 実際には使用されていません。
+   * 
+   * 閲覧状態の追跡はフロントエンド側で処理されるようになりました。
+   *
+   * @deprecated この機能は削除されました
    */
   async markFortuneAsViewed(req: Request, res: Response): Promise<void> {
-    try {
-      // ユーザーIDを取得（認証ミドルウェアから）
-      const userId = req.user?.id;
-      if (!userId) {
-        res.status(401).json({ message: '認証が必要です' });
-        return;
-      }
-      
-      // パラメータから運勢IDを取得
-      const { fortuneId } = req.params;
-      
-      if (!fortuneId) {
-        res.status(400).json({ message: '運勢IDが必要です' });
-        return;
-      }
-      
-      console.log(`運勢を閲覧済みとしてマークするリクエスト: fortuneId=${fortuneId}`);
-
-      // カスタムIDフォーマット（fortune-userId-date）からデータを抽出
-      if (fortuneId.startsWith('fortune-')) {
-        try {
-          // カスタムIDから日付とユーザーIDを抽出
-          const parts = fortuneId.split('-');
-          if (parts.length === 3) {
-            const idUserId = parts[1];
-            const dateStr = parts[2];
-            
-            console.log(`抽出されたデータ: userId=${idUserId}, date=${dateStr}`);
-            
-            if (idUserId && dateStr && this.isValidDateFormat(dateStr)) {
-              // 日付とユーザーIDで運勢を検索し、閲覧済みとしてマーク
-              const fortune = await this.fortuneRepository.findByUserIdAndDate(idUserId, new Date(dateStr));
-              
-              if (fortune) {
-                // 運勢IDを使用して閲覧済みとしてマーク
-                const success = await this.fortuneRepository.markAsViewed(fortune.id);
-                
-                if (success) {
-                  res.status(200).json({
-                    id: fortuneId,
-                    isViewed: true,
-                    viewedAt: new Date().toISOString()
-                  });
-                  return;
-                }
-              }
-            }
-          }
-        } catch (err) {
-          console.error(`カスタムID形式の解析中にエラーが発生しました: ${err}`);
-        }
-      }
-      
-      // 標準IDフォーマットの場合、またはカスタムID処理が失敗した場合
-      // リポジトリで運勢を閲覧済みとしてマーク
-      const success = await this.fortuneRepository.markAsViewed(fortuneId);
-      
-      if (!success) {
-        res.status(404).json({ message: '指定された運勢が見つかりません' });
-        return;
-      }
-      
-      // 成功レスポンスを返す
-      res.status(200).json({
-        id: fortuneId,
-        isViewed: true,
-        viewedAt: new Date().toISOString()
-      });
-    } catch (error: any) {
-      console.error(`運勢を閲覧済みとしてマークする際にエラーが発生しました: ${error}`);
-      res.status(500).json({
-        message: '運勢の更新中にエラーが発生しました',
-        error: error.message
-      });
-    }
+    console.warn('運勢閲覧済みマーク機能は削除されました。このエンドポイントは使用されるべきではありません。');
+    res.status(410).json({
+      message: 'この機能は廃止されました',
+      detail: '運勢の閲覧状態はフロントエンドで管理されるようになりました'
+    });
   }
   
   /**
@@ -615,26 +551,65 @@ export class FortuneController {
     // 五行要素を決定
     const element = this.determineElementFromDate(fortune.date);
     
+    // 五行要素の天干があれば取得
+    const dayMaster = fortune.dayMaster || '';
+    const dayElement = this.getElementFromStem(dayMaster);
+    
+    // AIアドバイスが構造化されているか確認
+    const aiGeneratedAdvice = typeof fortune.advice === 'object' ? fortune.advice : null;
+    
     // ドメインモデルからフロントエンド用のレスポンス形式に変換
     return {
       id: `fortune-${fortune.userId}-${dateStr}`, // クライアント側のキャッシュ用にカスタムID
       date: dateStr,
       element,
       yinYang: fortune.yinYangBalance?.yin > fortune.yinYangBalance?.yang ? '陰' : '陽',
-      overallLuck: fortune.overallScore,
-      careerLuck: fortune.categories.work,
-      relationshipLuck: fortune.categories.teamwork,
-      healthLuck: fortune.categories.health,
-      communicationLuck: fortune.categories.communication,
-      dailyAdvice: fortune.advice,
+      overallScore: fortune.overallScore,
+      starRating: Math.ceil(fortune.overallScore / 20), // 5段階評価に変換（1-5）
+      rating: this.mapScoreToRating(fortune.overallScore),
+      categories: {
+        work: fortune.categories?.work || 70,
+        teamwork: fortune.categories?.teamwork || 70,
+        health: fortune.categories?.health || 70,
+        communication: fortune.categories?.communication || 70
+      },
+      advice: typeof fortune.advice === 'string' ? fortune.advice : 'アドバイスは構造化形式で提供されています',
+      // 新しい構造化されたアドバイス形式
+      aiGeneratedAdvice: aiGeneratedAdvice,
+      personalGoal: fortune.personalGoal || '',
+      teamGoal: fortune.teamGoal || '',
       luckyItems: fortune.luckyItems || [],
       compatibleElements: this.getCompatibleElements(element),
       incompatibleElements: this.getIncompatibleElements(element),
-      isViewed: true, // 簡略化のため常にtrue
+      sajuData: {
+        mainElement: element,
+        yinYang: fortune.yinYangBalance?.yin > fortune.yinYangBalance?.yang ? '陰' : '陽',
+        compatibility: fortune.overallScore,
+        dayMaster: dayMaster,
+        tenGod: fortune.tenGod || '比肩',
+        earthBranch: fortune.earthBranch || '午',
+        todayPillars: fortune.todayPillars || '',
+        dayElement: dayElement, // 天干から決定した五行属性
+        branchTenGods: fortune.branchTenGods || {} // 地支の十神関係を追加
+      },
+      viewedAt: new Date().toISOString(), // 閲覧時刻を設定
       createdAt: fortune.createdAt instanceof Date 
         ? fortune.createdAt.toISOString()
         : new Date(fortune.createdAt).toISOString()
     };
+  }
+  
+  /**
+   * スコアから評価へのマッピング
+   * @param score 運勢スコア（0-100）
+   * @returns 運勢評価
+   */
+  private mapScoreToRating(score: number): string {
+    if (score >= 80) return 'excellent';
+    if (score >= 60) return 'good';
+    if (score >= 40) return 'neutral';
+    if (score >= 20) return 'caution';
+    return 'poor';
   }
   
   /**
@@ -692,4 +667,30 @@ export class FortuneController {
     };
     return incompatMap[element] || [];
   }
+  
+  /**
+   * 天干から五行を取得
+   * @param stem 天干
+   * @returns 五行属性
+   */
+  private getElementFromStem(stem: string): string {
+    const elementMap: { [key: string]: string } = {
+      '甲': '木', '乙': '木',
+      '丙': '火', '丁': '火',
+      '戊': '土', '己': '土',
+      '庚': '金', '辛': '金',
+      '壬': '水', '癸': '水'
+    };
+    
+    return elementMap[stem] || '木'; // デフォルトは木
+  }
 }
+  /**
+   * ここで学んだ教訓:
+   * 1. カスタムID形式（例: fortune-67e487dbc4a58a62d38ac6ac-2025-04-02）とMongoDBのObjectId形式を
+   *    適切に区別し、それぞれに対応した処理を行うことが重要。
+   * 2. カスタムIDからユーザーIDと日付を抽出する際は、各部分が正しく抽出できていることを検証する。
+   * 3. エラーメッセージには詳細な情報を含めることで、問題の特定と解決を容易にする。
+   * 4. MongoDBのCastErrorは、通常は不適切な型変換が試みられた場合に発生するもので、
+   *    特にObjectIdへの変換失敗が多いため、明示的な型チェックが必要。
+   */

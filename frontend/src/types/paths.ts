@@ -35,8 +35,10 @@ export const FORTUNE = {
   GET_RANGE: `${API_BASE_PATH}/fortune/range`,
   GET_BY_DATE: (date: string) => `${API_BASE_PATH}/fortune/date/${date}`,
   GET_USER_BY_DATE: (userId: string, date: string) => `${API_BASE_PATH}/fortune/users/${userId}/date/${date}`,
-  MARK_AS_VIEWED: (fortuneId: string) => `${API_BASE_PATH}/fortune/${fortuneId}/viewed`,
+  // MARK_AS_VIEWED エンドポイントは削除しました
   GET_TEAM_COMPATIBILITY: `${API_BASE_PATH}/fortune/team-compatibility`,
+  START_CONSULTATION: `${API_BASE_PATH}/fortune/consultation`,
+  GET_SAJU_PROFILE: `${API_BASE_PATH}/fortune/saju`,
 };
 
 // 会話関連
@@ -112,4 +114,5 @@ export const SUBSCRIPTION = {
   CREATE: `${API_BASE_PATH}/subscriptions`,
   CHANGE_PLAN: (teamId: string) => `${API_BASE_PATH}/subscriptions/team/${teamId}/plan`,
   UPDATE_STATUS: (teamId: string) => `${API_BASE_PATH}/subscriptions/team/${teamId}/status`,
+  UPDATE_USER_SUBSCRIPTION: (userId: string) => `${API_BASE_PATH}/subscriptions/user/${userId}`,
 };

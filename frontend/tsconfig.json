@@ -29,5 +29,13 @@
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/archive",
+    "node_modules",
+    "build",
+    "scripts",
+    "acceptance-tests",
+    "jest"
   ]
 }

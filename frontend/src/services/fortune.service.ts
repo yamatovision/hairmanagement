@@ -1,58 +1,78 @@
 /**
- * フォーチュンサービス
- * 運勢関連APIリクエストを処理する
- * 
- * 変更履歴:
- * - 2025/03/26: 初期実装 (AppGenius)
- * - 2025/03/26: オフラインモード対応 (AppGenius)
+ * 簡素化されたフォーチュンサービス
  */
 
 import { apiRequest } from '../utils/api.utils';
-// 共有型定義のインポート
 import { FORTUNE, IFortune } from '../types';
-
-// FortuneQueryRequest型定義
-type FortuneQueryRequest = {
-  startDate?: string;
-  endDate?: string;
-  userId?: string;
-  birthDate?: string;
-};
 
 /**
  * フォーチュンサービスクラス
- * 運勢関連の全APIリクエストを処理
  */
 class FortuneService {
   /**
-   * 本日の運勢を取得（オフラインモード対応）
-   * @returns 本日の運勢データ
+   * 本日の運勢を取得
    */
   async getDailyFortune(): Promise<IFortune> {
     try {
-      // オフラインモード対応のAPIリクエスト（キャッシュあり）
-      return await apiRequest<IFortune>(FORTUNE.GET_DAILY, {
+      const response = await apiRequest<IFortune>(FORTUNE.GET_DAILY, {
         method: 'GET',
-        offlineTtl: 24 * 60 * 60 * 1000 // 24時間キャッシュ
+        offlineTtl: 24 * 60 * 60 * 1000
       });
+      
+      // APIレスポンスの内容をデバッグログに出力
+      console.log('FortuneAPI Response:', {
+        hasAiGeneratedAdvice: !!response.aiGeneratedAdvice,
+        adviceType: typeof response.advice,
+        luckyPoints: response.aiGeneratedAdvice?.luckyPoints || 'None',
+        luckyPointsDetails: response.aiGeneratedAdvice?.luckyPoints ? {
+          color: response.aiGeneratedAdvice.luckyPoints.color,
+          itemsIsArray: Array.isArray(response.aiGeneratedAdvice.luckyPoints.items),
+          itemsLength: Array.isArray(response.aiGeneratedAdvice.luckyPoints.items) ? 
+            response.aiGeneratedAdvice.luckyPoints.items.length : 'not an array',
+          itemsValue: response.aiGeneratedAdvice.luckyPoints.items,
+          number: response.aiGeneratedAdvice.luckyPoints.number,
+          action: response.aiGeneratedAdvice.luckyPoints.action
+        } : 'No lucky points',
+        overallScore: response.overallScore,
+        statusCheck: 'OK'
+      });
+      
+      return response;
     } catch (error) {
-      console.error('デイリー運勢取得エラー:', error);
+      console.error('運勢取得エラー:', error);
       throw error;
     }
   }
 
   /**
-   * 指定された日付の運勢を取得（オフラインモード対応）
-   * @param date YYYY-MM-DD形式の日付
-   * @returns 指定日の運勢データ
+   * 指定日の運勢を取得
    */
   async getFortuneByDate(date: string): Promise<IFortune> {
     try {
-      // オフラインモード対応のAPIリクエスト（キャッシュあり）
-      return await apiRequest<IFortune>(FORTUNE.GET_BY_DATE(date), {
+      const response = await apiRequest<IFortune>(FORTUNE.GET_BY_DATE(date), {
         method: 'GET',
-        offlineTtl: 7 * 24 * 60 * 60 * 1000 // 7日間キャッシュ
+        offlineTtl: 24 * 60 * 60 * 1000
       });
+      
+      // APIレスポンスの内容をデバッグログに出力
+      console.log(`FortuneAPI Response for ${date}:`, {
+        hasAiGeneratedAdvice: !!response.aiGeneratedAdvice,
+        adviceType: typeof response.advice,
+        luckyPoints: response.aiGeneratedAdvice?.luckyPoints || 'None',
+        luckyPointsDetails: response.aiGeneratedAdvice?.luckyPoints ? {
+          color: response.aiGeneratedAdvice.luckyPoints.color,
+          itemsIsArray: Array.isArray(response.aiGeneratedAdvice.luckyPoints.items),
+          itemsLength: Array.isArray(response.aiGeneratedAdvice.luckyPoints.items) ? 
+            response.aiGeneratedAdvice.luckyPoints.items.length : 'not an array',
+          itemsValue: response.aiGeneratedAdvice.luckyPoints.items,
+          number: response.aiGeneratedAdvice.luckyPoints.number,
+          action: response.aiGeneratedAdvice.luckyPoints.action
+        } : 'No lucky points',
+        overallScore: response.overallScore,
+        date: response.date
+      });
+      
+      return response;
     } catch (error) {
       console.error(`${date}の運勢取得エラー:`, error);
       throw error;
@@ -60,142 +80,96 @@ class FortuneService {
   }
 
   /**
-   * 指定された日付範囲の運勢を取得（オフラインモード対応）
-   * @param query 取得条件（開始日・終了日）
-   * @returns 期間内の運勢データリスト
-   */
-  async getFortuneRange(query: FortuneQueryRequest): Promise<IFortune[]> {
-    try {
-      // クエリパラメータのチェック
-      if (!query.startDate || !query.endDate) {
-        console.error('日付範囲のパラメータが不足しています', query);
-        return []; // パラメータ不足時は空配列を返す
-      }
-
-      // birthDateが設定されていない場合、ユーザーに通知
-      if (!query.birthDate) {
-        console.error('生年月日(birthDate)が設定されていません。プロフィールで生年月日を登録してください。');
-        // エラー情報を含むダミーオブジェクトを返す（UI側でエラー表示に使用可能）
-        return [{
-          id: 'error-missing-birthdate',
-          date: new Date().toISOString().split('T')[0],
-          error: true,
-          message: '生年月日が設定されていません。プロフィール設定画面で生年月日を登録してください。'
-        }] as any;
-      }
-
-      // APIエンドポイントとサーバーが正しく設定されているか確認
-      const apiUrl = process.env.REACT_APP_API_URL || '';
-      if (!apiUrl) {
-        console.error('API URLが設定されていません。環境変数REACT_APP_API_URLを確認してください。');
-        return []; // API URL未設定時は空配列を返す
-      }
-
-      // オフラインモード対応のAPIリクエスト（キャッシュあり）
-      try {
-        const result = await apiRequest<IFortune[]>(FORTUNE.GET_RANGE, {
-          method: 'GET',
-          params: query,
-          offlineTtl: 7 * 24 * 60 * 60 * 1000 // 7日間キャッシュ
-        });
-        
-        // 結果が配列でない場合のフォールバック
-        if (!Array.isArray(result)) {
-          console.error('運勢範囲データが配列形式ではありません:', result);
-          return [];
-        }
-        
-        return result;
-      } catch (apiError) {
-        console.error('運勢範囲データAPI呼び出しエラー:', apiError);
-        // エラー時は仮のデータまたは空配列を返す
-        return [];
-      }
-    } catch (error) {
-      console.error('運勢範囲データ取得エラー:', error);
-      // 外部エラーハンドリングのために例外をスローせず、空配列を返す
-      return [];
-    }
-  }
-
-  /**
-   * 週間運勢を取得（デフォルトで今日から7日間）
-   * @param startDate 開始日（省略時は今日）
-   * @param birthDate 生年月日（YYYY-MM-DD形式、省略時はユーザープロファイルから取得）
-   * @returns 週間運勢データリスト
+   * 週間の運勢を取得
    */
   async getWeeklyFortunes(startDate?: string, birthDate?: string): Promise<IFortune[]> {
     try {
-      // 開始日が指定されていなければ今日の日付を使用
-      let start: string;
-      try {
-        start = startDate || new Date().toISOString().split('T')[0];
-      } catch (e) {
-        console.error('日付取得エラー:', e);
-        // フォールバック: 直接文字列化
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        start = `${year}-${month}-${day}`;
-      }
-      
-      // 終了日を計算（開始日から7日後）
-      try {
-        const end = new Date(start);
-        end.setDate(end.getDate() + 6); // 7日間（当日を含む）
-        const endDate = end.toISOString().split('T')[0];
-        
-        // 日付範囲の運勢を取得（生年月日を渡す）
-        return await this.getFortuneRange({
-          startDate: start,
-          endDate: endDate,
-          birthDate: birthDate
-        });
-      } catch (e) {
-        console.error('日付範囲計算エラー:', e);
-        return []; // エラー時は空配列を返す
-      }
+      // 必須パラメータの設定
+      const params: any = {
+        startDate: startDate || new Date().toISOString().split('T')[0],
+        endDate: this.getEndDate(startDate),
+        birthDate: birthDate || '1990-01-01' // デフォルト値
+      };
+
+      return await apiRequest<IFortune[]>(FORTUNE.GET_RANGE, {
+        method: 'GET',
+        params,
+        offlineTtl: 24 * 60 * 60 * 1000
+      });
     } catch (error) {
       console.error('週間運勢取得エラー:', error);
-      // エラーをスローせず、空配列を返す
+      // エラー時は空の配列を返すように変更
       return [];
     }
   }
 
   /**
-   * 運勢を閲覧済みとしてマーク（オフラインモード対応）
-   * @param fortuneId 運勢ID
-   * @returns 更新された運勢データ
+   * 開始日から7日後の終了日を計算
    */
-  async markAsViewed(fortuneId: string): Promise<IFortune> {
-    try {
-      // オフラインモード対応のAPIリクエスト（オフライン時はキューに追加）
-      return await apiRequest<IFortune>(FORTUNE.MARK_AS_VIEWED(fortuneId), {
-        method: 'POST'
-      });
-    } catch (error) {
-      console.error('運勢の閲覧状態更新エラー:', error);
-      throw error;
-    }
+  private getEndDate(startDate?: string): string {
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    return end.toISOString().split('T')[0];
   }
 
   /**
-   * チームメンバー間の相性を取得（オフラインモード対応）
-   * @returns チーム相性データ
+   * 運勢を閲覧済みとしてマーク (機能削除済み)
+   * クライアントサイドでのみ状態を更新するシンプルなスタブ関数
    */
-  async getTeamCompatibility() {
+  async markAsViewed(fortuneId: string): Promise<IFortune> {
+    console.log(`クライアントサイドでのみ閲覧済み状態を更新: fortuneId=${fortuneId}`);
+    
+    // クライアントサイドで状態を更新するためのダミーレスポンス
+    return {
+      id: fortuneId,
+      userId: '', 
+      date: '',
+      overallScore: 0,
+      starRating: 0,
+      rating: 'neutral' as 'excellent' | 'good' | 'neutral' | 'caution' | 'poor',
+      categories: {
+        work: 0,
+        teamwork: 0,
+        health: 0,
+        communication: 0
+      },
+      advice: '',
+      personalGoal: '',
+      teamGoal: '',
+      sajuData: {
+        mainElement: '',
+        yinYang: '',
+        compatibility: 0
+      },
+      viewedAt: new Date().toISOString(), // このフィールドは更新される
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  /**
+   * 四柱推命プロファイルを取得
+   */
+  async getSajuProfile(birthDate?: string, birthHour: number = 12) {
     try {
-      // オフラインモード対応のAPIリクエスト（キャッシュあり）
-      return await apiRequest(FORTUNE.GET_TEAM_COMPATIBILITY, {
+      const params: any = { birthHour };
+      if (birthDate) {
+        params.birthDate = birthDate;
+      }
+
+      return await apiRequest(FORTUNE.GET_SAJU_PROFILE, {
         method: 'GET',
-        offlineTtl: 24 * 60 * 60 * 1000 // 24時間キャッシュ
+        params,
+        offlineTtl: 7 * 24 * 60 * 60 * 1000
       });
     } catch (error) {
-      console.error('チーム相性取得エラー:', error);
+      console.error('四柱推命情報取得エラー:', error);
       throw error;
     }
   }
 }
 
-export default new FortuneService();
+// インスタンスを変数に代入してからエクスポート
+const fortuneServiceInstance = new FortuneService();
+export default fortuneServiceInstance;

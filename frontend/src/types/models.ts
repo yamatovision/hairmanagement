@@ -111,10 +111,12 @@ export interface IUser {
   email: string;
   password?: string;
   name: string;
-  birthDate: string;
+  birthDate?: string;
   birthHour?: number;
   birthLocation?: string;
-  role: 'employee' | 'manager' | 'admin' | 'superadmin';
+  role: 'employee' | 'manager' | 'admin' | 'superadmin' | 'custom';
+  customRole?: string;
+  subscriptionPlan?: PlanType;
   profilePicture?: string;
   elementalType?: ElementalType;
   elementalProfile?: ElementalType; // バックエンドとの互換性のため
@@ -131,20 +133,42 @@ export interface IFortune {
   id: string;
   userId: string;
   date: string;
-  dailyElement: ElementType;
-  yinYang: YinYangType;
-  overallLuck: number;
-  careerLuck: number;
-  relationshipLuck: number;
-  creativeEnergyLuck: number;
-  healthLuck: number;
-  wealthLuck: number;
-  description: string;
-  advice: string;
-  luckyColors?: string[];
-  luckyDirections?: string[];
-  compatibleElements?: ElementType[];
-  incompatibleElements?: ElementType[];
+  overallScore: number;
+  starRating: number;
+  rating: 'excellent' | 'good' | 'neutral' | 'caution' | 'poor';
+  categories: {
+    work: number;
+    teamwork: number;
+    health: number;
+    communication: number;
+  };
+  advice: string; // 古い形式との互換性のため
+  // AI生成アドバイス (新形式)
+  aiGeneratedAdvice?: {
+    summary: string;
+    personalAdvice: string;
+    teamAdvice: string;
+    luckyPoints: {
+      color: string;
+      items: string[];
+      number: number;
+      action: string;
+    }
+  };
+  // 目標関連情報
+  personalGoal?: string;
+  teamGoal?: string;
+  sajuData?: {
+    mainElement: string;
+    yinYang: string;
+    compatibility: number;
+    dayMaster?: string;
+    tenGod?: string;
+    earthBranch?: string;
+    todayPillars?: string; // 今日の四柱情報
+    dayElement?: string;   // 今日の日の五行属性（木・火・土・金・水）
+    branchTenGods?: Record<string, string>; // 地支十神関係
+  };
   viewedAt?: string | Date;
   createdAt: string | Date;
   updatedAt: string | Date;

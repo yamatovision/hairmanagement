@@ -63,19 +63,23 @@ type SajuProfile = {
   };
 };
 
-type IUser = {
-  id: string;
-  email: string;
-  name: string;
-  birthDate: string;
-  birthHour?: number;
-  birthLocation?: string;
-  role: 'employee' | 'manager' | 'admin' | 'superadmin';
-  profilePicture?: string;
-  elementalType?: ElementalType;
-  sajuProfile?: SajuProfile;
-  isActive: boolean;
-};
+// 型定義ファイルからIUserをインポートする代わりに、このコンポーネント内で使う型を定義
+interface ProfileFormProps {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    birthDate?: string; // birthDateをオプショナルに変更
+    birthHour?: number;
+    birthLocation?: string;
+    role: 'employee' | 'manager' | 'admin' | 'superadmin' | 'custom';
+    profilePicture?: string;
+    elementalType?: ElementalType;
+    sajuProfile?: SajuProfile;
+    isActive: boolean;
+    customRole?: string;
+  };
+}
 
 // 五行属性のカラー定義
 const elementColors = {
@@ -113,9 +117,7 @@ const ElementIcon = styled(Box)<{ bgcolor: string }>`
 `;
 
 // プロフィールフォームコンポーネントのProps
-interface ProfileFormProps {
-  user: IUser;
-}
+// 上で既に定義しています
 
 const ProfileForm: React.FC<ProfileFormProps> = ({ user }) => {
   const { updateProfile, user: contextUser } = useUser();
@@ -305,6 +307,12 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ user }) => {
     });
 
     try {
+      // birthDateをローカルストレージに保存して、フォーチュンコンテキストのフォールバックとして機能させる
+      if (formData.birthDate) {
+        localStorage.setItem('userBirthDate', formData.birthDate);
+        console.log('生年月日をローカルストレージに保存:', formData.birthDate);
+      }
+
       // APIの仕様に合わせて送信データを準備
       // バックエンドがelementalProfileを期待しているため、elementalTypeをelementalProfileとしても送信
       const updateData = {

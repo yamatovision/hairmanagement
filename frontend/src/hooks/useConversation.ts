@@ -3,7 +3,8 @@ import {
   IMessage, 
   IConversation, 
   SendMessageRequest, 
-  GeneratePromptQuestionRequest 
+  GeneratePromptQuestionRequest,
+  ConversationType
 } from '../utils/sharedTypes';
 import conversationService from '../services/conversation.service';
 
@@ -33,7 +34,12 @@ export const useConversation = (initialConversationId?: string) => {
   const { showToast } = useToast();
   
   // メッセージを送信
-  const sendMessage = useCallback(async (content: string, context?: any) => {
+  const sendMessage = useCallback(async (
+    content: string, 
+    context?: any, 
+    convType?: ConversationType, 
+    metadata?: any
+  ) => {
     try {
       setIsLoading(true);
       
@@ -54,6 +60,8 @@ export const useConversation = (initialConversationId?: string) => {
       const requestData: SendMessageRequest = {
         conversationId: currentConversation?.id,
         content,
+        conversationType: convType,
+        metadata,
         context
       };
       
@@ -63,9 +71,11 @@ export const useConversation = (initialConversationId?: string) => {
       setCurrentConversation(result.conversation);
       setMessages(result.conversation.messages);
       
+      return result;
     } catch (error) {
       console.error('メッセージ送信エラー:', error);
       showToast('メッセージの送信に失敗しました', 'error');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -177,6 +187,27 @@ export const useConversation = (initialConversationId?: string) => {
     }
   }, [initialConversationId, getConversationById]);
   
+  // チーム目標コンサルティング対話を開始
+  const startTeamConsultation = useCallback(async (teamId: string, initialMessage: string) => {
+    try {
+      setIsLoading(true);
+      
+      const result = await conversationService.startTeamConsultation(teamId, initialMessage);
+      
+      // 会話オブジェクトとメッセージを更新
+      setCurrentConversation(result.conversation);
+      setMessages(result.conversation.messages);
+      
+      return result;
+    } catch (error) {
+      console.error('チーム目標コンサルティング開始エラー:', error);
+      showToast('チーム目標コンサルティングの開始に失敗しました', 'error');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
+
   return {
     currentConversation,
     conversations,
@@ -188,6 +219,7 @@ export const useConversation = (initialConversationId?: string) => {
     getConversationById,
     generatePromptQuestion,
     archiveConversation,
-    favoriteMessage
+    favoriteMessage,
+    startTeamConsultation
   };
 };

@@ -31,12 +31,7 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
       date: new Date(doc.date),
       overallScore: doc.overallLuck,
       rating: this.mapScoreToRating(doc.overallLuck),
-      categories: {
-        work: doc.careerLuck,
-        teamwork: doc.relationshipLuck,
-        health: doc.healthLuck,
-        communication: doc.creativeEnergyLuck
-      },
+      // 分野別カテゴリースコアは削除されました（2025/4/3）
       luckyItems: doc.luckyColors,  // 簡略化のため色をラッキーアイテムとして使用
       yinYangBalance: {
         yin: doc.yinYang === '陰' ? 70 : 30,
@@ -65,10 +60,11 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
       dailyElement: this.determineDailyElement(entity.date),
       yinYang: entity.yinYangBalance?.yin > entity.yinYangBalance?.yang ? '陰' : '陽',
       overallLuck: entity.overallScore,
-      careerLuck: entity.categories.work,
-      relationshipLuck: entity.categories.teamwork,
-      healthLuck: entity.categories.health,
-      creativeEnergyLuck: entity.categories.communication,
+      // 分野別カテゴリースコアは削除されました（2025/4/3）
+      careerLuck: 0, // 互換性のために0を設定
+      relationshipLuck: 0, // 互換性のために0を設定
+      healthLuck: 0, // 互換性のために0を設定
+      creativeEnergyLuck: 0, // 互換性のために0を設定
       wealthLuck: Math.floor(Math.random() * 100) + 1, // 派生値として計算
       description: this.generateDescription(entity),
       advice: entity.advice,
@@ -87,12 +83,28 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
    * @returns 見つかった運勢またはnull
    */
   async findByUserIdAndDate(userId: string, date: Date): Promise<Fortune | null> {
+    // 日付をYYYY-MM-DD形式に変換
     const dateStr = date.toISOString().split('T')[0];
-    const fortune = await this.fortuneModel.findByUserAndDate(userId, dateStr);
-    if (!fortune) {
+    
+    console.log(`[MongoFortuneRepository] findByUserIdAndDate: userId=${userId}, date=${dateStr}`);
+    
+    try {
+      // findByUserAndDateメソッドを使用して運勢を検索
+      const fortune = await this.fortuneModel.findByUserAndDate(userId, dateStr);
+      
+      if (!fortune) {
+        console.log(`[MongoFortuneRepository] 運勢が見つかりませんでした: userId=${userId}, date=${dateStr}`);
+        return null;
+      }
+      
+      console.log(`[MongoFortuneRepository] 運勢が見つかりました: _id=${fortune._id}, userId=${fortune.userId}, date=${fortune.date}`);
+      
+      // Mongooseドキュメントからドメインエンティティへ変換
+      return this.toDomainEntity(fortune);
+    } catch (error) {
+      console.error(`[MongoFortuneRepository] findByUserIdAndDate エラー: ${error}`);
       return null;
     }
-    return this.toDomainEntity(fortune);
   }
 
   /**
@@ -139,21 +151,26 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
   
   /**
    * 運勢を閲覧済みとしてマークする
+   * 
+   * @deprecated この機能は削除されました。フロントエンドで閲覧状態を管理するようになりました。
    * @param fortuneId 運勢ID
    * @returns 操作が成功したかどうか
    */
   async markAsViewed(fortuneId: string): Promise<boolean> {
+    console.warn(`[MongoFortuneRepository] markAsViewed: この機能は廃止されました。fortuneId=${fortuneId}`);
+    return false;
+  }
+  
+  /**
+   * 文字列がMongoose ObjectIdとして有効かチェック
+   * @param id チェックする文字列
+   * @returns 有効なObjectIdかどうか
+   */
+  private isValidObjectId(id: string): boolean {
     try {
-      const fortune = await this.fortuneModel.findById(fortuneId);
-      if (!fortune) {
-        return false;
-      }
-      
-      // モデルのmarkAsViewedメソッドを使用
-      await fortune.markAsViewed();
-      return true;
+      const { Types } = require('mongoose');
+      return Types.ObjectId.isValid(id);
     } catch (error) {
-      console.error(`運勢を閲覧済みとしてマークする際にエラーが発生しました: ${error}`);
       return false;
     }
   }

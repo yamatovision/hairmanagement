@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>陰陽五行AIケアコンパニオン - デイリーフォーチュン</title>
+  <title>陰陽五行AIケアコンパニオン - デイリーフォーチュン (ジョナサン・アイブ版)</title>
   
   <!-- Material UI CDN -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
@@ -13,15 +13,15 @@
   <!-- Chart.js for visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   
-  <!-- Luxon for date handling -->
-  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
-  
   <style>
     :root {
       --primary: #6a1b9a;
-      --secondary: #9c27b0;
-      --light: #e1bee7;
-      --dark: #4a148c;
+      --primary-light: #9c27b0;
+      --primary-dark: #4a148c;
+      --primary-bg: #f3e5f5;
+      --secondary: #00897b;
+      --secondary-light: #4db6ac;
+      --secondary-dark: #004d40;
       --success: #4caf50;
       --warning: #ff9800;
       --error: #f44336;
@@ -29,204 +29,689 @@
       --gray-100: #f5f5f5;
       --gray-200: #eeeeee;
       --gray-300: #e0e0e0;
+      --gray-800: #424242;
+      --black: #212121;
       --text-primary: rgba(0, 0, 0, 0.87);
       --text-secondary: rgba(0, 0, 0, 0.6);
       --text-disabled: rgba(0, 0, 0, 0.38);
       
       /* 陰陽五行属性カラー */
-      --element-wood: #81c784;     /* 木：緑 */
-      --element-fire: #ef5350;     /* 火：赤 */
-      --element-earth: #ffd54f;    /* 土：黄 */
-      --element-metal: #b0bec5;    /* 金：銀/灰色 */
-      --element-water: #64b5f6;    /* 水：青 */
+      --element-wood: #43a047;       /* 木：緑 */
+      --element-wood-light: #81c784; /* 木：薄い緑 */
+      --element-wood-dark: #2e7d32;  /* 木：濃い緑 */
+      --element-wood-bg: #e8f5e9;    /* 木：背景色 */
+      
+      --element-fire: #e53935;       /* 火：赤 */
+      --element-fire-light: #ef5350; /* 火：薄い赤 */
+      --element-fire-dark: #c62828;  /* 火：濃い赤 */
+      --element-fire-bg: #ffebee;    /* 火：背景色 */
+      
+      --element-earth: #ff8f00;      /* 土：オレンジ */
+      --element-earth-light: #ffd54f;/* 土：薄いオレンジ */
+      --element-earth-dark: #ef6c00; /* 土：濃いオレンジ */
+      --element-earth-bg: #fff8e1;   /* 土：背景色 */
+      
+      --element-metal: #fdd835;     /* 金：金色 */
+      --element-metal-light: #ffee58;/* 金：薄い金色 */
+      --element-metal-dark: #f9a825; /* 金：濃い金色 */
+      --element-metal-bg: #fffde7;   /* 金：背景色 */
+      
+      --element-water: #1e88e5;      /* 水：青 */
+      --element-water-light: #64b5f6;/* 水：薄い青 */
+      --element-water-dark: #0d47a1; /* 水：濃い青 */
+      --element-water-bg: #e3f2fd;   /* 水：背景色 */
+      
+      --border-radius-sm: 12px;
+      --border-radius-md: 16px;
+      --border-radius-lg: 24px;
+      --box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+      --card-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
     
     body {
       font-family: 'Roboto', sans-serif;
       margin: 0;
       padding: 0;
-      background-color: var(--gray-100);
+      background: linear-gradient(180deg, var(--primary-bg) 0%, var(--gray-100) 100%);
+      background-attachment: fixed;
       color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      letter-spacing: 0.015em;
     }
     
     .header {
-      background-color: var(--primary);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
       color: white;
-      padding: 16px;
+      padding: 16px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
     }
     
     .header-title {
-      font-size: 1.25rem;
+      font-size: 1.35rem;
       font-weight: 500;
       margin: 0;
+      display: flex;
+      align-items: center;
+      letter-spacing: 0.02em;
+    }
+    
+    .header-icon {
+      margin-right: 12px;
     }
     
     .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 32px 24px;
+      animation: fadeIn 0.8s ease-out;
     }
     
-    .card {
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .main-card {
       background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 32px;
       overflow: hidden;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .main-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 32px rgba(0,0,0,0.15);
+    }
+    
+    /* 各五行属性に対応したカードスタイル */
+    .card-wood {
+      border-top: 5px solid var(--element-wood);
+      background-color: white;
+    }
+    
+    .card-fire {
+      border-top: 0;
+      background-color: white;
+    }
+    
+    .card-earth {
+      border-top: 5px solid var(--element-earth);
+      background-color: white;
+    }
+    
+    .card-metal {
+      border-top: 5px solid var(--element-metal);
+      background-color: white;
+    }
+    
+    .card-water {
+      border-top: 5px solid var(--element-water);
+      background-color: white;
     }
     
     .card-header {
-      background-color: var(--light);
-      padding: 16px;
-      border-bottom: 1px solid var(--gray-300);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card-header-fire {
+      background: linear-gradient(135deg, var(--element-fire) 0%, var(--element-fire-dark) 100%);
+      color: white;
+      padding: 28px 28px;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(229, 57, 53, 0.25);
+    }
+    
+    .card-header-bg-icon {
+      position: absolute;
+      right: -10px;
+      top: -30px;
+      font-size: 180px;
+      opacity: 0.08;
+      transform: rotate(15deg);
+      color: white;
+    }
+    
+    .card-date {
+      font-size: 0.95rem;
+      opacity: 0.9;
+      margin-bottom: 8px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
     }
     
     .card-title {
-      margin: 0;
-      font-size: 1.25rem;
-      color: var(--primary);
-      font-weight: 500;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 2;
+      letter-spacing: 0.01em;
     }
     
-    .card-content {
-      padding: 16px;
-    }
-    
-    .fortune-visual {
-      display: flex;
+    .user-element-tag {
+      display: inline-flex;
       align-items: center;
+      background-color: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      margin-top: 8px;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .user-element-tag:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .user-element-tag .material-icons {
+      font-size: 1.1rem;
+      margin-right: 8px;
+    }
+    
+    .score-chart-section {
+      display: flex;
       justify-content: center;
-      margin-bottom: 16px;
+      padding: 32px 24px;
+      background-color: var(--element-fire-bg);
+      position: relative;
+      border-bottom: 1px solid rgba(229, 57, 53, 0.1);
     }
     
     .fortune-chart-container {
       width: 200px;
       height: 200px;
       position: relative;
+      filter: drop-shadow(0 8px 16px rgba(229, 57, 53, 0.2));
     }
     
-    .element-icons {
-      display: flex;
-      justify-content: space-around;
-      margin: 16px 0;
+    .chart-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
     }
     
-    .element-icon {
+    .score-value {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--element-fire);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    
+    .score-label {
+      font-size: 1rem;
+      color: var(--gray-800);
+      margin-top: 8px;
+      font-weight: 500;
+    }
+    
+    .card-content {
+      padding: 32px 28px;
+    }
+    
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 16px;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 8px;
+      letter-spacing: 0.01em;
+    }
+    
+    .section-title .material-icons {
+      margin-right: 12px;
+      color: var(--element-fire);
+      font-size: 1.5rem;
+    }
+    
+    .advice-text {
+      margin-bottom: 24px;
+      line-height: 1.7;
+      font-size: 1.05rem;
+      color: var(--text-primary);
+    }
+    
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    
+    .action-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background-color: var(--element-fire-bg);
+      color: var(--element-fire-dark);
+      box-shadow: 0 3px 8px rgba(229, 57, 53, 0.1);
+      transition: all 0.3s ease;
+      margin: 0 6px 8px 0;
+    }
+    
+    .action-tag:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px rgba(229, 57, 53, 0.15);
+    }
+    
+    .action-number {
+      background-color: var(--element-fire);
+      color: white;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      display: flex;
+      align-items: center;
       justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-right: 8px;
+      box-shadow: 0 2px 4px rgba(229, 57, 53, 0.3);
+    }
+    
+    .ai-consultation {
+      margin-top: 24px;
+      text-align: center;
+    }
+    
+    .ai-consult-button {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 30px;
+      font-size: 1rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      box-shadow: 0 4px 16px rgba(106, 27, 154, 0.25);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .ai-consult-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(106, 27, 154, 0.35);
+    }
+    
+    .ai-consult-button .material-icons {
+      font-size: 1.3rem;
+      margin-right: 10px;
+    }
+    
+    .ai-consult-desc {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .harmony-container {
+      margin-top: 28px;
+    }
+    
+    .score-bar {
+      margin-bottom: 20px;
+    }
+    
+    .score-bar-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    
+    .score-bar-value {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .action-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin: 24px 0 12px 0;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+    }
+    
+    .action-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .action-list li {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius-sm);
+      transition: all 0.3s ease;
+    }
+    
+    .action-list li:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      background-color: white;
+    }
+    
+    .recommended-actions .action-list li {
+      border-left: 3px solid var(--element-fire);
+    }
+    
+    .avoid-actions .action-list li {
+      border-left: 3px solid var(--error);
+    }
+    
+    .action-icon {
+      margin-right: 12px;
+      color: var(--element-fire);
+      font-size: 1.2rem;
+    }
+    
+    .avoid-actions .action-icon {
+      color: var(--error);
+    }
+    
+    .action-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    
+    .score-bar-track {
+      height: 10px;
+      background-color: var(--gray-200);
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .score-bar-progress {
+      height: 100%;
+      background: linear-gradient(90deg, var(--element-fire-light) 0%, var(--element-fire) 100%);
+      border-radius: 5px;
+      transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 1px 3px rgba(229, 57, 53, 0.3);
+    }
+    
+    /* 各属性ごとのプログレスバーカラー */
+    .score-bar-progress-wood {
+      background: linear-gradient(90deg, var(--element-wood-light) 0%, var(--element-wood) 100%);
+      box-shadow: 0 1px 3px rgba(67, 160, 71, 0.3);
+    }
+    
+    .score-bar-progress-fire {
+      background: linear-gradient(90deg, var(--element-fire-light) 0%, var(--element-fire) 100%);
+      box-shadow: 0 1px 3px rgba(229, 57, 53, 0.3);
+    }
+    
+    .score-bar-progress-earth {
+      background: linear-gradient(90deg, var(--element-earth-light) 0%, var(--element-earth) 100%);
+      box-shadow: 0 1px 3px rgba(255, 143, 0, 0.3);
+    }
+    
+    .score-bar-progress-metal {
+      background: linear-gradient(90deg, var(--element-metal-light) 0%, var(--element-metal) 100%);
+      box-shadow: 0 1px 3px rgba(253, 216, 53, 0.3);
+    }
+    
+    .score-bar-progress-water {
+      background: linear-gradient(90deg, var(--element-water-light) 0%, var(--element-water) 100%);
+      box-shadow: 0 1px 3px rgba(30, 136, 229, 0.3);
+    }
+    
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gray-200) 15%, var(--gray-200) 85%, transparent);
+      margin: 32px 0;
+    }
+    
+    .goal-section {
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius-md);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .goal-section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+    
+    .goal-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+    
+    .goal-title .material-icons {
+      margin-right: 12px;
+      font-size: 1.3rem;
+    }
+    
+    .goal-content {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    
+    .action-points {
+      background: linear-gradient(135deg, var(--element-fire-bg) 0%, white 100%);
+      border-radius: var(--border-radius-md);
+      padding: 24px;
+      border-left: 4px solid var(--element-fire);
+      box-shadow: 0 4px 16px rgba(229, 57, 53, 0.1);
+    }
+    
+    .action-point {
+      display: flex;
+      margin-bottom: 16px;
+      align-items: flex-start;
+    }
+    
+    .action-point:last-child {
+      margin-bottom: 0;
+    }
+    
+    .action-number {
+      background-color: var(--element-fire);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-right: 16px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      box-shadow: 0 2px 6px rgba(229, 57, 53, 0.3);
+    }
+    
+    .action-text {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    
+    .team-hint {
+      background-color: white;
+      border-radius: var(--border-radius-md);
+      padding: 28px;
+      margin-top: 32px;
+      box-shadow: var(--card-shadow);
+      border-left: 4px solid var(--element-fire);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .team-hint:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    }
+    
+    .team-hint::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 150px;
+      background: linear-gradient(90deg, transparent, rgba(255, 0, 0, 0.03));
+      z-index: 0;
+    }
+    
+    .team-hint-title {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      margin-bottom: 16px;
+      font-size: 1.2rem;
+      color: var(--gray-800);
       position: relative;
     }
     
-    .wood {
-      background-color: var(--element-wood);
-      color: white;
+    .team-hint-title .material-icons {
+      margin-right: 12px;
+      color: var(--element-fire);
+      font-size: 1.4rem;
     }
     
-    .fire {
-      background-color: var(--element-fire);
-      color: white;
-    }
-    
-    .earth {
-      background-color: var(--element-earth);
-      color: var(--text-primary);
-    }
-    
-    .metal {
-      background-color: var(--element-metal);
-      color: var(--text-primary);
-    }
-    
-    .water {
-      background-color: var(--element-water);
-      color: white;
-    }
-    
-    .element-label {
-      font-size: 0.75rem;
-      margin-top: 4px;
-    }
-    
-    .question-card {
-      background-color: var(--light);
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-    }
-    
-    .answer-form {
+    .team-members {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
       margin-top: 16px;
     }
     
-    .text-field {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--gray-300);
-      border-radius: 4px;
-      font-family: 'Roboto', sans-serif;
-      font-size: 1rem;
-      resize: vertical;
-      min-height: 80px;
-    }
-    
-    .button {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 10px 16px;
-      font-size: 0.875rem;
+    .team-member {
+      display: inline-flex;
+      align-items: center;
+      background-color: var(--element-fire-bg);
+      color: var(--element-fire);
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-size: 0.9rem;
       font-weight: 500;
-      text-transform: uppercase;
-      cursor: pointer;
-      letter-spacing: 0.02857em;
-      transition: background-color 0.3s;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(229, 57, 53, 0.1);
     }
     
-    .button:hover {
-      background-color: var(--dark);
+    .team-member:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+      background-color: rgba(255, 235, 238, 0.8);
     }
     
-    .button-secondary {
-      background-color: transparent;
-      color: var(--primary);
-      border: 1px solid var(--primary);
+    .team-member .material-icons {
+      font-size: 1.1rem;
+      margin-right: 8px;
     }
     
-    .button-secondary:hover {
-      background-color: rgba(106, 27, 154, 0.04);
+    .calendar-section {
+      background-color: white;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      margin-bottom: 32px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .calendar-section:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
     }
     
     .calendar-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      padding: 20px 24px;
+      background-color: var(--primary-bg);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .calendar-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .calendar-title .material-icons {
+      margin-right: 12px;
+      font-size: 1.3rem;
+    }
+    
+    .calendar-controls {
+      display: flex;
+      align-items: center;
     }
     
     .calendar-toggle {
       display: flex;
-      border: 1px solid var(--gray-300);
-      border-radius: 4px;
+      background-color: white;
+      border-radius: 30px;
       overflow: hidden;
+      border: 1px solid var(--gray-300);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     
     .calendar-toggle-button {
-      background-color: white;
+      background: none;
       border: none;
-      padding: 8px 16px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
       cursor: pointer;
-      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
     }
     
     .calendar-toggle-button.active {
@@ -234,60 +719,154 @@
       color: white;
     }
     
+    .calendar-content {
+      padding: 28px;
+    }
+    
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-    }
-    
-    .calendar-day {
-      padding: 8px;
-      text-align: center;
-      border-radius: 4px;
-      cursor: pointer;
-      position: relative;
+      gap: 10px;
     }
     
     .calendar-day-header {
+      padding: 10px 0;
+      text-align: center;
+      font-size: 0.85rem;
       font-weight: 500;
       color: var(--text-secondary);
-      padding: 8px;
-      text-align: center;
+    }
+    
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius-sm);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    
+    .calendar-day:hover {
+      background-color: var(--gray-200);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      z-index: 1;
     }
     
     .calendar-day.today {
-      background-color: var(--light);
+      background-color: var(--primary-bg);
       font-weight: 700;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      box-shadow: 0 3px 10px rgba(106, 27, 154, 0.2);
     }
     
-    .calendar-day .indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
+    .calendar-day-inactive {
+      opacity: 0.5;
+      background-color: var(--gray-200);
+    }
+    
+    .day-number {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
       position: absolute;
-      bottom: 2px;
-      left: 50%;
-      transform: translateX(-50%);
+      top: 6px;
+      left: 6px;
     }
     
-    .indicator.excellent {
-      background-color: var(--success);
+    .score-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin: 6px auto 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: white;
+      font-weight: bold;
+      transition: all 0.3s ease;
     }
     
-    .indicator.good {
-      background-color: var(--primary);
+    .calendar-day:hover .score-circle {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     
-    .indicator.neutral {
-      background-color: var(--gray-300);
+    .wood-element {
+      background: linear-gradient(135deg, var(--element-wood-light), var(--element-wood));
     }
     
-    .indicator.challenging {
-      background-color: var(--warning);
+    .fire-element {
+      background: linear-gradient(135deg, var(--element-fire-light), var(--element-fire));
     }
     
-    .indicator.difficult {
-      background-color: var(--error);
+    .earth-element {
+      background: linear-gradient(135deg, var(--element-earth-light), var(--element-earth));
+    }
+    
+    .metal-element {
+      background: linear-gradient(135deg, var(--element-metal-light), var(--element-metal));
+      color: var(--text-primary) !important;
+    }
+    
+    .water-element {
+      background: linear-gradient(135deg, var(--element-water-light), var(--element-water));
+    }
+    
+    .calendar-legend {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      background-color: white;
+      padding: 6px 10px;
+      border-radius: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: all 0.3s ease;
+    }
+    
+    .legend-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      margin-right: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    
+    .score-legend {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-style: italic;
     }
     
     .bottom-navigation {
@@ -295,163 +874,406 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background-color: white;
+      background-color: rgba(255, 255, 255, 0.95);
       display: flex;
       justify-content: space-around;
-      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 -2px 15px rgba(0,0,0,0.12);
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0,0,0,0.05);
+      padding: 4px 0;
     }
     
     .bottom-nav-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 8px 0;
-      min-width: 64px;
+      padding: 12px 0;
+      min-width: 72px;
       flex: 1;
       color: var(--text-secondary);
       text-decoration: none;
+      position: relative;
+      transition: all 0.3s ease;
     }
     
     .bottom-nav-item.active {
       color: var(--primary);
     }
     
+    .bottom-nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 3px;
+      background-color: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+    
+    .bottom-nav-item .material-icons {
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+    }
+    
     .bottom-nav-label {
-      font-size: 0.75rem;
-      margin-top: 4px;
-    }
-    
-    .team-hint {
-      padding: 12px;
-      background-color: var(--gray-200);
-      border-radius: 4px;
-      margin-top: 16px;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-    
-    .team-hint-title {
+      font-size: 0.8rem;
       font-weight: 500;
-      margin-bottom: 4px;
-      color: var(--text-primary);
     }
     
-    /* スペースを確保するためのパディング（ボトムナビゲーションの高さ分） */
     .page-bottom-padding {
-      padding-bottom: 64px;
+      padding-bottom: 100px;
     }
+    
+    .question-section {
+      background-color: white;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--card-shadow);
+      padding: 28px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .question-section:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    }
+    
+    .question-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--element-fire) 100%);
+    }
+    
+    .question-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .question-title .material-icons {
+      margin-right: 12px;
+      font-size: 1.4rem;
+    }
+    
+    .question-text {
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      line-height: 1.7;
+      font-size: 1.05rem;
+    }
+    
+    .text-field {
+      width: 100%;
+      padding: 18px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius-sm);
+      font-family: 'Roboto', sans-serif;
+      font-size: 1.05rem;
+      resize: vertical;
+      min-height: 120px;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    }
+    
+    .text-field:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(106, 27, 154, 0.15), inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .button-group {
+      display: flex;
+      justify-content: flex-end;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    
+    .button {
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .button .material-icons {
+      font-size: 1.3rem;
+      margin-right: 10px;
+    }
+    
+    .button-primary {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 12px rgba(106, 27, 154, 0.3);
+    }
+    
+    .button-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(106, 27, 154, 0.4);
+    }
+    
+    .button-secondary {
+      background-color: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      box-shadow: 0 2px 6px rgba(106, 27, 154, 0.1);
+    }
+    
+    .button-secondary:hover {
+      background-color: rgba(106, 27, 154, 0.05);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(106, 27, 154, 0.15);
+    }
+    
+    /* レスポンシブデザイン */
+    @media (max-width: 600px) {
+      .card-title {
+        font-size: 1.5rem;
+      }
+      
+      .score-chart-section {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .calendar-grid {
+        gap: 6px;
+      }
+      
+      .calendar-legend {
+        gap: 10px;
+      }
+      
+      .button {
+        padding: 12px 20px;
+      }
+    }
+    
+    /* アニメーション */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .animate-pulse {
+      animation: pulse 2s infinite ease-in-out;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .animated-section {
+      animation: slideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.5s; }
+    .delay-5 { animation-delay: 0.7s; }
   </style>
 </head>
 <body>
+  <!-- ヘッダー -->
   <div class="header">
-    <h1 class="header-title">デイリーフォーチュン</h1>
+    <h1 class="header-title">
+      <span class="material-icons header-icon">auto_graph</span>
+      デイリーフォーチュン
+    </h1>
     <div style="display: flex; align-items: center;">
-      <span class="material-icons" style="margin-right: 16px;">notifications</span>
-      <span class="material-icons">account_circle</span>
+      <span class="material-icons" style="margin-right: 20px; font-size: 1.4rem;">notifications</span>
+      <span class="material-icons" style="font-size: 1.4rem;">account_circle</span>
     </div>
   </div>
   
   <div class="container">
-    <div class="card" style="border-top: 5px solid var(--element-fire); background-color: rgba(239, 83, 80, 0.05);"><!-- 火の属性カラーとわずかな背景色 -->
-      <div class="card-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <h2 class="card-title">本日の運勢 (2025年3月26日)</h2>
-            <div style="font-size: 0.875rem; color: var(--text-secondary);">佐藤 美咲さんの陰陽五行分析</div>
-          </div>
-          <div style="display: flex; align-items: center; background-color: var(--element-fire); color: white; padding: 6px 12px; border-radius: 16px; font-weight: 500; box-shadow: 0 2px 4px rgba(239, 83, 80, 0.3);">
-            <span class="material-icons" style="font-size: 1rem; margin-right: 4px;">local_fire_department</span>
-            <span>火のタイプ</span>
-          </div>
+    <!-- メイン運勢カード -->
+    <div class="main-card card-fire animated-section">
+      <!-- カードヘッダー -->
+      <div class="card-header-fire">
+        <span class="material-icons card-header-bg-icon">local_fire_department</span>
+        <div class="card-date">2025年4月3日</div>
+        <h2 class="card-title">今日の運勢</h2>
+        <div class="user-element-tag">
+          <span class="material-icons">local_fire_department</span>
+          火の陽 (丙午)
         </div>
       </div>
-      <div class="card-content">
-        <div class="fortune-visual">
-          <div class="fortune-chart-container">
-            <canvas id="fortuneChart"></canvas>
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-              <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">89</div>
-              <div style="font-size: 0.875rem;">優れた運気</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="element-icons">
-          <div class="element-icon wood">
-            <span class="material-icons">eco</span>
-            <span class="element-label">木</span>
-          </div>
-          <div class="element-icon fire">
-            <span class="material-icons">local_fire_department</span>
-            <span class="element-label">火</span>
-          </div>
-          <div class="element-icon earth">
-            <span class="material-icons">landscape</span>
-            <span class="element-label">土</span>
-          </div>
-          <div class="element-icon metal">
-            <span class="material-icons">grade</span>
-            <span class="element-label">金</span>
-          </div>
-          <div class="element-icon water">
-            <span class="material-icons">water_drop</span>
-            <span class="element-label">水</span>
-          </div>
-        </div>
-        
-        <div style="margin-top: 16px;">
-          <h3 style="margin-top: 0; color: var(--primary);">今日のポイント</h3>
-          <p>本日は「火」のエネルギーが強く、創造性と情熱が高まる日です。新しいカットやカラーのアイデアがひらめきやすい傾向にあります。一方で「水」の要素が弱まっているため、細かい作業は慎重に。「木」のサポートを受け、美容技術の向上に適した日でもあります。</p>
-          
-          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
-            <div style="background-color: var(--light); padding: 8px 12px; border-radius: 16px; font-size: 0.875rem;">
-              <span class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 4px;">tips_and_updates</span>
-              <span>カラーの提案に最適</span>
-            </div>
-            <div style="background-color: var(--light); padding: 8px 12px; border-radius: 16px; font-size: 0.875rem;">
-              <span class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 4px;">schedule</span>
-              <span>15時-17時がラッキータイム</span>
-            </div>
-            <div style="background-color: var(--light); padding: 8px 12px; border-radius: 16px; font-size: 0.875rem;">
-              <span class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 4px;">palette</span>
-              <span>ラッキーカラー：赤</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="question-card">
-      <h3 style="margin-top: 0; color: var(--primary);">今日の呼び水質問</h3>
-      <p>創造力が冴える日です。お客様に提案したい新しいスタイルのアイデアはありますか？</p>
       
-      <div class="answer-form">
-        <textarea class="text-field" placeholder="ここに回答を入力..."></textarea>
-        <div style="display: flex; justify-content: flex-end; margin-top: 8px; gap: 8px;">
-          <button class="button button-secondary">スキップ</button>
-          <button class="button">回答する</button>
+      <!-- スコアチャートセクション -->
+      <div class="score-chart-section">
+        <div class="fortune-chart-container">
+          <canvas id="fortuneChart"></canvas>
+          <div class="chart-center-text">
+            <div class="score-value">89</div>
+            <div class="score-label">命式との相性</div>
+          </div>
         </div>
+      </div>
+      
+      <!-- カードコンテンツ -->
+      <div class="card-content">
+        <!-- 今日のポイント -->
+        <h3 class="section-title">
+          <span class="material-icons">tips_and_updates</span>
+          今日のポイント
+        </h3>
+        <p class="advice-text">
+          あなたは今日、晴れ渡った空に風を受けて飛ぶ鳥のような運気です！思いがけない幸運と新しい出会いの予感があります。直感を信じれば、思わぬ発見があるでしょう。
+        </p>
+        
+        <!-- ラッキーポイント -->
+        <div style="background-color: #ffebee; border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(229, 57, 53, 0.1);">
+          <h4 style="font-size: 1.1rem; color: #e53935; margin-bottom: 12px; display: flex; align-items: center;">
+            <span class="material-icons" style="margin-right: 8px; font-size: 1.2rem;">auto_awesome</span>
+            今日のラッキーポイント
+          </h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <div class="action-tag" style="background-color: white; color: #e53935; border: 1px solid #e53935;">
+              <span class="action-number" style="background-color: #e53935;">★</span>
+              <span>ラッキーカラー: 赤</span>
+            </div>
+            <div class="action-tag" style="background-color: white; color: #e53935; border: 1px solid #e53935;">
+              <span class="action-number" style="background-color: #e53935;">★</span>
+              <span>ラッキーアイテム: 鈴</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <div class="action-tag" style="background-color: white; color: #e53935; border: 1px solid #e53935;">
+              <span class="action-number" style="background-color: #e53935;">★</span>
+              <span>ラッキーナンバー: 8</span>
+            </div>
+            <div class="action-tag" style="background-color: white; color: #e53935; border: 1px solid #e53935;">
+              <span class="action-number" style="background-color: #e53935;">★</span>
+              <span>開運アクション: 朝日を浴びる</span>
+            </div>
+          </div>
+        </div>
+        
+        
+        <!-- 命式との相性スコア -->
+        <div class="harmony-container animated-section delay-1">
+          <div class="score-bar">
+            <div class="score-bar-label">
+              <span>命式との相性</span>
+              <span class="score-bar-value">62/70</span>
+            </div>
+            <div class="score-bar-track">
+              <div class="score-bar-progress score-bar-progress-fire" style="width: 0%"></div>
+            </div>
+          </div>
+          
+          <div class="score-bar">
+            <div class="score-bar-label">
+              <span>五行バランス補完</span>
+              <span class="score-bar-value">27/30</span>
+            </div>
+            <div class="score-bar-track">
+              <div class="score-bar-progress score-bar-progress-fire" style="width: 0%"></div>
+            </div>
+          </div>
+          
+          <!-- AIアシスタントへの相談ボタン -->
+          <div class="ai-consultation">
+            <button class="ai-consult-button">
+              <span class="material-icons">psychology</span>
+              AIアシスタントに相談する
+            </button>
+            <p class="ai-consult-desc">今日の五行エネルギーをどう活かすか、AIがパーソナライズされたアドバイスを提供します</p>
+          </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <!-- 目標へのアドバイス -->
+        <div class="animated-section delay-2">
+          <!-- 個人目標 -->
+          <div class="goal-section">
+            <div class="goal-title">
+              <span class="material-icons">person</span>
+              個人目標へのアドバイス
+            </div>
+            <p class="goal-content">
+              個人目標「最高のAISAASを作る」に向けて、今日は特に良い日です。庚（金）の持つ鋭さと明晰さは、AIシステムの論理構造を見極めるのに最適です。直感的なひらめきを大切に、システムの「骨格」となる部分に焦点を当て、余分な要素を削ぎ落としていきましょう。
+            </p>
+          </div>
+          
+          <!-- チーム目標 -->
+          <div class="goal-section">
+            <div class="goal-title">
+              <span class="material-icons">groups</span>
+              チーム目標へのアドバイス
+            </div>
+            <p class="goal-content">
+              チーム目標「年内30億円規模でバイアウト」のため、今日はチーム内での役割分担を明確にし、バイアウト計画の具体的なタイムラインを設定するのに最適な時期です。特に、財務面の詳細な検証と、戦略的な折衝ポイントを見極めることに注力すると良い結果につながります。
+            </p>
+          </div>
+        </div>
+        
       </div>
     </div>
     
-    <div class="team-hint" style="border-left: 4px solid var(--element-fire);">
+    
+    <!-- チームヒント -->
+    <div class="team-hint animated-section delay-5">
       <div class="team-hint-title">
-        <span class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 4px;">groups</span>
+        <span class="material-icons">diversity_3</span>
         チームヒント
       </div>
-      <p style="margin: 0;">今日はチーム内の「<span style="color: var(--element-fire); font-weight: 500;">火</span>」属性の同僚（<span style="display: inline-flex; align-items: center; background-color: var(--element-fire); color: white; padding: 2px 6px; border-radius: 12px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 0.75rem; margin-right: 2px;">local_fire_department</span>田中さん</span>、<span style="display: inline-flex; align-items: center; background-color: var(--element-fire); color: white; padding: 2px 6px; border-radius: 12px; font-size: 0.75rem;"><span class="material-icons" style="font-size: 0.75rem; margin-right: 2px;">local_fire_department</span>山田さん</span>）との相性が良好です。同じ火タイプ同士で新しいスタイル提案についてアイデアを共有すると、さらに発展するでしょう。</p>
-    </div>
-    
-    <div class="card">
-      <div class="calendar-header">
-        <h3 style="margin: 0; color: var(--primary);">運勢カレンダー</h3>
-        <div class="calendar-toggle">
-          <button class="calendar-toggle-button active">週間</button>
-          <button class="calendar-toggle-button">月間</button>
+      <p style="margin-bottom: 16px;">今日はチーム内の「火」属性の同僚との相性が特に良好です。同じ火タイプ同士で新しいアイデアを共有すると、さらに発展するでしょう。</p>
+      
+      <div class="team-members">
+        <div class="team-member">
+          <span class="material-icons">local_fire_department</span>
+          田中さん
+        </div>
+        <div class="team-member">
+          <span class="material-icons">local_fire_department</span>
+          山田さん
         </div>
       </div>
-      <div class="card-content">
-        <div class="calendar-grid">
+    </div>
+    
+    <!-- カレンダーセクション -->
+    <div class="calendar-section">
+      <div class="calendar-header">
+        <h3 class="calendar-title">
+          <span class="material-icons">calendar_month</span>
+          運勢カレンダー
+        </h3>
+        <div class="calendar-controls">
+          <div class="calendar-toggle">
+            <button class="calendar-toggle-button active">週間</button>
+            <button class="calendar-toggle-button">月間</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="calendar-content">
+        <!-- 週間ビュー -->
+        <div class="calendar-grid week-view">
           <div class="calendar-day-header">日</div>
           <div class="calendar-day-header">月</div>
           <div class="calendar-day-header">火</div>
@@ -460,36 +1282,245 @@
           <div class="calendar-day-header">金</div>
           <div class="calendar-day-header">土</div>
           
-          <div class="calendar-day">23<div class="indicator good"></div></div>
-          <div class="calendar-day">24<div class="indicator neutral"></div></div>
-          <div class="calendar-day">25<div class="indicator challenging"></div></div>
-          <div class="calendar-day today">26<div class="indicator excellent"></div></div>
-          <div class="calendar-day">27<div class="indicator excellent"></div></div>
-          <div class="calendar-day">28<div class="indicator good"></div></div>
-          <div class="calendar-day">29<div class="indicator neutral"></div></div>
+          <div class="calendar-day">
+            <span class="day-number">31</span>
+            <div class="score-circle metal-element">82</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">1</span>
+            <div class="score-circle earth-element">75</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">2</span>
+            <div class="score-circle water-element">65</div>
+          </div>
+          <div class="calendar-day today">
+            <span class="day-number">3</span>
+            <div class="score-circle fire-element">89</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">4</span>
+            <div class="score-circle fire-element">86</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">5</span>
+            <div class="score-circle wood-element">78</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">6</span>
+            <div class="score-circle earth-element">71</div>
+          </div>
         </div>
         
-        <div style="display: flex; justify-content: center; margin-top: 16px; gap: 16px; font-size: 0.75rem;">
-          <div style="display: flex; align-items: center;">
-            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--success); margin-right: 4px;"></div>
-            <span>最高</span>
+        <!-- 月間ビュー (初期状態では非表示) -->
+        <div class="calendar-grid month-view" style="display: none;">
+          <div class="calendar-day-header">日</div>
+          <div class="calendar-day-header">月</div>
+          <div class="calendar-day-header">火</div>
+          <div class="calendar-day-header">水</div>
+          <div class="calendar-day-header">木</div>
+          <div class="calendar-day-header">金</div>
+          <div class="calendar-day-header">土</div>
+          
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">26</span>
+            <div class="score-circle earth-element">58</div>
           </div>
-          <div style="display: flex; align-items: center;">
-            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--primary); margin-right: 4px;"></div>
-            <span>良好</span>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">27</span>
+            <div class="score-circle metal-element">62</div>
           </div>
-          <div style="display: flex; align-items: center;">
-            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--gray-300); margin-right: 4px;"></div>
-            <span>普通</span>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">28</span>
+            <div class="score-circle water-element">67</div>
           </div>
-          <div style="display: flex; align-items: center;">
-            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--warning); margin-right: 4px;"></div>
-            <span>要注意</span>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">29</span>
+            <div class="score-circle wood-element">71</div>
           </div>
-          <div style="display: flex; align-items: center;">
-            <div style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--error); margin-right: 4px;"></div>
-            <span>困難</span>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">30</span>
+            <div class="score-circle fire-element">76</div>
           </div>
+          <div class="calendar-day">
+            <span class="day-number">31</span>
+            <div class="score-circle metal-element">82</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">1</span>
+            <div class="score-circle earth-element">75</div>
+          </div>
+          
+          <div class="calendar-day">
+            <span class="day-number">2</span>
+            <div class="score-circle water-element">65</div>
+          </div>
+          <div class="calendar-day today">
+            <span class="day-number">3</span>
+            <div class="score-circle fire-element">89</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">4</span>
+            <div class="score-circle fire-element">86</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">5</span>
+            <div class="score-circle wood-element">78</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">6</span>
+            <div class="score-circle earth-element">71</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">7</span>
+            <div class="score-circle metal-element">73</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">8</span>
+            <div class="score-circle water-element">68</div>
+          </div>
+          
+          <div class="calendar-day">
+            <span class="day-number">9</span>
+            <div class="score-circle wood-element">76</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">10</span>
+            <div class="score-circle fire-element">81</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">11</span>
+            <div class="score-circle earth-element">74</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">12</span>
+            <div class="score-circle metal-element">80</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">13</span>
+            <div class="score-circle water-element">72</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">14</span>
+            <div class="score-circle wood-element">77</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">15</span>
+            <div class="score-circle fire-element">85</div>
+          </div>
+          
+          <div class="calendar-day">
+            <span class="day-number">16</span>
+            <div class="score-circle earth-element">71</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">17</span>
+            <div class="score-circle metal-element">79</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">18</span>
+            <div class="score-circle water-element">70</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">19</span>
+            <div class="score-circle wood-element">75</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">20</span>
+            <div class="score-circle fire-element">83</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">21</span>
+            <div class="score-circle earth-element">73</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">22</span>
+            <div class="score-circle metal-element">78</div>
+          </div>
+          
+          <div class="calendar-day">
+            <span class="day-number">23</span>
+            <div class="score-circle water-element">69</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">24</span>
+            <div class="score-circle wood-element">74</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">25</span>
+            <div class="score-circle fire-element">82</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">26</span>
+            <div class="score-circle earth-element">70</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">27</span>
+            <div class="score-circle metal-element">77</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">28</span>
+            <div class="score-circle water-element">72</div>
+          </div>
+          <div class="calendar-day">
+            <span class="day-number">29</span>
+            <div class="score-circle wood-element">76</div>
+          </div>
+          
+          <div class="calendar-day">
+            <span class="day-number">30</span>
+            <div class="score-circle fire-element">84</div>
+          </div>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">1</span>
+            <div class="score-circle earth-element">66</div>
+          </div>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">2</span>
+            <div class="score-circle metal-element">68</div>
+          </div>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">3</span>
+            <div class="score-circle water-element">64</div>
+          </div>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">4</span>
+            <div class="score-circle wood-element">69</div>
+          </div>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">5</span>
+            <div class="score-circle fire-element">74</div>
+          </div>
+          <div class="calendar-day calendar-day-inactive">
+            <span class="day-number">6</span>
+            <div class="score-circle earth-element">63</div>
+          </div>
+        </div>
+        
+        <div class="calendar-legend">
+          <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(135deg, var(--element-wood-light), var(--element-wood));"></div>
+            <span>木の日</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(135deg, var(--element-fire-light), var(--element-fire));"></div>
+            <span>火の日</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(135deg, var(--element-earth-light), var(--element-earth));"></div>
+            <span>土の日</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(135deg, var(--element-metal-light), var(--element-metal));"></div>
+            <span>金の日</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: linear-gradient(135deg, var(--element-water-light), var(--element-water));"></div>
+            <span>水の日</span>
+          </div>
+        </div>
+        <div class="score-legend">
+          <span class="score-info">※ 円内の数字はあなたの命式との相性スコア (100点満点)</span>
         </div>
       </div>
     </div>
@@ -497,6 +1528,7 @@
     <div class="page-bottom-padding"></div>
   </div>
   
+  <!-- ボトムナビゲーション -->
   <div class="bottom-navigation">
     <a href="#" class="bottom-nav-item active">
       <span class="material-icons">auto_graph</span>
@@ -531,8 +1563,8 @@
         datasets: [{
           data: [89, 11],
           backgroundColor: [
-            '#9c27b0',
-            '#e1bee7',
+            '#e53935',  // 火の色（メイン）
+            '#ffebee',  // 火の薄い背景色
           ],
           borderWidth: 0,
         }]
@@ -548,64 +1580,91 @@
           tooltip: {
             enabled: false
           }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 2000,
+          easing: 'easeOutQuart'
         }
       }
     });
     
+    // スコアバーのアニメーション
+    setTimeout(() => {
+      document.querySelectorAll('.score-bar-progress').forEach((bar, index) => {
+        const values = [88.5, 90]; // 62/70 = 88.5%, 27/30 = 90%
+        bar.style.width = values[index] + '%';
+      });
+    }, 800);
+    
     // カレンダー切り替え
     const calendarToggleButtons = document.querySelectorAll('.calendar-toggle-button');
-    calendarToggleButtons.forEach(button => {
+    const weekView = document.querySelector('.week-view');
+    const monthView = document.querySelector('.month-view');
+    
+    calendarToggleButtons.forEach((button, index) => {
       button.addEventListener('click', () => {
         calendarToggleButtons.forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
         
-        // ここで週間/月間カレンダーの切り替え処理を実装
-        // 簡易デモのため実際の切り替えは省略
+        // ビューの切り替え
+        if (index === 0) { // 週間ビュー
+          weekView.style.display = 'grid';
+          monthView.style.display = 'none';
+        } else { // 月間ビュー
+          weekView.style.display = 'none';
+          monthView.style.display = 'grid';
+        }
       });
-    });
-    
-    // 五行要素のハイライト（今日のハイライト要素を強調表示）
-    const highlightElement = document.querySelector('.element-icon.fire');
-    highlightElement.style.transform = 'scale(1.1)';
-    highlightElement.style.boxShadow = '0 0 8px rgba(239, 83, 80, 0.6)';
-    
-    // ユーザーの属性（火）を強調表示
-    document.querySelectorAll('.element-icon').forEach(icon => {
-      if (icon.classList.contains('fire')) {
-        icon.style.border = '2px solid white';
-        icon.innerHTML += '<div style="position: absolute; top: -6px; right: -6px; background-color: white; color: var(--element-fire); border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">私</div>';
-      }
     });
     
     // カレンダーの日付クリック処理
     const calendarDays = document.querySelectorAll('.calendar-day');
     calendarDays.forEach(day => {
       day.addEventListener('click', () => {
-        // 日付クリック時の処理をここに実装
-        // 簡易デモのためアラートを表示
         if (!day.classList.contains('today')) {
-          alert(day.textContent + '日の運勢を表示します');
+          const dateText = day.textContent.replace(/\D/g, '');
+          // アクティブな日付を変更
+          document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('today'));
+          day.classList.add('today');
+          // 実際のアプリではここで日付が変わったことをユーザーに通知
+          const month = new Date().getMonth() + 1;
+          alert(`${month}月${dateText}日の運勢を表示します`);
         }
       });
     });
     
     // 回答送信処理
-    const answerButton = document.querySelector('.answer-form .button');
+    const answerButton = document.querySelector('.button-primary');
     answerButton.addEventListener('click', () => {
       const answerText = document.querySelector('.text-field').value;
       if (answerText.trim() !== '') {
-        alert('回答を送信しました！');
-        // 回答送信後のUI更新やAI対話への遷移などはここに実装
+        alert('回答を送信しました！AIが分析します');
+        document.querySelector('.text-field').value = '';
       } else {
         alert('回答を入力してください');
       }
     });
     
     // スキップボタン処理
-    const skipButton = document.querySelector('.answer-form .button-secondary');
+    const skipButton = document.querySelector('.button-secondary');
     skipButton.addEventListener('click', () => {
-      // スキップ処理を実装
       alert('質問をスキップしました');
+      document.querySelector('.text-field').value = '';
+    });
+    
+    // 画面のスクロールアニメーション
+    document.addEventListener('DOMContentLoaded', () => {
+      const animatedSections = document.querySelectorAll('.animated-section');
+      
+      // 遅延アニメーションのためにopacityを0に初期化
+      setTimeout(() => {
+        // ProgressBarのアニメーションを初期化
+        document.querySelectorAll('.score-bar-progress').forEach(bar => {
+          bar.style.width = '0%';
+        });
+      }, 100);
     });
   </script>
 </body>

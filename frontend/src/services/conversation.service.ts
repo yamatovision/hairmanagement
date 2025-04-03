@@ -4,7 +4,8 @@ import {
   IConversation, 
   IMessage, 
   SendMessageRequest, 
-  GeneratePromptQuestionRequest 
+  GeneratePromptQuestionRequest,
+  ConversationType
 } from '../utils/sharedTypes';
 
 /**
@@ -194,6 +195,42 @@ class ConversationService {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'お気に入り登録に失敗しました');
+    }
+    
+    const data = await response.json();
+    return data.data;
+  }
+
+  /**
+   * チーム目標コンサルティング対話を開始する
+   * @param teamId チームID
+   * @param initialMessage 初期メッセージ
+   * @returns 会話情報と最初のメッセージ
+   */
+  async startTeamConsultation(teamId: string, initialMessage: string): Promise<{
+    conversation: IConversation;
+    lastMessage: IMessage;
+  }> {
+    const token = localStorage.getItem('token');
+    
+    const messageData: SendMessageRequest = {
+      content: initialMessage,
+      conversationType: ConversationType.TEAM_CONSULTATION,
+      metadata: { teamId }
+    };
+    
+    const response = await fetch(getApiUrl(CONVERSATION.SEND_MESSAGE), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(messageData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'チーム目標コンサルティングの開始に失敗しました');
     }
     
     const data = await response.json();

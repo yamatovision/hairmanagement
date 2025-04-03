@@ -25,6 +25,7 @@ const OFFLINE_ENABLED_ENDPOINTS = [
   '/api/v1/fortune/daily',
   '/api/v1/fortune/range',
   '/api/v1/fortune/date/',
+  '/api/v1/fortune/saju-profile',
   '/api/v1/users/me',
   '/api/v1/conversation'
 ];
@@ -32,6 +33,7 @@ const OFFLINE_ENABLED_ENDPOINTS = [
 // オフラインキューに入れる操作（非GETリクエスト）
 const QUEUABLE_OPERATIONS = [
   '/api/v1/fortune/daily/viewed',
+  '/api/v1/fortune/consultation',
   '/api/v1/conversation/message'
 ];
 

@@ -34,6 +34,11 @@ export const registerUserRoutes = (router: Router): void => {
     userController.updateUserPassword(req, res)
   );
   
+  // 全ユーザーリスト取得（管理者・マネージャー専用）
+  router.get('/users', auth, (req, res) =>
+    userController.getAllUsers(req, res)
+  );
+  
   // 特定ユーザーのプロフィール取得
   router.get('/users/:userId', auth, (req, res) => 
     userController.getUserProfile(req, res)

@@ -8,7 +8,7 @@
 
 import { useCallback } from 'react';
 import { useFortune as useFortuneContext } from '../contexts/FortuneContext';
-import { ElementalType, IFortune } from '../utils/sharedTypes';
+import { ElementalType, IFortune } from '../types/models';
 
 interface FortuneHookReturn {
   // FortuneContextから提供される基本機能

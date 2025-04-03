@@ -37,28 +37,14 @@ export interface Fortune extends Entity<string> {
   rating: FortuneRating;
   
   /**
-   * 運勢の詳細カテゴリ
+   * 運勢の詳細カテゴリ（削除済み 2025/4/3）
+   * @deprecated 分野別カテゴリースコアは削除されました
    */
-  categories: {
-    /**
-     * 仕事運 (0-100)
-     */
-    work: number;
-    
-    /**
-     * チームワーク運 (0-100)
-     */
-    teamwork: number;
-    
-    /**
-     * 健康運 (0-100)
-     */
-    health: number;
-    
-    /**
-     * コミュニケーション運 (0-100)
-     */
-    communication: number;
+  categories?: {
+    work?: number;
+    teamwork?: number;
+    health?: number;
+    communication?: number;
   };
   
   /**

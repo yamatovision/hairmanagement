@@ -296,6 +296,7 @@ export function configureContainer(): void {
     class MockAIService {
       constructor() {}
       async sendMessage(prompt) { return { content: "これはモックレスポンスです。" }; }
+      async generateText(prompt, options) { return "これはモックレスポンスです。本番環境では実際のAIからのレスポンスが返されます。"; }
       async generateImage() { return "https://example.com/mock-image.png"; }
     }
     
