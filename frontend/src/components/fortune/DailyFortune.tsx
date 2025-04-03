@@ -418,7 +418,17 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
         </Typography>
 
         <Typography sx={{ lineHeight: 1.7, fontSize: '1.05rem', mb: 3 }}>
-          {typeof todayAdvice === 'string' ? todayAdvice : "本日の運勢アドバイスを準備中です。"}
+          {typeof todayAdvice === 'string' && todayAdvice.length > 0 ? 
+            // JSONオブジェクトの文字列なら適切に処理
+            (todayAdvice.startsWith('{') && todayAdvice.endsWith('}') ? 
+              "本日は五行のエネルギーを活かして行動しましょう。" : 
+              // マークダウン形式のテキスト（#が含まれている）ならHTMLタグを除去
+              todayAdvice.includes('#') ? 
+                todayAdvice.split('\n')[0].replace(/#.*?今日のあなたの運気\s*/, '') : 
+                todayAdvice
+            ) : 
+            "本日の運勢アドバイスを準備中です。"
+          }
         </Typography>
         
         {/* ラッキーポイント - 常に表示（API応答またはデフォルト値を使用） */}

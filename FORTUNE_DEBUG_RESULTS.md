@@ -868,3 +868,11 @@ Bash(cd /Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/ &
 
 > 概要などは不要ですね。上記に変えてもらうことできますか？いったんgitに今の実
   装をあげてから進めてください
+
+
+
+
+  1. daily-fortune.service.ts -
+  AIレスポンスのパース処理を新しい形式に対応させる
+  2. fortune.model.ts - データベースモデルの構造を更新する
+  3. fortune.controller.ts - フロントエンドへの応答形式を調整する
