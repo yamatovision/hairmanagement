@@ -1,9 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import AppRoutes from './routes/AppRoutes';
 import { useAuth } from './contexts/AuthContext';
 import OfflineIndicator from './components/common/OfflineIndicator';
+import baseTheme from './styles/theme';
 import './App.css';
+
+// MUI向けにテーマを変換
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: baseTheme.colors.primary.main,
+      light: baseTheme.colors.primary.light,
+      dark: baseTheme.colors.primary.dark,
+      contrastText: baseTheme.colors.primary.contrastText,
+    },
+    secondary: {
+      main: baseTheme.colors.secondary.main,
+      light: baseTheme.colors.secondary.light,
+      dark: baseTheme.colors.secondary.dark,
+      contrastText: baseTheme.colors.secondary.contrastText,
+    },
+    background: {
+      default: baseTheme.colors.background.default,
+      paper: baseTheme.colors.background.paper,
+    },
+    text: {
+      primary: baseTheme.colors.text.primary,
+      secondary: baseTheme.colors.text.secondary,
+    },
+  },
+  typography: {
+    fontFamily: baseTheme.typography.fontFamily,
+  },
+  shape: {
+    borderRadius: baseTheme.shape.borderRadius,
+  },
+});
 
 // ナビゲーションアイテムの定義
 const navItems = [
@@ -85,8 +119,9 @@ function App() {
   const isLoginPage = currentPath === '/login';
 
   return (
-    <div className="app">
-      <OfflineIndicator position="top-right" />
+    <ThemeProvider theme={theme}>
+      <div className="app">
+        <OfflineIndicator position="top-right" />
       
       {/* PWAインストールバナー */}
       {showInstallBanner && (
@@ -132,6 +167,7 @@ function App() {
         </nav>
       )}
     </div>
+    </ThemeProvider>
   );
 }
 
