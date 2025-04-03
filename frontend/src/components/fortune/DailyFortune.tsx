@@ -607,10 +607,11 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail: _onClick
                 mb: 2,
                 display: 'flex', 
                 alignItems: 'center',
-                color: theme.palette.primary.main
+                color: theme.palette.primary.main, // 紫色に統一
+                fontSize: '1.2rem'
               }}
             >
-              <VisibilityIcon sx={{ mr: 1.5 }} />
+              <VisibilityIcon sx={{ mr: 1.5, color: theme.palette.primary.main }} />
               詳細アドバイス
             </Typography>
             
