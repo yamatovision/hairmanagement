@@ -618,9 +618,9 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail: _onClick
               component="div"
               sx={{ 
                 p: 2, 
-                bgcolor: theme.palette.grey[50], 
+                bgcolor: `${theme.palette.primary.main}08`, // 薄い紫色の背景
                 borderRadius: 2,
-                border: `1px solid ${theme.palette.grey[200]}`,
+                border: `1px solid ${theme.palette.primary.light}20`,
                 boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)',
                 '& h1': {
                   fontSize: '1.5rem',
@@ -629,12 +629,12 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail: _onClick
                   mt: 2,
                   mb: 1,
                   pb: 0.5,
-                  borderBottom: `1px solid ${theme.palette.grey[200]}`
+                  borderBottom: `1px solid ${theme.palette.primary.light}30`
                 },
                 '& h2': {
                   fontSize: '1.3rem',
                   fontWeight: 600,
-                  color: elementStyle.color,
+                  color: theme.palette.primary.dark,
                   mt: 2,
                   mb: 1
                 },
@@ -673,7 +673,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail: _onClick
                 startIcon={<PsychologyIcon />}
                 onClick={() => navigate('/conversation/fortune')}
                 sx={{
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 10%, ${theme.palette.primary.dark} 90%)`,
                   padding: '12px 24px',
                   borderRadius: '30px',
                   boxShadow: '0 4px 16px rgba(106, 27, 154, 0.25)',
