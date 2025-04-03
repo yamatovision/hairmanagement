@@ -56,8 +56,7 @@ export const FortuneProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const fortune = await fortuneService.getDailyFortune();
       setDailyFortune(fortune);
       // 選択されたフォーチュンがない場合のみ、デイリーフォーチュンを選択状態にする
-      if (fortune) {
-        // selectedFortuneを直接参照せず、常に最新の取得結果を使用
+      if (fortune && !selectedFortune) {
         setSelectedFortune(fortune);
       }
     } catch (err) {
@@ -66,7 +65,7 @@ export const FortuneProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, selectedFortune]);
 
   // 週間フォーチュンを取得
   const fetchWeeklyFortunes = useCallback(async (startDate?: string): Promise<void> => {

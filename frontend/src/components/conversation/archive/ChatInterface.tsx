@@ -60,13 +60,72 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   fortuneId,
   initialPrompt 
 }) => {
+  // conversationIdのバリデーション - 有効なIDのみを通過させる
+  const validConversationId = conversationId && 
+    conversationId !== 'fortune' && 
+    !conversationId.includes('?') ? 
+    conversationId : undefined;
+    
+  // 検証のためのデバッグログ
+  console.log('ChatInterface Props:', { 
+    original: conversationId,
+    validated: validConversationId, 
+    fortuneId,
+    hasInitialPrompt: !!initialPrompt
+  });
+  
   const { 
     messages, 
     isLoading, 
     sendMessage, 
     favoriteMessage, 
-    currentConversation 
-  } = useConversation(conversationId);
+    currentConversation,
+    startFortuneConsultation
+  } = useConversation(validConversationId);
+  
+  // fortuneIdが指定されていて会話IDがない場合、フォーチュン相談を自動開始
+  useEffect(() => {
+    // このコンポーネントがマウントされたかどうかのフラグ
+    let isMounted = true;
+    // 初回レンダリング時のみ実行するためのフラグ
+    const shouldInitialize = fortuneId && !conversationId && !currentConversation;
+    
+    // フォーチュン相談開始処理
+    const initializeFortuneConsultation = async () => {
+      if (!shouldInitialize) return;
+      
+      console.log('フォーチュン相談を自動開始:', fortuneId);
+      try {
+        await startFortuneConsultation(fortuneId);
+      } catch (error) {
+        if (!isMounted) return; // コンポーネントがアンマウントされていたら処理しない
+        
+        console.error('フォーチュン相談自動開始エラー:', error);
+        // エラーメッセージをカスタマイズ（タイムアウトエラーの場合など）
+        let errorMessage = 'フォーチュン相談の開始に失敗しました。しばらくしてからもう一度お試しください。';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('タイムアウト')) {
+            errorMessage = 'サーバーの応答がタイムアウトしました。しばらくしてからもう一度お試しください。';
+          } else if (error.message.includes('フォーチュンID')) {
+            errorMessage = 'フォーチュンIDが正しく指定されていません。';
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+        }
+        
+        alert(errorMessage);
+      }
+    };
+    
+    // 初期化処理を開始
+    initializeFortuneConsultation();
+    
+    // クリーンアップ関数
+    return () => {
+      isMounted = false;
+    };
+  }, [fortuneId, conversationId, currentConversation, startFortuneConsultation]);
   
   const [inputMessage, setInputMessage] = useState(initialPrompt || '');
   const [dailyElement, setDailyElement] = useState<'木' | '火' | '土' | '金' | '水'>('木');

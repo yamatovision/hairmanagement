@@ -637,13 +637,8 @@
       
       <!-- カードコンテンツ -->
       <div class="card-content">
-        <!-- マークダウンコンテンツ表示エリア -->
-        <div id="fortuneContent" class="markdown-content">
-          <!-- ここにマークダウンコンテンツが表示されます -->
-        </div>
-        
         <!-- ラッキーポイント -->
-        <div class="lucky-points-container">
+        <div class="lucky-points-container animated-section">
           <div class="lucky-points-title">
             <span class="material-icons">auto_awesome</span>
             今日のラッキーポイント
@@ -684,29 +679,9 @@
 
         <div class="divider"></div>
         
-        <!-- 目標へのアドバイス -->
-        <div class="animated-section delay-2">
-          <!-- 個人目標 -->
-          <div class="goal-section">
-            <div class="goal-title">
-              <span class="material-icons">person</span>
-              個人目標へのアドバイス
-            </div>
-            <p class="goal-content" id="personalAdvice">
-              AIプロダクト開発の効率化には、今日の「巳」の気を活かして直感的なアプローチを取り入れましょう。従来の手法だけでなく、チームメンバーの意見を火の勢いで吸収・統合する方法が効果的です。午後2時から4時は分析力が高まる時間帯なので、コードレビューや最適化作業に充てることをお勧めします。
-            </p>
-          </div>
-          
-          <!-- チーム目標 -->
-          <div class="goal-section">
-            <div class="goal-title">
-              <span class="material-icons">groups</span>
-              チーム目標へのアドバイス
-            </div>
-            <p class="goal-content" id="teamAdvice">
-              四半期バイアウト目標の達成には、あなたの「陽火」の特性を活かしたリーダーシップが鍵となります。今日は各メンバーの「土」の気（安定性）を引き出すコミュニケーションを心がけてください。具体的な数値目標を視覚化して共有し、チーム全体のモチベーションを高める小さな成功体験を意図的に作りましょう。
-            </p>
-          </div>
+        <!-- マークダウンコンテンツ表示エリア -->
+        <div id="fortuneContent" class="markdown-content animated-section delay-1">
+          <!-- ここにマークダウンコンテンツが表示されます -->
         </div>
         
         <!-- AIアシスタントへの相談ボタン -->
@@ -784,27 +759,32 @@
       }
     });
     
-    // マークダウンコンテンツのレンダリング
-    const markdownContent = `
-# 今日のあなたの運気
+    // APIから取得したデータを表示 (新しい構造対応)
+    const fortuneData = {
+      // 新しい構造: advice フィールドにマークダウン形式でアドバイスが含まれる
+      aiGeneratedAdvice: {
+        advice: `# 今日のあなたの運気
 
 あなたは今日、朝日が霧を通して徐々に輝きを増していくような運気です。陽火の持ち主として、今日の「戊戌」の日柱があなたの創造力と実行力のバランスを整えてくれます。特に午前中から昼にかけては、新しいアイデアが次々と湧き上がり、それを形にする力も充実しています。チームをまとめる場面では、自然と周囲から信頼を集められるでしょう。
-`;
-    
-    document.getElementById('fortuneContent').innerHTML = marked.parse(markdownContent);
-    
-    // APIから取得したデータを表示
-    const fortuneData = {
-      summary: "あなたは今日、朝日が霧を通して徐々に輝きを増していくような運気です。陽火の持ち主として、今日の「戊戌」の日柱があなたの創造力と実行力のバランスを整えてくれます。特に午前中から昼にかけては、新しいアイデアが次々と湧き上がり、それを形にする力も充実しています。チームをまとめる場面では、自然と周囲から信頼を集められるでしょう。",
-      luckyPoints: {
-        color: "エメラルドグリーン",
-        items: ["緑色のノート", "木製ペン"],
-        number: 3,
-        action: "窓を開けて5分間深呼吸する"
-      },
-      personalAdvice: "AIプロダクト開発の効率化には、今日の「巳」の気を活かして直感的なアプローチを取り入れましょう。従来の手法だけでなく、チームメンバーの意見を火の勢いで吸収・統合する方法が効果的です。午後2時から4時は分析力が高まる時間帯なので、コードレビューや最適化作業に充てることをお勧めします。",
-      teamAdvice: "四半期バイアウト目標の達成には、あなたの「陽火」の特性を活かしたリーダーシップが鍵となります。今日は各メンバーの「土」の気（安定性）を引き出すコミュニケーションを心がけてください。具体的な数値目標を視覚化して共有し、チーム全体のモチベーションを高める小さな成功体験を意図的に作りましょう。"
+
+# 個人目標へのアドバイス
+
+AIプロダクト開発の効率化には、今日の「巳」の気を活かして直感的なアプローチを取り入れましょう。従来の手法だけでなく、チームメンバーの意見を火の勢いで吸収・統合する方法が効果的です。午後2時から4時は分析力が高まる時間帯なので、コードレビューや最適化作業に充てることをお勧めします。
+
+# チーム目標へのアドバイス
+
+四半期バイアウト目標の達成には、あなたの「陽火」の特性を活かしたリーダーシップが鍵となります。今日は各メンバーの「土」の気（安定性）を引き出すコミュニケーションを心がけてください。具体的な数値目標を視覚化して共有し、チーム全体のモチベーションを高める小さな成功体験を意図的に作りましょう。`,
+        luckyPoints: {
+          color: "エメラルドグリーン",
+          items: ["緑色のノート", "木製ペン"],
+          number: 3,
+          action: "窓を開けて5分間深呼吸する"
+        }
+      }
     };
+    
+    // マークダウンコンテンツのレンダリング
+    document.getElementById('fortuneContent').innerHTML = marked.parse(fortuneData.aiGeneratedAdvice.advice);
     
     // ラッキーポイントの表示を更新
     // ラッキーカラーに応じた色を設定
@@ -820,28 +800,26 @@
       '銀': '#9e9e9e'
     };
     
-    const luckyColor = fortuneData.luckyPoints.color;
+    const luckyPoints = fortuneData.aiGeneratedAdvice.luckyPoints;
+    const luckyColor = luckyPoints.color;
     document.getElementById('luckyColor').textContent = luckyColor;
     document.getElementById('luckyColorCircle').style.backgroundColor = colorMap[luckyColor] || '#9e9e9e';
     
     // ラッキーアイテムの表示
-    document.getElementById('luckyItem').textContent = fortuneData.luckyPoints.items[0];
+    document.getElementById('luckyItem').textContent = luckyPoints.items[0];
     
     // ラッキーナンバーの表示
-    const luckyNumber = fortuneData.luckyPoints.number;
+    const luckyNumber = luckyPoints.number;
     document.getElementById('luckyNumber').textContent = luckyNumber;
     document.getElementById('luckyNumberCircle').textContent = luckyNumber;
     
     // 開運アクションの表示
-    document.getElementById('luckyAction').textContent = fortuneData.luckyPoints.action;
-    
-    // アドバイスの表示
-    document.getElementById('personalAdvice').textContent = fortuneData.personalAdvice;
-    document.getElementById('teamAdvice').textContent = fortuneData.teamAdvice;
+    document.getElementById('luckyAction').textContent = luckyPoints.action;
     
     // 画面のスクロールアニメーション
     document.addEventListener('DOMContentLoaded', () => {
       const animatedSections = document.querySelectorAll('.animated-section');
+      // アニメーション効果を追加する処理があれば追加
     });
   </script>
 </body>

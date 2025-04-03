@@ -1,5 +1,6 @@
 /**
- * AI対話システム関連APIエンドポイントのテストスクリプト
+ * POST /api/v1/conversations エンドポイントのデバッグスクリプト
+ * このスクリプトは会話エンドポイントのデバッグ情報を収集します
  */
 const axios = require('axios');
 const dotenv = require('dotenv');
@@ -9,8 +10,20 @@ const path = require('path');
 // 環境変数の読み込み
 dotenv.config();
 
-// APIのベースURL
-const API_BASE_URL = process.env.API_URL || 'http://localhost:5001/api/v1';
+// APIのベースURL (IPv4アドレスを明示的に指定)
+const API_BASE_URL = process.env.API_URL || 'http://127.0.0.1:5001/api/v1';
+
+// ANSI カラーコード
+const colors = {
+  reset: '\x1b[0m',
+  green: '\x1b[32m',
+  red: '\x1b[31m',
+  blue: '\x1b[34m',
+  yellow: '\x1b[33m',
+  cyan: '\x1b[36m',
+  magenta: '\x1b[35m',
+  dim: '\x1b[2m',
+};
 
 // 成功したテストと失敗したテストをカウント
 let successCount = 0;
@@ -19,6 +32,7 @@ let startTime;
 
 // APIトークン
 let authToken = null;
+let userId = null;
 
 /**
  * テスト結果をログに記録
@@ -26,17 +40,21 @@ let authToken = null;
 function logTestResult(name, success, data = null, error = null) {
   if (success) {
     successCount++;
-    console.log(`${'\x1b[32m'}✓ ${name}: 成功${'\x1b[0m'}`);
+    console.log(`${colors.green}✓ ${name}: 成功${colors.reset}`);
     if (data) {
-      console.log(`  データタイプ: ${Array.isArray(data) ? '配列' : typeof data}`);
+      console.log(`  レスポンスタイプ: ${Array.isArray(data) ? '配列' : typeof data}`);
+      if (typeof data === 'object' && data !== null) {
+        console.log(`  レスポンスキー: ${Object.keys(data).join(', ')}`);
+      }
       console.log(`  データサンプル: ${JSON.stringify(data).substring(0, 150)}...`);
     }
   } else {
     failureCount++;
-    console.log(`${'\x1b[31m'}✗ ${name}: 失敗${'\x1b[0m'}`);
+    console.log(`${colors.red}✗ ${name}: 失敗${colors.reset}`);
     if (error) {
       console.log(`  エラー: ${error.message || JSON.stringify(error)}`);
-      if (error.response && error.response.data) {
+      if (error.response) {
+        console.log(`  ステータスコード: ${error.response.status}`);
         console.log(`  レスポンスデータ: ${JSON.stringify(error.response.data)}`);
       }
     }
@@ -49,24 +67,32 @@ function logTestResult(name, success, data = null, error = null) {
  */
 async function login() {
   try {
-    console.log(`${'\x1b[34m'}認証トークンを取得中...${'\x1b[0m'}`);
+    console.log(`${colors.blue}認証トークンを取得中...${colors.reset}`);
     
-    // 管理者ユーザーでログイン
+    // ログイン
     const loginResponse = await axios.post(`${API_BASE_URL}/auth/login`, {
       email: 'admin@example.com',
       password: 'admin123'
+    }, {
+      timeout: 10000 // 10秒タイムアウト
     });
     
-    if (loginResponse.data && loginResponse.data.success) {
-      authToken = loginResponse.data.data.token;
-      console.log(`${'\x1b[32m'}認証トークンを取得しました${'\x1b[0m'}\n`);
+    console.log(`${colors.cyan}ログインレスポンス: ${JSON.stringify(loginResponse.data).substring(0, 100)}...${colors.reset}`);
+    
+    // レスポンス形式の確認
+    if (loginResponse.data && loginResponse.data.token) {
+      // 直接tokenが含まれるパターン
+      authToken = loginResponse.data.token;
+      userId = loginResponse.data.user.id;
+      console.log(`${colors.green}認証トークンを取得しました${colors.reset}`);
+      console.log(`${colors.cyan}ユーザーID: ${userId}${colors.reset}\n`);
       return true;
     } else {
-      console.log(`${'\x1b[31m'}認証トークンが取得できませんでした${'\x1b[0m'}\n`);
+      console.log(`${colors.red}認証トークンが取得できませんでした${colors.reset}\n`);
       return false;
     }
   } catch (error) {
-    console.error(`${'\x1b[31m'}ログインに失敗しました: ${error.message}${'\x1b[0m'}\n`);
+    console.error(`${colors.red}ログインに失敗しました: ${error.message}${colors.reset}\n`);
     if (error.response && error.response.data) {
       console.log(JSON.stringify(error.response.data));
     }
@@ -75,46 +101,229 @@ async function login() {
 }
 
 /**
- * APIエンドポイントをテストする関数
+ * デバッグ情報付きでリクエストを送信する共通関数
  */
-async function testEndpoint(testName, endpoint, method = 'GET', body = null) {
+async function sendRequest(method, url, data = null, headers = {}, timeout = 30000) {
+  const requestId = Math.random().toString(36).substring(2, 10);
+  console.log(`${colors.magenta}[${requestId}] リクエスト開始: ${method.toUpperCase()} ${url}${colors.reset}`);
+  console.log(`${colors.magenta}[${requestId}] ヘッダー: ${JSON.stringify(headers)}${colors.reset}`);
+  
+  if (data) {
+    console.log(`${colors.magenta}[${requestId}] データ: ${JSON.stringify(data)}${colors.reset}`);
+  }
+  
+  const requestStartTime = Date.now();
+  
   try {
-    // URLに含まれる変数を置換
-    let url = `${API_BASE_URL}${endpoint}`;
+    const config = {
+      method,
+      url,
+      headers,
+      timeout
+    };
+    
+    if (data && (method === 'post' || method === 'put' || method === 'patch')) {
+      config.data = data;
+    }
+    
+    const response = await axios(config);
+    
+    const requestDuration = Date.now() - requestStartTime;
+    console.log(`${colors.green}[${requestId}] リクエスト成功 (${requestDuration}ms)${colors.reset}`);
+    console.log(`${colors.green}[${requestId}] ステータスコード: ${response.status}${colors.reset}`);
+    console.log(`${colors.green}[${requestId}] レスポンスヘッダー: ${JSON.stringify(response.headers)}${colors.reset}`);
+    
+    if (response.data) {
+      if (typeof response.data === 'object') {
+        console.log(`${colors.green}[${requestId}] レスポンスキー: ${Object.keys(response.data).join(', ')}${colors.reset}`);
+      }
+      console.log(`${colors.green}[${requestId}] レスポンス: ${JSON.stringify(response.data).substring(0, 150)}...${colors.reset}`);
+    }
+    
+    return response;
+  } catch (error) {
+    const requestDuration = Date.now() - requestStartTime;
+    console.log(`${colors.red}[${requestId}] リクエスト失敗 (${requestDuration}ms): ${error.message}${colors.reset}`);
+    
+    if (error.code === 'ECONNABORTED') {
+      console.log(`${colors.red}[${requestId}] タイムアウト (${timeout}ms)${colors.reset}`);
+    }
+    
+    if (error.response) {
+      console.log(`${colors.red}[${requestId}] ステータスコード: ${error.response.status}${colors.reset}`);
+      console.log(`${colors.red}[${requestId}] レスポンスヘッダー: ${JSON.stringify(error.response.headers)}${colors.reset}`);
+      console.log(`${colors.red}[${requestId}] レスポンスデータ: ${JSON.stringify(error.response.data)}${colors.reset}`);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * デバッグエンドポイントをテスト
+ */
+async function testDebugEndpoint() {
+  const testName = 'デバッグエンドポイント接続確認';
+  try {
+    console.log(`${colors.blue}${testName}を実行中...${colors.reset}`);
+    
+    // GET /api/v1/health リクエスト
+    const response = await sendRequest('get', `${API_BASE_URL}/health`);
+    
+    if (response.data && response.data.status === 'ok') {
+      logTestResult(testName, true, response.data);
+      return { success: true, data: response.data };
+    } else {
+      throw new Error('ヘルスチェックエンドポイントからの応答が期待した形式ではありません');
+    }
+  } catch (error) {
+    logTestResult(testName, false, null, error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * 運勢の取得をテスト
+ */
+async function testGetFortune() {
+  const testName = 'デイリー運勢の取得テスト';
+  try {
+    console.log(`${colors.blue}${testName}を実行中...${colors.reset}`);
+    
+    if (!authToken) {
+      throw new Error('認証トークンがありません');
+    }
     
     // ヘッダーに認証トークンを含める
     const headers = {
-      'Content-Type': 'application/json'
+      'Authorization': `Bearer ${authToken}`
     };
     
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
+    // GET /api/v1/fortune/daily リクエスト (60秒タイムアウト)
+    const response = await sendRequest('get', `${API_BASE_URL}/fortune/daily`, null, headers, 60000);
+    
+    if (response.data && response.data.success) {
+      logTestResult(testName, true, response.data);
+      return { success: true, data: response.data };
+    } else {
+      throw new Error('運勢エンドポイントからの応答が期待した形式ではありません');
+    }
+  } catch (error) {
+    logTestResult(testName, false, null, error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * デバッグ直接会話エンドポイントを試す
+ */
+async function testDirectConversationsEndpoint() {
+  const testName = 'デバッグ直接会話エンドポイント接続確認';
+  try {
+    console.log(`${colors.blue}${testName}を実行中...${colors.reset}`);
+    
+    if (!authToken) {
+      throw new Error('認証トークンがありません');
     }
     
-    const options = { headers };
+    // 今日の日付を取得
+    const today = new Date().toISOString().split('T')[0];
     
-    // APIリクエスト
-    let response;
+    // リクエストデータ
+    const requestData = {
+      type: 'fortune',
+      contextId: today
+    };
     
-    switch (method.toUpperCase()) {
-      case 'GET':
-        response = await axios.get(url, options);
-        break;
-      case 'POST':
-        response = await axios.post(url, body, options);
-        break;
-      case 'PUT':
-        response = await axios.put(url, body, options);
-        break;
-      case 'DELETE':
-        response = await axios.delete(url, options);
-        break;
-      default:
-        throw new Error(`サポートされていないHTTPメソッド: ${method}`);
+    // ヘッダーに認証トークンを含める
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`
+    };
+    
+    // POST リクエスト (直接会話エンドポイント)
+    const response = await sendRequest(
+      'post',
+      `${API_BASE_URL}/direct-conversations`,
+      requestData,
+      headers,
+      60000 // 60秒タイムアウト
+    );
+    
+    if (response.data && response.data.success) {
+      const conversation = response.data.data;
+      
+      console.log(`${colors.cyan}会話ID: ${conversation.id}${colors.reset}`);
+      console.log(`${colors.cyan}会話タイプ: ${conversation.type}${colors.reset}`);
+      console.log(`${colors.cyan}メッセージ数: ${conversation.messages.length}${colors.reset}`);
+      
+      if (conversation.messages.length > 0) {
+        console.log(`${colors.cyan}初期メッセージ: ${conversation.messages[0].content.substring(0, 50)}...${colors.reset}`);
+      }
+      
+      logTestResult(testName, true, response.data);
+      return { success: true, conversationId: conversation.id, data: response.data };
+    } else {
+      throw new Error('レスポンスが期待した形式ではありません');
+    }
+  } catch (error) {
+    logTestResult(testName, false, null, error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * 会話を開始するテスト
+ */
+async function testStartConversation() {
+  const testName = 'AI会話開始 (運勢タイプ)';
+  try {
+    console.log(`${colors.blue}${testName}を実行中...${colors.reset}`);
+    
+    if (!authToken) {
+      throw new Error('認証トークンがありません');
     }
     
-    logTestResult(testName, true, response.data);
-    return { success: true, data: response.data };
+    // 今日の日付を取得
+    const today = new Date().toISOString().split('T')[0];
+    
+    // リクエストデータ
+    const requestData = {
+      type: 'fortune',
+      contextId: today
+    };
+    
+    // ヘッダーに認証トークンを含める
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`
+    };
+    
+    // POST リクエスト (長いタイムアウト)
+    const response = await sendRequest(
+      'post',
+      `${API_BASE_URL}/conversations`,
+      requestData,
+      headers,
+      120000 // 120秒タイムアウト
+    );
+    
+    if (response.data && response.data.success) {
+      const conversation = response.data.data;
+      
+      console.log(`${colors.cyan}会話ID: ${conversation.id}${colors.reset}`);
+      console.log(`${colors.cyan}会話タイプ: ${conversation.type}${colors.reset}`);
+      console.log(`${colors.cyan}メッセージ数: ${conversation.messages.length}${colors.reset}`);
+      
+      if (conversation.messages.length > 0) {
+        console.log(`${colors.cyan}初期メッセージ: ${conversation.messages[0].content.substring(0, 50)}...${colors.reset}`);
+      }
+      
+      logTestResult(testName, true, response.data);
+      return { success: true, conversationId: conversation.id, data: response.data };
+    } else {
+      throw new Error('レスポンスが期待した形式ではありません');
+    }
   } catch (error) {
     logTestResult(testName, false, null, error);
     return { success: false, error };
@@ -125,82 +334,54 @@ async function testEndpoint(testName, endpoint, method = 'GET', body = null) {
  * テストを実行する関数
  */
 async function runTests() {
-  console.log(`${'\x1b[34m'}===== AI対話システム関連エンドポイントのテスト開始 =====${'\x1b[0m'}\n`);
+  console.log(`${colors.blue}===== 会話システムAPIエンドポイントデバッグ開始 =====${colors.reset}\n`);
+  console.log(`${colors.yellow}このスクリプトは様々なエンドポイントを調査し、会話が戻らない原因を探ります${colors.reset}\n`);
   startTime = new Date();
+  
+  // ヘルスチェック
+  await testDebugEndpoint();
   
   // ログインして認証トークンを取得
   const isLoggedIn = await login();
   if (!isLoggedIn) {
-    console.log(`${'\x1b[33m'}認証なしでテストを続行します（失敗する可能性あり）${'\x1b[0m'}\n`);
+    console.log(`${colors.yellow}認証に失敗したため、残りのテストをスキップします${colors.reset}\n`);
+    return;
   }
   
-  // テスト1: 会話履歴取得
-  await testEndpoint(
-    '会話履歴取得',
-    '/conversation'
-  );
+  // 運勢取得テスト (AIサービスが使われるかチェック)
+  console.log(`${colors.yellow}デイリー運勢エンドポイント（AIサービスを使用）をテスト中...${colors.reset}\n`);
+  await testGetFortune();
   
-  // テスト2: 運勢に基づく呼び水質問生成
-  await testEndpoint(
-    '呼び水質問生成',
-    '/conversation/generate-prompt'
-  );
+  // 直接会話エンドポイントテスト (新規エンドポイント)
+  console.log(`${colors.yellow}直接会話エンドポイントをテスト中...${colors.reset}\n`);
+  await testDirectConversationsEndpoint();
   
-  // テスト3: 新規会話開始（メッセージ送信）
-  const messageData = {
-    content: 'こんにちは、これはテストメッセージです。',
-    type: 'text'
-  };
-  
-  const conversationResult = await testEndpoint(
-    '新規会話開始',
-    '/conversation/message',
-    'POST',
-    messageData
-  );
-  
-  // テスト4: 特定の会話の詳細取得
-  let conversationId = null;
-  if (conversationResult.success && conversationResult.data && conversationResult.data.data) {
-    conversationId = conversationResult.data.data.conversationId;
-    
-    await testEndpoint(
-      '特定の会話詳細取得',
-      `/conversation/${conversationId}`
-    );
-    
-    // テスト5: 会話をお気に入り登録
-    await testEndpoint(
-      '会話のお気に入り登録',
-      `/conversation/${conversationId}/favorite`,
-      'PUT'
-    );
-    
-    // テスト6: 会話をアーカイブ
-    await testEndpoint(
-      '会話のアーカイブ',
-      `/conversation/${conversationId}/archive`,
-      'PUT'
-    );
-  } else {
-    console.log(`${'\x1b[33m'}警告: 会話の作成に失敗したため、関連テストをスキップします${'\x1b[0m'}\n`);
-  }
+  // 会話開始テスト (通常エンドポイント)
+  console.log(`${colors.yellow}通常の会話エンドポイントをテスト中...${colors.reset}\n`);
+  await testStartConversation();
   
   // 結果の集計
   const endTime = new Date();
   const duration = (endTime - startTime) / 1000;
   
-  console.log(`${'\x1b[34m'}===== テスト結果サマリー =====${'\x1b[0m'}`);
+  console.log(`${colors.blue}===== テスト結果サマリー =====${colors.reset}`);
   console.log(`実行時間: ${duration.toFixed(2)}秒`);
   console.log(`テスト実行数: ${successCount + failureCount}`);
-  console.log(`${'\x1b[32m'}成功: ${successCount}${'\x1b[0m'}`);
-  console.log(`${'\x1b[31m'}失敗: ${failureCount}${'\x1b[0m'}`);
+  console.log(`${colors.green}成功: ${successCount}${colors.reset}`);
+  console.log(`${colors.red}失敗: ${failureCount}${colors.reset}`);
   
   if (failureCount === 0) {
-    console.log(`\n${'\x1b[32m'}すべてのテストが成功しました！${'\x1b[0m'}`);
+    console.log(`\n${colors.green}すべてのテストが成功しました！${colors.reset}`);
   } else {
-    console.log(`\n${'\x1b[31m'}一部のテストが失敗しました。${'\x1b[0m'}`);
+    console.log(`\n${colors.red}一部のテストが失敗しました。${colors.reset}`);
   }
+  
+  console.log(`\n${colors.yellow}デバッグ結果:${colors.reset}`);
+  console.log(`${colors.yellow}1. ヘルスチェックエンドポイント: ${successCount >= 1 ? '正常' : '異常'}${colors.reset}`);
+  console.log(`${colors.yellow}2. 認証システム: ${isLoggedIn ? '正常' : '異常'}${colors.reset}`);
+  console.log(`${colors.yellow}3. デイリー運勢API: ${successCount >= 2 ? '正常' : '異常'}${colors.reset}`);
+  console.log(`${colors.yellow}4. 直接会話エンドポイント: ${successCount >= 3 ? '正常' : '異常'}${colors.reset}`);
+  console.log(`${colors.yellow}5. 通常会話エンドポイント: ${successCount >= 4 ? '正常' : '異常'}${colors.reset}`);
   
   // テスト結果をファイルに保存
   const resultDir = path.join(__dirname, '../logs');
@@ -209,10 +390,10 @@ async function runTests() {
   }
   
   const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
-  const resultFile = path.join(resultDir, `conversation-api-test-${timestamp}.log`);
+  const resultFile = path.join(resultDir, `conversation-debug-${timestamp}.log`);
   
   const resultContent = `
-AI対話システム関連エンドポイントのテスト結果
+会話システムAPIエンドポイントデバッグ結果
 ======================================
 実行日時: ${new Date().toLocaleString()}
 API URL: ${API_BASE_URL}
@@ -221,6 +402,13 @@ API URL: ${API_BASE_URL}
 テスト実行数: ${successCount + failureCount}
 成功: ${successCount}
 失敗: ${failureCount}
+
+デバッグ結果:
+1. ヘルスチェックエンドポイント: ${successCount >= 1 ? '正常' : '異常'}
+2. 認証システム: ${isLoggedIn ? '正常' : '異常'}
+3. デイリー運勢API: ${successCount >= 2 ? '正常' : '異常'}
+4. 直接会話エンドポイント: ${successCount >= 3 ? '正常' : '異常'}
+5. 通常会話エンドポイント: ${successCount >= 4 ? '正常' : '異常'}
   `.trim();
   
   fs.writeFileSync(resultFile, resultContent);
@@ -229,5 +417,5 @@ API URL: ${API_BASE_URL}
 
 // テストを実行
 runTests().catch(error => {
-  console.error(`${'\x1b[31m'}テスト実行中にエラーが発生しました:${'\x1b[0m'}`, error);
+  console.error(`${colors.red}テスト実行中にエラーが発生しました:${colors.reset}`, error);
 });

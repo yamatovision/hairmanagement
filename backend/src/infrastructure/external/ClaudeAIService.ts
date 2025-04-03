@@ -19,11 +19,35 @@ export class ClaudeAIService {
 
   /**
    * メッセージを送信しレスポンスを受け取る
-   * @param prompt ユーザープロンプト
+   * @param messagesOrPrompt ユーザープロンプトまたはメッセージ履歴の配列
+   * @param options 追加オプション
    * @returns AIからのレスポンス
    */
-  async sendMessage(prompt: string): Promise<any> {
-    return this.generateText(prompt, {});
+  async sendMessage(messagesOrPrompt: string | Array<{role: string, content: string}>, options: any = {}): Promise<any> {
+    try {
+      console.log('ClaudeAIService.sendMessage: 入力タイプ:', typeof messagesOrPrompt, 
+        Array.isArray(messagesOrPrompt) ? '配列長: ' + messagesOrPrompt.length : '');
+        
+      // 文字列の場合は単純にgenerateTextを呼び出す
+      if (typeof messagesOrPrompt === 'string') {
+        return this.generateText(messagesOrPrompt, options);
+      }
+      
+      // 配列の場合は直接メッセージ配列としてgenerateTextWithMessagesを呼び出す
+      if (Array.isArray(messagesOrPrompt)) {
+        return this.generateTextWithMessages(messagesOrPrompt, options);
+      }
+      
+      // 不明な入力タイプの場合
+      console.error('ClaudeAIService.sendMessage: サポートされていない入力タイプ:', 
+        typeof messagesOrPrompt, messagesOrPrompt);
+      return { content: 'サポートされていない入力形式です。後でもう一度お試しください。' };
+    } catch (error) {
+      // エラーハンドリング
+      console.error('ClaudeAIService.sendMessage: エラーが発生しました:', error);
+      // エラーメッセージを含むオブジェクトを返す（会話の継続を可能にするため）
+      return { content: 'AIサービスでエラーが発生しました。後でもう一度お試しください。' };
+    }
   }
 
   /**
@@ -203,6 +227,93 @@ AIプロダクトの開発において、今日は特に「ユーザー体験」
       }
       // エラー情報を含めてスローする
       throw new Error(`AI応答の生成に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
+    }
+  }
+
+  /**
+   * メッセージ配列を使ってテキストを生成する
+   * @param messages メッセージの配列
+   * @param options オプション
+   * @returns AIからのレスポンス
+   */
+  async generateTextWithMessages(messages: Array<{role: string, content: string}>, options: any = {}): Promise<any> {
+    try {
+      // ロギング - リクエスト内容のサマリー
+      console.log(`ClaudeAIService: メッセージ配列でClaudeAPI呼び出し (${messages.length}件のメッセージ):`);
+      messages.forEach((msg, i) => {
+        console.log(`- メッセージ${i+1}: role=${msg.role}, content長=${msg.content.length}`);
+      });
+      
+      // 実際の環境では本当のAPI呼び出しを行う
+      if (this.apiKey !== 'dummy-api-key') {
+        // モデルの選択（オプションから、なければデフォルト値）
+        const model = options.model || 'claude-3-sonnet-20240229';
+        // トークン数の設定（オプションから、なければデフォルト値）
+        const maxTokens = options.maxTokens || 1000;
+        
+        console.log(`ClaudeAIService: Using model ${model} with max tokens ${maxTokens}`);
+        
+        const response = await axios.post(
+          this.apiUrl,
+          {
+            model: model,
+            max_tokens: maxTokens,
+            messages: messages // メッセージ配列をそのまま送信
+          },
+          {
+            headers: {
+              'x-api-key': this.apiKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json'
+            },
+            timeout: 10000 // 10秒タイムアウト
+          }
+        );
+        
+        // レスポンスの解析と詳細ログ出力
+        console.log('ClaudeAIService: APIレスポンス受信:', {
+          status: response.status,
+          hasData: !!response.data,
+          dataKeys: Object.keys(response.data || {}),
+          hasContent: !!(response.data && response.data.content),
+          contentType: response.data && response.data.content ? typeof response.data.content : 'undefined',
+          isArray: response.data && response.data.content ? Array.isArray(response.data.content) : false
+        });
+        
+        if (response.data) {
+          // Claude API v2形式
+          if (response.data.content && Array.isArray(response.data.content) && response.data.content.length > 0) {
+            // テキスト部分を取得
+            const responseText = response.data.content[0].text;
+            return { content: responseText };
+          } 
+          else {
+            console.log('ClaudeAIService: 不明なレスポンス形式 - 完全なレスポンスを返します');
+            return { content: JSON.stringify(response.data) };
+          }
+        } else {
+          throw new Error('空のレスポンス');
+        }
+      }
+      
+      // 開発環境用のモックレスポンス
+      console.log('ClaudeAIService: Using mock response (dummy API key detected)');
+      return { 
+        content: "これはメッセージ配列に対するモックレスポンスです。実際のAPIが呼び出されると、Claude AIからの応答がここに表示されます。"
+      };
+    } catch (error) {
+      // エラー詳細のロギング
+      console.error('Claude API呼び出し中にエラーが発生しました:', error);
+      if (error instanceof Error) {
+        console.error('エラーメッセージ:', error.message);
+        console.error('スタックトレース:', error.stack);
+      }
+      
+      // エラー時にもレスポンスを返す（会話の継続を可能にするため）
+      return { 
+        content: `申し訳ありませんが、現在AIサービスからの応答を取得できません。後でもう一度お試しください。`,
+        error: true
+      };
     }
   }
 

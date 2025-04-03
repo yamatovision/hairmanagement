@@ -5,7 +5,9 @@ module.exports = {
     // WebSocketの接続問題を解決するために設定
     webSocketServer: false,
     client: {
-      webSocketURL: false
+      webSocketURL: {
+        hostname: 'localhost'
+      }
     }
   },
   webpack: {

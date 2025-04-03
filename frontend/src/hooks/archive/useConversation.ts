@@ -104,6 +104,19 @@ export const useConversation = (initialConversationId?: string) => {
   
   // 特定の会話を取得
   const getConversationById = useCallback(async (conversationId: string) => {
+    // 有効なIDかチェック
+    if (!conversationId || conversationId === 'fortune' || 
+        conversationId.includes('?') || conversationId.includes('/')) {
+      console.log('無効な会話IDのため取得をスキップ:', conversationId);
+      return null;
+    }
+    
+    // URLパラメータとしてのfortuneIdを除外処理
+    if (window.location.pathname.includes('/conversation') && window.location.search.includes('fortuneId=')) {
+      console.log('フォーチュン相談ページのため会話ID取得をスキップします');
+      return null;
+    }
+    
     try {
       setIsLoading(true);
       
@@ -114,8 +127,13 @@ export const useConversation = (initialConversationId?: string) => {
       
       return conversation;
     } catch (error) {
-      console.error('会話取得エラー:', error);
-      showToast('会話の取得に失敗しました', 'error');
+      // 無効な会話IDの場合はサイレントに失敗
+      if (error instanceof Error && error.message.includes('無効な会話ID')) {
+        console.log('無効な会話ID:', error.message);
+      } else {
+        console.error('会話取得エラー:', error);
+        showToast('会話の取得に失敗しました', 'error');
+      }
       return null;
     } finally {
       setIsLoading(false);
@@ -208,6 +226,56 @@ export const useConversation = (initialConversationId?: string) => {
     }
   }, [showToast]);
 
+  /**
+   * フォーチュン相談対話を開始
+   */
+  const startFortuneConsultation = useCallback(async (fortuneId: string) => {
+    try {
+      if (!fortuneId) {
+        throw new Error('フォーチュンIDが指定されていません');
+      }
+      
+      setIsLoading(true);
+      
+      // フォーチュン相談APIを呼び出し
+      const result = await conversationService.startFortuneChat(fortuneId);
+      
+      // レスポンスを確認
+      console.log('startFortuneConsultation結果:', result);
+      
+      if (result && result.success && result.data) {
+        console.log('会話データ取得成功:', result.data);
+        // 会話オブジェクトとメッセージを更新
+        setCurrentConversation(result.data.conversation);
+        setMessages(result.data.conversation.messages);
+        
+        return result.data;
+      } else {
+        console.error('有効な会話データが受信できませんでした:', result);
+        throw new Error((result && result.message) || 'フォーチュン相談の開始に失敗しました');
+      }
+    } catch (error) {
+      console.error('フォーチュン相談開始エラー:', error);
+      let errorMessage = 'フォーチュン相談の開始に失敗しました';
+      
+      // エラーメッセージを取得（タイムアウトの場合は特別なメッセージ）
+      if (error instanceof Error) {
+        if (error.message.includes('タイムアウト')) {
+          errorMessage = 'サーバーの応答がタイムアウトしました。しばらく経ってから再度お試しください。';
+        } else if (error.message.includes('フォーチュンID')) {
+          errorMessage = 'フォーチュンIDが正しく指定されていません。';
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+      
+      showToast(errorMessage, 'error');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
+  
   return {
     currentConversation,
     conversations,
@@ -220,6 +288,7 @@ export const useConversation = (initialConversationId?: string) => {
     generatePromptQuestion,
     archiveConversation,
     favoriteMessage,
-    startTeamConsultation
+    startTeamConsultation,
+    startFortuneConsultation
   };
 };

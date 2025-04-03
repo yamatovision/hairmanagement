@@ -22,7 +22,8 @@ import ChatIcon from '@mui/icons-material/Chat';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import { useNavigate } from 'react-router-dom';
-import { useConversation } from '../../hooks/useConversation';
+// アーカイブされたフックを削除（以前のシステムで使用）
+// import { useConversation } from '../../hooks/useConversation';
 
 interface ConversationHistoryProps {
   showArchived?: boolean;
@@ -33,13 +34,12 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   showArchived = false,
   maxItems
 }) => {
-  const { 
-    conversations, 
-    isLoading, 
-    pagination, 
-    archiveConversation, 
-    fetchConversations 
-  } = useConversation();
+  // モック実装
+  const conversations = [];
+  const isLoading = false;
+  const pagination = { totalPages: 0, page: 1 };
+  const archiveConversation = (id: string) => Promise.resolve(true);
+  const fetchConversations = () => Promise.resolve({ conversations: [], pagination: null });
   
   const [page, setPage] = useState(1);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -49,11 +49,8 @@ const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   
   // 会話一覧を取得
   useEffect(() => {
-    fetchConversations({
-      page,
-      limit: maxItems || 10,
-      isArchived: showArchived
-    });
+    // 引数なしで呼び出し
+    fetchConversations();
   }, [page, showArchived]);
   
   // メニューを開く

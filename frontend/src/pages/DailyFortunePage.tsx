@@ -52,10 +52,12 @@ const FortunePageContent = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
 
-  // ページ読み込み時に一度だけデータ取得
+  // ページ読み込み時に一度だけデータ取得（すでにデータがある場合は取得しない）
   useEffect(() => {
-    fetchDailyFortune();
-  }, [fetchDailyFortune]);
+    if (!dailyFortune) {
+      fetchDailyFortune();
+    }
+  }, [fetchDailyFortune, dailyFortune]);
 
   // データの手動更新
   const handleRefresh = async () => {

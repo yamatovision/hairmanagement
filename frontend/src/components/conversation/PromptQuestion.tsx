@@ -3,7 +3,15 @@ import { Box, Paper, Typography, Button, CircularProgress, IconButton } from '@m
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ElementTag from '../common/ElementTag';
-import { useConversation } from '../../hooks/useConversation';
+// モック実装
+const mockGeneratePrompt = async (params: any) => {
+  return {
+    content: "今日はどのような課題に取り組んでいますか？",
+    category: params.category || "growth"
+  };
+};
+// アーカイブされたフックを削除（以前のシステムで使用）
+// import { useConversation } from '../../hooks/useConversation';
 import { useAuth } from '../../contexts/AuthContext';
 
 type PromptCategory = 'growth' | 'team' | 'career' | 'organization';
@@ -19,7 +27,8 @@ const PromptQuestion: React.FC<PromptQuestionProps> = ({
   category,
   onAnswerClick
 }) => {
-  const { generatePromptQuestion } = useConversation();
+  // useConversationからgeneratePromptQuestionを取得する代わりにモック実装を使用
+  const generatePromptQuestion = mockGeneratePrompt;
   const { user } = useAuth();
   
   const [prompt, setPrompt] = useState<string>('');

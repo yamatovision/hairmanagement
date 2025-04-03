@@ -47,7 +47,7 @@ serviceWorker.register({
       window.location.reload();
     }
   },
-  onSuccess: registration => {
+  onSuccess: _registration => {
     console.log('オフラインモードが有効になりました');
   }
 });

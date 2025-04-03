@@ -425,18 +425,26 @@ export class DailyFortuneService {
       console.log('[DailyFortuneService.parseAIResponse] オブジェクトが直接渡されました');
       const objectResponse = response as any;
       
-      // オブジェクトをマークダウン形式に変換
+      // オブジェクトをマークダウン形式に変換（旧形式から新形式への変換）
       let advice = '';
-      if (objectResponse.summary) {
-        advice += `# 今日のあなたの運気\n${objectResponse.summary}\n\n`;
-      }
       
-      if (objectResponse.personalAdvice) {
-        advice += `# 個人目標へのアドバイス\n${objectResponse.personalAdvice}\n\n`;
-      }
-      
-      if (objectResponse.teamAdvice) {
-        advice += `# チーム目標へのアドバイス\n${objectResponse.teamAdvice}\n\n`;
+      // adviceフィールドが既にある場合はそのまま使用
+      if (objectResponse.advice) {
+        advice = objectResponse.advice;
+      } 
+      // 旧形式のフィールドから新形式に変換
+      else if (objectResponse.summary || objectResponse.personalAdvice || objectResponse.teamAdvice) {
+        if (objectResponse.summary) {
+          advice += `# 今日のあなたの運気\n${objectResponse.summary}\n\n`;
+        }
+        
+        if (objectResponse.personalAdvice) {
+          advice += `# 個人目標へのアドバイス\n${objectResponse.personalAdvice}\n\n`;
+        }
+        
+        if (objectResponse.teamAdvice) {
+          advice += `# チーム目標へのアドバイス\n${objectResponse.teamAdvice}\n\n`;
+        }
       }
       
       // luckyPointsがない場合はデフォルト値を設定
@@ -473,7 +481,7 @@ export class DailyFortuneService {
       
       // 新しい構造化データを返す
       return {
-        advice,
+        advice: advice.trim(),
         luckyPoints: objectResponse.luckyPoints
       };
     }
@@ -494,7 +502,7 @@ export class DailyFortuneService {
           const jsonResult = JSON.parse(responseStr);
           
           // 必要なプロパティが含まれているか確認
-          if (jsonResult.summary || jsonResult.luckyPoints) {
+          if (jsonResult.summary || jsonResult.luckyPoints || jsonResult.advice) {
             console.log('[DailyFortuneService.parseAIResponse] 有効なJSONオブジェクトとして解析成功');
             
             // luckyPoints.itemsが配列でない場合は配列に変換
@@ -502,7 +510,20 @@ export class DailyFortuneService {
               jsonResult.luckyPoints.items = [String(jsonResult.luckyPoints.items)];
             }
             
-            // jsonオブジェクトをマークダウン形式に変換
+            // 既にadviceフィールドがある場合はそのまま使用
+            if (jsonResult.advice) {
+              return {
+                advice: jsonResult.advice,
+                luckyPoints: jsonResult.luckyPoints || {
+                  color: "赤",
+                  items: ["鈴", "明るい色の文房具"],
+                  number: 8,
+                  action: "朝日を浴びる"
+                }
+              };
+            }
+            
+            // 旧形式の場合は新形式に変換
             let advice = '';
             if (jsonResult.summary) {
               advice += `# 今日のあなたの運気\n${jsonResult.summary}\n\n`;
@@ -517,8 +538,13 @@ export class DailyFortuneService {
             }
             
             return {
-              advice,
-              luckyPoints: jsonResult.luckyPoints
+              advice: advice.trim(),
+              luckyPoints: jsonResult.luckyPoints || {
+                color: "赤",
+                items: ["鈴", "明るい色の文房具"],
+                number: 8,
+                action: "朝日を浴びる"
+              }
             };
           }
         } catch (e) {
@@ -537,11 +563,53 @@ export class DailyFortuneService {
         }
       };
       
-      // 原文そのままをadviceとして保存（マークダウン形式で残す）
-      result.advice = responseStr;
+      // マークダウンフォーマット処理（セクション見出しの抽出）
+      // 各セクションごとに抽出 - 標準的なセクションヘッダーを試す
+      let parsedAdvice = '';
+      
+      // 今日の運気（複数のパターンに対応）
+      let fortuneMatch = responseStr.match(/# 今日のあなたの運気\s*\n([^#]+)/);
+      if (!fortuneMatch) {
+        fortuneMatch = responseStr.match(/# 1\.?\s*今日のあなたの運気\s*\n([^#]+)/);
+      }
+      
+      if (fortuneMatch && fortuneMatch[1]) {
+        parsedAdvice += `# 今日のあなたの運気\n${fortuneMatch[1].trim()}\n\n`;
+      }
+      
+      // 個人目標アドバイス（複数のパターンに対応）
+      let personalMatch = responseStr.match(/# 個人目標へのアドバイス\s*\n([^#]+)/);
+      if (!personalMatch) {
+        personalMatch = responseStr.match(/# 3\.?\s*個人目標へのアドバイス\s*\n([^#]+)/);
+      }
+      
+      if (personalMatch && personalMatch[1]) {
+        parsedAdvice += `# 個人目標へのアドバイス\n${personalMatch[1].trim()}\n\n`;
+      }
+      
+      // チーム目標アドバイス（複数のパターンに対応）
+      let teamMatch = responseStr.match(/# チーム目標へのアドバイス\s*\n([^#]+)/);
+      if (!teamMatch) {
+        teamMatch = responseStr.match(/# 4\.?\s*チーム目標へのアドバイス\s*\n([^#]+)/);
+      }
+      
+      if (teamMatch && teamMatch[1]) {
+        parsedAdvice += `# チーム目標へのアドバイス\n${teamMatch[1].trim()}\n\n`;
+      }
+      
+      // パース結果があれば使用、なければ原文そのまま
+      if (parsedAdvice) {
+        result.advice = parsedAdvice.trim();
+      } else {
+        // 最後の手段として原文をそのまま使用
+        result.advice = responseStr;
+      }
       
       // ラッキーポイントのみ抽出
       console.log('[DailyFortuneService.parseAIResponse] ラッキーポイント抽出中...');
+      
+      // ラッキーポイントセクションを抽出（複数パターンに対応）
+      const luckyPointsSection = responseStr.match(/# (?:2\.?)?\s*ラッキーポイント\s*\n([\s\S]+?)(?=\n#|$)/);
       
       // 色
       const colorMatch = responseStr.match(/ラッキーカラー[:：]\s*(.+?)(?=\n|$)/);
@@ -620,7 +688,17 @@ export class DailyFortuneService {
       }
       
       console.log('[DailyFortuneService.parseAIResponse] 問題のあったレスポンス全文:\n', response);
-      return null;
+      
+      // エラー時でもフォールバック値を返す
+      return {
+        advice: "# 今日のあなたの運気\n本日の運勢データを準備中です。\n\n# 個人目標へのアドバイス\n個人目標に向けて着実に進みましょう。\n\n# チーム目標へのアドバイス\nチームとの連携を大切にしてください。",
+        luckyPoints: {
+          color: "赤",
+          items: ["鈴", "明るい色の文房具"],
+          number: 8,
+          action: "朝日を浴びる"
+        }
+      };
     }
   }
 

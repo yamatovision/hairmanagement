@@ -593,9 +593,15 @@ export class FortuneController {
       // 新しい構造化されたアドバイス形式
       // aiGeneratedAdviceが存在しない場合でも、常にオブジェクトを返す（nullは返さない）
       aiGeneratedAdvice: {
+        // 新形式（マークダウン形式のアドバイス）
+        advice: aiGeneratedAdvice?.advice || `# 今日のあなたの運気\n${typeof fortune.advice === 'string' ? fortune.advice : "本日は五行のエネルギーを活かして行動しましょう。"}\n\n# 個人目標へのアドバイス\n個人目標に向けて集中して取り組みましょう。\n\n# チーム目標へのアドバイス\nチームとの連携を大切にしてください。`,
+        
+        // 旧形式との互換性のためのフィールド（非推奨・将来的に削除予定）
         summary: aiGeneratedAdvice?.summary || (typeof fortune.advice === 'string' ? fortune.advice : "本日は五行のエネルギーを活かして行動しましょう。"),
         personalAdvice: aiGeneratedAdvice?.personalAdvice || "個人目標に向けて集中して取り組みましょう。",
         teamAdvice: aiGeneratedAdvice?.teamAdvice || "チームとの連携を大切にしてください。",
+        
+        // ラッキーポイント（構造化データ）
         luckyPoints: {
           color: aiGeneratedAdvice?.luckyPoints?.color || "赤",
           items: (aiGeneratedAdvice?.luckyPoints && 

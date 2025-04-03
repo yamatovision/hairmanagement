@@ -224,51 +224,9 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail: _onClick
     action: "朝日を浴びる"
   };
 
-  // APIレスポンスの内容をログ出力（デバッグ用）
-  console.log('FortuneData:', {
-    hasAiGeneratedAdvice: !!aiGeneratedAdvice,
-    aiAdvice: aiGeneratedAdvice?.advice?.substring(0, 30),
-    luckyPoints: aiGeneratedAdvice?.luckyPoints,
-    luckyPointsDetails: aiGeneratedAdvice?.luckyPoints ? {
-      color: aiGeneratedAdvice.luckyPoints.color,
-      items: aiGeneratedAdvice.luckyPoints.items,
-      itemsType: typeof aiGeneratedAdvice.luckyPoints.items,
-      isArray: Array.isArray(aiGeneratedAdvice.luckyPoints.items),
-      itemsLength: Array.isArray(aiGeneratedAdvice.luckyPoints.items) ? aiGeneratedAdvice.luckyPoints.items.length : null,
-      number: aiGeneratedAdvice.luckyPoints.number,
-      action: aiGeneratedAdvice.luckyPoints.action
-    } : 'No lucky points data',
-    originalAdvice: advice?.substring(0, 30)
-  });
-  
-  // フォーマットされた画面デバッグ情報
-  console.table({
-    'ラッキーポイント': aiGeneratedAdvice?.luckyPoints ? 'あり' : 'なし',
-    'ラッキーカラー': aiGeneratedAdvice?.luckyPoints?.color || defaultLuckyPoints.color,
-    'ラッキーアイテム配列': Array.isArray(aiGeneratedAdvice?.luckyPoints?.items) ? 'はい' : 'いいえ',
-    'アイテム内容': Array.isArray(aiGeneratedAdvice?.luckyPoints?.items) ? 
-      (aiGeneratedAdvice?.luckyPoints?.items.length > 0 ? aiGeneratedAdvice.luckyPoints.items.join(', ') : '空配列') : 
-      (aiGeneratedAdvice?.luckyPoints?.items || 'なし'),
-    'アクション': aiGeneratedAdvice?.luckyPoints?.action || defaultLuckyPoints.action
-  });
-
   // 日付フォーマット
   const today = new Date();
   const formattedDate = today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
-  
-  // デバッグ: ラッキーポイントのデータ構造確認
-  console.log('Lucky Points Data:', {
-    hasLuckyPoints: !!aiGeneratedAdvice?.luckyPoints,
-    actualLuckyPoints: aiGeneratedAdvice?.luckyPoints,
-    defaultLuckyPoints: defaultLuckyPoints,
-    displayedLuckyPoints: aiGeneratedAdvice?.luckyPoints || defaultLuckyPoints,
-    isItemsArray: aiGeneratedAdvice?.luckyPoints ? 
-      Array.isArray(aiGeneratedAdvice.luckyPoints.items) : 'using defaults',
-    firstItem: aiGeneratedAdvice?.luckyPoints && 
-      Array.isArray(aiGeneratedAdvice.luckyPoints.items) && 
-      aiGeneratedAdvice.luckyPoints.items.length > 0 ? 
-      aiGeneratedAdvice.luckyPoints.items[0] : defaultLuckyPoints.items[0]
-  });
 
   // 注: 相性スコアと五行バランス補完スコアの分割計算は削除されました
 

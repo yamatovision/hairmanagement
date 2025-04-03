@@ -7,7 +7,9 @@ export enum ConversationType {
   GENERAL = 'general',
   FORTUNE = 'fortune',
   TEAM_COMPATIBILITY = 'team_compatibility',
-  DAILY_REPORT = 'daily_report'
+  DAILY_REPORT = 'daily_report',
+  TEAM_CONSULTATION = 'team_consultation',
+  TEAM_MEMBER = 'team_member'
 }
 
 /**

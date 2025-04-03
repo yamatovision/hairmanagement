@@ -31,8 +31,10 @@ type UserRegistrationRequest = {
 // APIのBase URL
 // 環境に応じて適切なURLを選択
 const isDevelopment = process.env.NODE_ENV === 'development';
-// 開発環境ではプロキシを使用
-const API_URL = isDevelopment ? '' : 'https://patrolmanagement-backend-235426778039.asia-northeast1.run.app';
+// バックエンドに直接アクセスするURL
+const API_URL = isDevelopment 
+  ? 'http://localhost:5001' 
+  : 'https://patrolmanagement-backend-235426778039.asia-northeast1.run.app';
 
 /**
  * 認証サービス

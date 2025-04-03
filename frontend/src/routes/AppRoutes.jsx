@@ -6,12 +6,13 @@ import AuthPage from '../pages/AuthPage';
 // 遅延ロードするページコンポーネント
 const DailyFortunePage = React.lazy(() => import('../pages/DailyFortunePage'));
 const ManagerDashboardPage = React.lazy(() => import('../pages/ManagerDashboardPage'));
-const ConversationPage = React.lazy(() => import('../pages/ConversationPage'));
+const DirectChatPage = React.lazy(() => import('../pages/DirectChatPage'));
 const ProfilePage = React.lazy(() => import('../pages/ProfilePage'));
 const TeamPage = React.lazy(() => import('../pages/TeamPage'));
 
 // ダミーのホームページコンポーネント（後で実際の実装に置き換え）
-const HomePage = () => (
+// ESLint 警告を避けるためにアンダースコアプレフィックスを追加
+const _HomePage = () => (
   <div className="container p-4">
     <h1>陰陽五行AIケアコンパニオン</h1>
     <p>ようこそ！このアプリケーションは現在開発中です。</p>
@@ -99,25 +100,13 @@ const AppRoutes = () => {
         } 
       />
       
-      {/* AI対話ページ */}
+      {/* AI対話ページ（直接会話インターフェース） */}
       <Route 
         path="/conversation" 
         element={
           <ProtectedRoute>
             <React.Suspense fallback={<div>読み込み中...</div>}>
-              <ConversationPage />
-            </React.Suspense>
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* 特定の会話IDを指定した場合 */}
-      <Route 
-        path="/conversation/:conversationId" 
-        element={
-          <ProtectedRoute>
-            <React.Suspense fallback={<div>読み込み中...</div>}>
-              <ConversationPage />
+              <DirectChatPage />
             </React.Suspense>
           </ProtectedRoute>
         } 

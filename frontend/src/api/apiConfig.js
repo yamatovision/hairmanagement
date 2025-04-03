@@ -9,10 +9,10 @@ import axios from 'axios';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 // APIのベースURL設定
-// 開発環境ではプロキシ設定を使用、本番環境では本番バックエンドを使用
+// 開発環境では直接バックエンドに接続、本番環境では本番バックエンドを使用
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? process.env.REACT_APP_API_URL || 'https://patrolmanagement-backend-235426778039.asia-northeast1.run.app'
-  : '';
+  : 'http://localhost:5001'; // 開発環境では直接バックエンドにアクセス
 
 // IPv6の代わりにIPv4を使用するためのフラグ
 const USE_IPV4 = true;
@@ -22,19 +22,8 @@ const API_BASE_PATH = process.env.REACT_APP_API_BASE_PATH || '/api/v1';
 
 // API URL解決関数
 export const getApiUrl = (endpoint) => {
-  // 開発環境ではプロキシを使用するため、相対パスを返す
-  if (isDevelopment) {
-    // エンドポイントが既にAPIパスで始まっているか確認
-    if (endpoint.startsWith('/api/')) {
-      return endpoint;
-    }
-    
-    // API_BASE_PATHを追加
-    const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    return `${API_BASE_PATH}${path}`;
-  }
-  
-  // 本番環境の処理 - エンドポイントが完全なパスかチェック
+  // 開発環境でも本番環境でも、直接バックエンドにアクセス
+  // エンドポイントが既にAPIパスで始まっているか確認
   if (endpoint.startsWith('/api/')) {
     return `${API_BASE_URL}${endpoint}`;
   }

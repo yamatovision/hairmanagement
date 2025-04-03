@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { registerRoutes } from './interfaces/http/routes';
 import './infrastructure/di/container'; // 依存性注入の設定を読み込む
+// import { addDirectChatEndpoint } from './direct-chat'; // 直接チャットエンドポイント（新しいルートシステムに統合）
 
 /**
  * Express アプリケーションの初期化
@@ -26,6 +27,10 @@ export function createApp(): Express {
     app.use(morgan('dev')); // 開発環境ではリクエストログを出力
   }
   
+  // 注：直接チャットエンドポイントは interfaces/http/routes/simple-conversation.routes.ts に移動しました
+  // これによりクリーンアーキテクチャのルーティング機構に統合されました
+  console.log('***** 直接チャットエンドポイントは標準ルート登録システム（interfaces/http/routes）で処理されます *****');
+  
   // ルーターの設定
   const router = express.Router();
   registerRoutes(router);
@@ -43,7 +48,8 @@ export function createApp(): Express {
   });
   
   // 404ハンドラー
-  app.use((_, res) => {
+  app.use((req, res, next) => {
+    console.log('404処理対象:', req.path);
     res.status(404).json({
       message: 'リソースが見つかりません',
       code: 'NOT_FOUND'

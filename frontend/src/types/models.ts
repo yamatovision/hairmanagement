@@ -148,6 +148,7 @@ export interface IFortune {
     summary: string;
     personalAdvice: string;
     teamAdvice: string;
+    advice: string; // マークダウン形式の運勢アドバイスを追加
     luckyPoints: {
       color: string;
       items: string[];

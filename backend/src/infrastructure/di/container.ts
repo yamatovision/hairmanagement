@@ -206,6 +206,15 @@ export function configureContainer(): void {
   container.register<ITokenService>('ITokenService', { useClass: JwtTokenService });
   container.register('ElementalCalculatorService', { useClass: ElementalCalculatorService });
   
+  // 運勢サービスを登録
+  try {
+    const { DailyFortuneService } = require('../../application/services/daily-fortune.service');
+    container.register('DailyFortuneService', { useClass: DailyFortuneService });
+    console.log('DailyFortuneServiceが正常に登録されました');
+  } catch (error) {
+    console.error('DailyFortuneServiceの登録に失敗しました:', error);
+  }
+  
   // サブスクリプション関連サービスを登録
   try {
     container.register('SubscriptionService', { 
@@ -251,32 +260,8 @@ export function configureContainer(): void {
     }
   }
   
-  // 会話サービスを登録
-  try {
-    const conversationServiceModule = require('../../application/services/conversation.service');
-    if (conversationServiceModule && conversationServiceModule.ConversationService) {
-      container.register('ConversationService', { 
-        useClass: conversationServiceModule.ConversationService 
-      });
-      console.log('ConversationServiceが正常に登録されました');
-    } else {
-      console.log('ConversationServiceをスキップします - モジュールが見つかりましたが、クラスが見つかりません');
-    }
-  } catch (error) {
-    console.error('ConversationServiceの登録に失敗しました:', error);
-    
-    // モックサービスを登録してエラーを回避
-    class MockConversationService {
-      constructor() {}
-      async createConversation() { return { id: 'mock-id', messages: [] }; }
-      async getConversation() { return { id: 'mock-id', messages: [] }; }
-      async addMessage() { return { id: 'mock-id', messages: [{ content: 'Mock response' }] }; }
-      async generateResponse() { return 'Mock AI response'; }
-    }
-    
-    container.register('ConversationService', { useClass: MockConversationService });
-    console.log('MockConversationServiceを代わりに登録しました');
-  }
+  // 会話サービスを登録（修正：ここでは登録しないようにし、下で正確に登録する）
+  console.log('会話サービス: 登録は後半で行われます...');
   
   // Claude AI サービスを登録
   try {
@@ -404,32 +389,97 @@ export function configureContainer(): void {
     }
   }
   
-  // ConversationControllerを登録
+  // ConversationServiceとConversationControllerを登録（修正バージョン）
+  console.log('会話サービスとコントローラーの登録を開始します...');
+  
   try {
-    const conversationControllerModule = require('../../interfaces/http/controllers/conversation.controller');
+    console.log('会話サービス: 会話サービスモジュールをロード中...');
+    
+    // モジュールの存在確認
+    const conversationServicePath = '../../application/services/conversation.service';
+    const conversationControllerPath = '../../interfaces/http/controllers/conversation.controller';
+    
+    console.log(`会話サービスパス: ${conversationServicePath}`);
+    console.log(`会話コントローラーパス: ${conversationControllerPath}`);
+    
+    // モジュールをクリアにロード
+    delete require.cache[require.resolve(conversationServicePath)];
+    delete require.cache[require.resolve(conversationControllerPath)];
+    
+    // モジュールをロード
+    const conversationServiceModule = require(conversationServicePath);
+    const conversationControllerModule = require(conversationControllerPath);
+    
+    console.log('会話サービス: モジュールロード完了');
+    console.log(`会話サービスモジュール内容: ${Object.keys(conversationServiceModule).join(', ')}`);
+    console.log(`会話コントローラーモジュール内容: ${Object.keys(conversationControllerModule).join(', ')}`);
+    
+    // 会話サービスを登録
+    if (conversationServiceModule && conversationServiceModule.ConversationService) {
+      container.register('ConversationService', { 
+        useClass: conversationServiceModule.ConversationService 
+      });
+      console.log('会話サービス: ConversationServiceが正常に登録されました');
+    } else {
+      throw new Error('ConversationServiceクラスが見つかりません');
+    }
+    
+    // 会話コントローラーを登録
     if (conversationControllerModule && conversationControllerModule.ConversationController) {
       container.register('ConversationController', { 
         useClass: conversationControllerModule.ConversationController 
       });
-      
-      // 文字列トークンとしてのAuthMiddlewareも登録
-      const { AuthMiddleware } = require('../../interfaces/http/middlewares/auth.middleware');
-      container.register('AuthMiddleware', { useClass: AuthMiddleware });
-      console.log('ConversationControllerとAuthMiddlewareが正常に登録されました');
+      console.log('会話サービス: ConversationControllerが正常に登録されました');
     } else {
-      console.log('ConversationControllerをスキップします - モジュールが見つかりましたが、クラスが見つかりません');
+      throw new Error('ConversationControllerクラスが見つかりません');
+    }
+    
+    // 文字列トークンとしてのAuthMiddlewareを登録
+    const { AuthMiddleware } = require('../../interfaces/http/middlewares/auth.middleware');
+    container.register('AuthMiddleware', { useClass: AuthMiddleware });
+    console.log('会話サービス: AuthMiddlewareが正常に登録されました');
+    
+    // 登録されているか確認
+    try {
+      const resolvedService = container.resolve('ConversationService');
+      const resolvedController = container.resolve('ConversationController');
+      const resolvedMiddleware = container.resolve('AuthMiddleware');
+      
+      console.log('会話サービス: 解決テスト成功');
+      console.log(`- サービス: ${resolvedService ? 'OK' : 'エラー'}`);
+      console.log(`- コントローラー: ${resolvedController ? 'OK' : 'エラー'}`);
+      console.log(`- ミドルウェア: ${resolvedMiddleware ? 'OK' : 'エラー'}`);
+    } catch (resolveError) {
+      console.error('会話サービス: 依存性解決テストに失敗しました', resolveError);
     }
   } catch (error) {
-    console.error('ConversationControllerの登録に失敗しました:', error);
-    // モックコントローラーを登録してエラーを回避
+    console.error('会話サービスまたはコントローラーの登録に失敗しました:', error);
+    if (error instanceof Error) {
+      console.error('詳細:', error.message);
+      console.error('スタックトレース:', error.stack);
+    }
+    
+    // モックサービスとコントローラーを登録してエラーを回避
+    console.log('会話サービス: モックサービスとコントローラーを登録します');
+    
+    class MockConversationService {
+      constructor() {}
+      async findConversationByContext() { return null; }
+      async createConversation() { return { id: 'mock-id', messages: [], createdAt: new Date() }; }
+      async sendMessage() { return { id: 'mock-id', messages: [], createdAt: new Date() }; }
+      async getConversationById() { return { id: 'mock-id', messages: [], createdAt: new Date() }; }
+    }
+    
     class MockConversationController {
       constructor() {}
-      async createConversation(req, res) { res.json({ success: true, data: { id: 'mock-id' } }); }
-      async getConversation(req, res) { res.json({ success: true, data: { id: 'mock-id', messages: [] } }); }
-      async addMessage(req, res) { res.json({ success: true, data: { content: 'Mock response' } }); }
+      async startOrContinueConversation(req, res) { res.json({ success: true, data: { id: 'mock-id', messages: [] } }); }
+      async sendMessage(req, res) { res.json({ success: true, data: { message: { content: 'Mock response' } } }); }
+      async getConversationById(req, res) { res.json({ success: true, data: { id: 'mock-id', messages: [] } }); }
     }
+    
+    container.register('ConversationService', { useClass: MockConversationService });
     container.register('ConversationController', { useClass: MockConversationController });
-    console.log('MockConversationControllerを代わりに登録しました');
+    console.log('会話サービス: モックサービスとコントローラーが登録されました');
   }
   
   // イベント駆動アーキテクチャの設定

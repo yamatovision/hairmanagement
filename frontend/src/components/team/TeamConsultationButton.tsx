@@ -27,9 +27,11 @@ import ChatIcon from '@mui/icons-material/Chat';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import CloseIcon from '@mui/icons-material/Close';
-import { useConversation } from '../../hooks/useConversation';
-import ChatInterface from '../conversation/ChatInterface';
-import { ConversationType } from '../../utils/sharedTypes';
+// アーカイブされたコンポーネントを新しい実装に変更
+import { useDirectConversation } from '../../hooks/useDirectConversation';
+import DirectChatInterface from '../conversation/DirectChatInterface';
+// 会話タイプの定義
+type ConversationType = 'fortune' | 'team' | 'member';
 
 interface TeamConsultationButtonProps {
   teamId: string;
@@ -55,7 +57,7 @@ const TeamConsultationButton: React.FC<TeamConsultationButtonProps> = ({
   const [error, setError] = useState<string | null>(null);
   
   // 会話フック
-  const { startTeamConsultation } = useConversation();
+  const { startConversation, sendMessage } = useDirectConversation();
   
   // ダイアログを開く
   const handleOpenDialog = () => {
@@ -128,11 +130,13 @@ const TeamConsultationButton: React.FC<TeamConsultationButtonProps> = ({
       setError(null);
       
       // チーム目標コンサルティング対話を開始
-      const result = await startTeamConsultation(teamId, prompt);
+      const result = await startConversation('team', teamId);
       
       // 会話IDを保存
-      if (result?.conversation?.id) {
-        setConversationId(result.conversation.id);
+      if (result?.id) {
+        setConversationId(result.id);
+        // 初期メッセージを送信
+        await sendMessage(prompt);
       }
       
       // ステップ2（対話画面）に進む
@@ -267,8 +271,9 @@ const TeamConsultationButton: React.FC<TeamConsultationButtonProps> = ({
             // 対話インターフェース
             <Box sx={{ height: 500 }}>
               {conversationId ? (
-                <ChatInterface 
-                  conversationId={conversationId} 
+                <DirectChatInterface 
+                  type="team"
+                  contextId={teamId}
                   initialPrompt={initialPrompt} 
                 />
               ) : (

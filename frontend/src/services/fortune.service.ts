@@ -19,24 +19,6 @@ class FortuneService {
         offlineTtl: 24 * 60 * 60 * 1000
       });
       
-      // APIレスポンスの内容をデバッグログに出力
-      console.log('FortuneAPI Response:', {
-        hasAiGeneratedAdvice: !!response.aiGeneratedAdvice,
-        adviceType: typeof response.advice,
-        luckyPoints: response.aiGeneratedAdvice?.luckyPoints || 'None',
-        luckyPointsDetails: response.aiGeneratedAdvice?.luckyPoints ? {
-          color: response.aiGeneratedAdvice.luckyPoints.color,
-          itemsIsArray: Array.isArray(response.aiGeneratedAdvice.luckyPoints.items),
-          itemsLength: Array.isArray(response.aiGeneratedAdvice.luckyPoints.items) ? 
-            response.aiGeneratedAdvice.luckyPoints.items.length : 'not an array',
-          itemsValue: response.aiGeneratedAdvice.luckyPoints.items,
-          number: response.aiGeneratedAdvice.luckyPoints.number,
-          action: response.aiGeneratedAdvice.luckyPoints.action
-        } : 'No lucky points',
-        overallScore: response.overallScore,
-        statusCheck: 'OK'
-      });
-      
       return response;
     } catch (error) {
       console.error('運勢取得エラー:', error);
@@ -52,24 +34,6 @@ class FortuneService {
       const response = await apiRequest<IFortune>(FORTUNE.GET_BY_DATE(date), {
         method: 'GET',
         offlineTtl: 24 * 60 * 60 * 1000
-      });
-      
-      // APIレスポンスの内容をデバッグログに出力
-      console.log(`FortuneAPI Response for ${date}:`, {
-        hasAiGeneratedAdvice: !!response.aiGeneratedAdvice,
-        adviceType: typeof response.advice,
-        luckyPoints: response.aiGeneratedAdvice?.luckyPoints || 'None',
-        luckyPointsDetails: response.aiGeneratedAdvice?.luckyPoints ? {
-          color: response.aiGeneratedAdvice.luckyPoints.color,
-          itemsIsArray: Array.isArray(response.aiGeneratedAdvice.luckyPoints.items),
-          itemsLength: Array.isArray(response.aiGeneratedAdvice.luckyPoints.items) ? 
-            response.aiGeneratedAdvice.luckyPoints.items.length : 'not an array',
-          itemsValue: response.aiGeneratedAdvice.luckyPoints.items,
-          number: response.aiGeneratedAdvice.luckyPoints.number,
-          action: response.aiGeneratedAdvice.luckyPoints.action
-        } : 'No lucky points',
-        overallScore: response.overallScore,
-        date: response.date
       });
       
       return response;

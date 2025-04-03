@@ -91,7 +91,13 @@ const DailyFortuneView: React.FC = () => {
 
   // 相談ボタンのクリックハンドラー
   const handleConsultClick = () => {
-    navigate('/conversation/fortune');
+    if (fortune && fortune.id) {
+      // 会話ページにリダイレクトし、fortuneIdをクエリパラメータとして渡す
+      navigate(`/conversation?fortuneId=${fortune.id}`);
+    } else {
+      // フォーチュンIDがない場合は単純に会話ページに遷移
+      navigate('/conversation');
+    }
   };
 
   if (loading) {

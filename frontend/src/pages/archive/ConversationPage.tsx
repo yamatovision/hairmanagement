@@ -16,6 +16,18 @@ const ConversationPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const location = window.location;
+  
+  // URLから運勢IDを取得
+  const queryParams = new URLSearchParams(location.search);
+  const fortuneIdFromURL = queryParams.get('fortuneId');
+  
+  // URLパラメータのデバッグ出力
+  console.log('ConversationPage URLパラメータ:', {
+    conversationId,
+    fortuneIdFromURL,
+    fullPath: location.pathname + location.search
+  });
   
   const { dailyFortune } = useFortune();
   const { getConversationById } = useConversation();
@@ -23,12 +35,19 @@ const ConversationPage: React.FC = () => {
   const [tabValue, setTabValue] = useState<number>(0);
   const [promptQuestion, setPromptQuestion] = useState<string | null>(null);
   
-  // 会話詳細を取得（既存の会話の場合）
+  // 会話詳細を取得（既存の会話の場合かつフォーチュンIDが指定されていない場合）
   useEffect(() => {
-    if (conversationId) {
+    // フォーチュンIDが指定されている場合は会話詳細を取得しない
+    if (fortuneIdFromURL) {
+      console.log('フォーチュンIDが指定されているため、会話詳細取得をスキップします');
+      return;
+    }
+    
+    // 有効な会話IDが指定されている場合のみ取得する
+    if (conversationId && conversationId !== 'fortune') {
       getConversationById(conversationId);
     }
-  }, [conversationId]);
+  }, [conversationId, fortuneIdFromURL, getConversationById]);
   
   // タブ切り替え処理
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -92,7 +111,7 @@ const ConversationPage: React.FC = () => {
             >
               <ChatInterface
                 conversationId={conversationId}
-                fortuneId={dailyFortune?.id}
+                fortuneId={fortuneIdFromURL || dailyFortune?.id}
                 initialPrompt={promptQuestion || undefined}
               />
             </Paper>

@@ -23,7 +23,6 @@
     "baseUrl": ".",
     // JSXプロパティとスタイル要素の互換性を向上させる設定
     "noImplicitAny": false,
-    "suppressImplicitAnyIndexErrors": true,
     "noImplicitThis": false,
     "strictNullChecks": false
   },
@@ -32,6 +31,11 @@
   ],
   "exclude": [
     "src/archive",
+    "src/components/conversation/archive",
+    "src/hooks/archive",
+    "src/pages/archive",
+    "src/services/archive",
+    "src/tests",
     "node_modules",
     "build",
     "scripts",

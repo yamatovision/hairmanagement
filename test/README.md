@@ -1,8 +1,45 @@
-# AI対話システムテスト
+# テストスクリプト集
 
-このディレクトリには、AI対話システム機能をテストするための様々なテストスクリプトとツールが含まれています。
+このディレクトリには、システムの各コンポーネントをテストするためのスクリプトが含まれています。
 
-## テスト内容
+## 利用可能なテストスクリプト
+
+### Claude AI接続テスト
+
+ClaudeAI APIへの接続をテストするシンプルなスクリプトです。
+
+- **JavaScript版**: `test-claude-ai.js`
+- **TypeScript版**: `test-claude-ai.ts`
+
+#### 実行方法
+
+JavaScript版:
+```bash
+node test/test-claude-ai.js
+```
+
+TypeScript版:
+```bash
+npx ts-node test/test-claude-ai.ts
+```
+
+#### 必要な環境変数
+
+`.env`ファイルに以下の環境変数を設定してください:
+
+```
+CLAUDE_API_KEY=your_api_key_here
+CLAUDE_API_URL=https://api.anthropic.com/v1/messages
+CLAUDE_MODEL=claude-3-7-sonnet-20250219
+```
+
+`CLAUDE_API_URL`と`CLAUDE_MODEL`はオプションで、デフォルト値が設定されています。
+
+### AI対話システムテスト
+
+このディレクトリには、AI対話システム機能をテストするためのスクリプトとツールも含まれています。
+
+#### テスト内容
 
 1. バックエンドAPIテスト
    - 呼び水質問生成 API
