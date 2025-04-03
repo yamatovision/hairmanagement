@@ -184,18 +184,21 @@ export class ElementalCalculatorService {
     // ElementalForecastを使用して運勢データを生成
     const generatedFortune = ElementalForecast.generateDailyFortune(birthDate, dateStr);
     
+    // 値が1未満の場合は最小値1に調整
+    const ensureMinValue = (value: number): number => Math.max(1, value);
+    
     // Fortuneエンティティに変換
     const fortune: Fortune = {
       id: '', // リポジトリで割り当て
       userId: userId,
       date: targetDate,
-      overallScore: generatedFortune.overallLuck,
+      overallScore: ensureMinValue(generatedFortune.overallLuck),
       rating: this.mapScoreToRating(generatedFortune.overallLuck),
       categories: {
-        work: generatedFortune.careerLuck,
-        teamwork: generatedFortune.relationshipLuck,
-        health: generatedFortune.healthLuck,
-        communication: generatedFortune.creativityLuck
+        work: ensureMinValue(generatedFortune.careerLuck),
+        teamwork: ensureMinValue(generatedFortune.relationshipLuck),
+        health: ensureMinValue(generatedFortune.healthLuck),
+        communication: ensureMinValue(generatedFortune.creativityLuck)
       },
       luckyItems: generatedFortune.luckyColors,  // 簡略化のため色をラッキーアイテムとして使用
       yinYangBalance: {
@@ -204,7 +207,20 @@ export class ElementalCalculatorService {
       },
       advice: generatedFortune.advice,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      // MongoDBスキーマに合わせて追加のフィールドを設定
+      dailyElement: generatedFortune.dailyElement,
+      yinYang: generatedFortune.yinYang,
+      careerLuck: ensureMinValue(generatedFortune.careerLuck),
+      relationshipLuck: ensureMinValue(generatedFortune.relationshipLuck),
+      creativeEnergyLuck: ensureMinValue(generatedFortune.creativityLuck), // フィールド名をMySQLスキーマに合わせる
+      healthLuck: ensureMinValue(generatedFortune.healthLuck),
+      wealthLuck: ensureMinValue(generatedFortune.wealthLuck),
+      description: generatedFortune.description,
+      luckyColors: generatedFortune.luckyColors,
+      luckyDirections: generatedFortune.luckyDirections,
+      compatibleElements: generatedFortune.compatibleElements,
+      incompatibleElements: generatedFortune.incompatibleElements
     };
     
     return fortune;
