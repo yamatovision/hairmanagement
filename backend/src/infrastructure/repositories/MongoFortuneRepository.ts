@@ -35,31 +35,34 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
     if (doc.aiGeneratedAdvice) {
       console.log('[MongoFortuneRepository] aiGeneratedAdviceを構造化データとして処理します');
       
+      // 型アサーションを使用して旧構造のプロパティにアクセス
+      const oldFormat = doc.aiGeneratedAdvice as any;
+      
       // 新しい構造（advice + luckyPoints）のチェック
       if (doc.aiGeneratedAdvice.advice === undefined && 
-          (doc.aiGeneratedAdvice.summary || doc.aiGeneratedAdvice.personalAdvice || doc.aiGeneratedAdvice.teamAdvice)) {
+          (oldFormat.summary || oldFormat.personalAdvice || oldFormat.teamAdvice)) {
         // 旧構造から新構造への変換（移行用コード）
         console.log('[MongoFortuneRepository] 旧構造のaiGeneratedAdviceを新構造に変換します');
         
         // マークダウン形式のアドバイスを構築
         let advice = '';
         
-        if (doc.aiGeneratedAdvice.summary) {
-          advice += `# 今日のあなたの運気\n${doc.aiGeneratedAdvice.summary}\n\n`;
+        if (oldFormat.summary) {
+          advice += `# 今日のあなたの運気\n${oldFormat.summary}\n\n`;
         }
         
-        if (doc.aiGeneratedAdvice.personalAdvice) {
-          advice += `# 個人目標へのアドバイス\n${doc.aiGeneratedAdvice.personalAdvice}\n\n`;
+        if (oldFormat.personalAdvice) {
+          advice += `# 個人目標へのアドバイス\n${oldFormat.personalAdvice}\n\n`;
         }
         
-        if (doc.aiGeneratedAdvice.teamAdvice) {
-          advice += `# チーム目標へのアドバイス\n${doc.aiGeneratedAdvice.teamAdvice}\n\n`;
+        if (oldFormat.teamAdvice) {
+          advice += `# チーム目標へのアドバイス\n${oldFormat.teamAdvice}\n\n`;
         }
         
         // 新しい構造に変換
         doc.aiGeneratedAdvice = {
           advice: advice.trim(),
-          luckyPoints: doc.aiGeneratedAdvice.luckyPoints || {
+          luckyPoints: oldFormat.luckyPoints || {
             color: "赤",
             items: ["鈴", "明るい色の文房具"],
             number: 8,
@@ -104,7 +107,7 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
       try {
         if (typeof doc.advice === 'string' && doc.advice.trim().startsWith('{') && doc.advice.trim().endsWith('}')) {
           console.log('[MongoFortuneRepository] adviceをJSON文字列として解析を試みます');
-          const parsedAdvice = JSON.parse(doc.advice);
+          const parsedAdvice = JSON.parse(doc.advice) as any;
           if (parsedAdvice.summary || parsedAdvice.luckyPoints) {
             console.log('[MongoFortuneRepository] adviceからaiGeneratedAdviceを抽出しました');
             // 必要なフィールドを全て設定
@@ -211,37 +214,40 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
     
     // aiGeneratedAdviceがある場合は必要なフィールドを全て追加する
     if (aiGeneratedAdvice) {
+      // 型アサーション
+      const oldFormat = aiGeneratedAdvice as any;
+      
       console.log('[MongoFortuneRepository] aiGeneratedAdviceの内容:', {
         hasAdvice: !!aiGeneratedAdvice.advice,
         hasLuckyPoints: !!aiGeneratedAdvice.luckyPoints,
         // 旧形式のフィールド（移行用）
-        hasSummary: !!aiGeneratedAdvice.summary,
-        hasPersonalAdvice: !!aiGeneratedAdvice.personalAdvice,
-        hasTeamAdvice: !!aiGeneratedAdvice.teamAdvice
+        hasSummary: !!oldFormat.summary,
+        hasPersonalAdvice: !!oldFormat.personalAdvice,
+        hasTeamAdvice: !!oldFormat.teamAdvice
       });
       
       // 旧形式から新形式への変換（移行用コード）
       if (aiGeneratedAdvice.advice === undefined && 
-          (aiGeneratedAdvice.summary || aiGeneratedAdvice.personalAdvice || aiGeneratedAdvice.teamAdvice)) {
+          (oldFormat.summary || oldFormat.personalAdvice || oldFormat.teamAdvice)) {
         // マークダウン形式のアドバイスを構築
         let advice = '';
         
-        if (aiGeneratedAdvice.summary) {
-          advice += `# 今日のあなたの運気\n${aiGeneratedAdvice.summary}\n\n`;
+        if (oldFormat.summary) {
+          advice += `# 今日のあなたの運気\n${oldFormat.summary}\n\n`;
         }
         
-        if (aiGeneratedAdvice.personalAdvice) {
-          advice += `# 個人目標へのアドバイス\n${aiGeneratedAdvice.personalAdvice}\n\n`;
+        if (oldFormat.personalAdvice) {
+          advice += `# 個人目標へのアドバイス\n${oldFormat.personalAdvice}\n\n`;
         }
         
-        if (aiGeneratedAdvice.teamAdvice) {
-          advice += `# チーム目標へのアドバイス\n${aiGeneratedAdvice.teamAdvice}\n\n`;
+        if (oldFormat.teamAdvice) {
+          advice += `# チーム目標へのアドバイス\n${oldFormat.teamAdvice}\n\n`;
         }
         
         // 新しい形式のオブジェクトを作成
         aiGeneratedAdvice = {
           advice: advice.trim(),
-          luckyPoints: aiGeneratedAdvice.luckyPoints || {
+          luckyPoints: oldFormat.luckyPoints || {
             color: "赤",
             items: ["鈴", "明るい色の文房具"],
             number: 8,
