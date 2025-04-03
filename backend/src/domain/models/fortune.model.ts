@@ -31,9 +31,7 @@ export interface IFortuneDocument extends mongoose.Document {
   advice: string;
   // AIで生成されたアドバイス (構造化オブジェクト)
   aiGeneratedAdvice?: {
-    summary: string;
-    personalAdvice: string;
-    teamAdvice: string;
+    advice: string; // マークダウン形式のアドバイステキスト
     luckyPoints?: {
       color: string;
       items: string[];
@@ -128,9 +126,7 @@ const FortuneSchema: Schema = new Schema(
       required: true
     },
     aiGeneratedAdvice: {
-      summary: { type: String },
-      personalAdvice: { type: String },
-      teamAdvice: { type: String },
+      advice: { type: String },
       luckyPoints: {
         color: { type: String },
         items: [{ type: String }],

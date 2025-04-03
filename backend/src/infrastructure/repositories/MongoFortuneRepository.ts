@@ -34,19 +34,47 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
     // aiGeneratedAdviceを持っている場合、構造化データとして渡す
     if (doc.aiGeneratedAdvice) {
       console.log('[MongoFortuneRepository] aiGeneratedAdviceを構造化データとして処理します');
-      // 適切な形式かチェック - 必要なフィールドが欠けていたら追加
-      if (!doc.aiGeneratedAdvice.summary) {
-        console.log('[MongoFortuneRepository] aiGeneratedAdviceにsummaryが不足しているため追加します');
-        doc.aiGeneratedAdvice.summary = typeof doc.advice === 'string' ? doc.advice : "本日は五行のエネルギーを活かして行動しましょう。";
+      
+      // 新しい構造（advice + luckyPoints）のチェック
+      if (doc.aiGeneratedAdvice.advice === undefined && 
+          (doc.aiGeneratedAdvice.summary || doc.aiGeneratedAdvice.personalAdvice || doc.aiGeneratedAdvice.teamAdvice)) {
+        // 旧構造から新構造への変換（移行用コード）
+        console.log('[MongoFortuneRepository] 旧構造のaiGeneratedAdviceを新構造に変換します');
+        
+        // マークダウン形式のアドバイスを構築
+        let advice = '';
+        
+        if (doc.aiGeneratedAdvice.summary) {
+          advice += `# 今日のあなたの運気\n${doc.aiGeneratedAdvice.summary}\n\n`;
+        }
+        
+        if (doc.aiGeneratedAdvice.personalAdvice) {
+          advice += `# 個人目標へのアドバイス\n${doc.aiGeneratedAdvice.personalAdvice}\n\n`;
+        }
+        
+        if (doc.aiGeneratedAdvice.teamAdvice) {
+          advice += `# チーム目標へのアドバイス\n${doc.aiGeneratedAdvice.teamAdvice}\n\n`;
+        }
+        
+        // 新しい構造に変換
+        doc.aiGeneratedAdvice = {
+          advice: advice.trim(),
+          luckyPoints: doc.aiGeneratedAdvice.luckyPoints || {
+            color: "赤",
+            items: ["鈴", "明るい色の文房具"],
+            number: 8,
+            action: "朝日を浴びる"
+          }
+        };
       }
-      if (!doc.aiGeneratedAdvice.personalAdvice) {
-        console.log('[MongoFortuneRepository] aiGeneratedAdviceにpersonalAdviceが不足しているため追加します');
-        doc.aiGeneratedAdvice.personalAdvice = "個人目標に向けて集中して取り組みましょう。";
+      
+      // adviceフィールドのチェック
+      if (!doc.aiGeneratedAdvice.advice) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにadviceが不足しているため追加します');
+        doc.aiGeneratedAdvice.advice = typeof doc.advice === 'string' ? doc.advice : 
+          "# 今日のあなたの運気\n本日は五行のエネルギーを活かして行動しましょう。\n\n# 個人目標へのアドバイス\n個人目標に向けて集中して取り組みましょう。\n\n# チーム目標へのアドバイス\nチームとの連携を大切にしてください。";
       }
-      if (!doc.aiGeneratedAdvice.teamAdvice) {
-        console.log('[MongoFortuneRepository] aiGeneratedAdviceにteamAdviceが不足しているため追加します');
-        doc.aiGeneratedAdvice.teamAdvice = "チームとの連携を大切にしてください。";
-      }
+      
       // luckyPointsをチェック
       if (!doc.aiGeneratedAdvice.luckyPoints) {
         console.log('[MongoFortuneRepository] aiGeneratedAdviceにluckyPointsが不足しているため追加します');
@@ -80,10 +108,24 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
           if (parsedAdvice.summary || parsedAdvice.luckyPoints) {
             console.log('[MongoFortuneRepository] adviceからaiGeneratedAdviceを抽出しました');
             // 必要なフィールドを全て設定
+            // マークダウン形式のアドバイスを構築
+            let adviceText = '';
+            
+            if (parsedAdvice.summary) {
+              adviceText += `# 今日のあなたの運気\n${parsedAdvice.summary}\n\n`;
+            }
+            
+            if (parsedAdvice.personalAdvice) {
+              adviceText += `# 個人目標へのアドバイス\n${parsedAdvice.personalAdvice}\n\n`;
+            }
+            
+            if (parsedAdvice.teamAdvice) {
+              adviceText += `# チーム目標へのアドバイス\n${parsedAdvice.teamAdvice}\n\n`;
+            }
+            
             doc.aiGeneratedAdvice = {
-              summary: parsedAdvice.summary || (typeof doc.advice === 'string' ? doc.advice : "本日は五行のエネルギーを活かして行動しましょう。"),
-              personalAdvice: parsedAdvice.personalAdvice || "個人目標に向けて集中して取り組みましょう。",
-              teamAdvice: parsedAdvice.teamAdvice || "チームとの連携を大切にしてください。",
+              advice: adviceText.trim() || (typeof doc.advice === 'string' ? doc.advice : 
+                "# 今日のあなたの運気\n本日は五行のエネルギーを活かして行動しましょう。\n\n# 個人目標へのアドバイス\n個人目標に向けて集中して取り組みましょう。\n\n# チーム目標へのアドバイス\nチームとの連携を大切にしてください。"),
               luckyPoints: {
                 color: parsedAdvice.luckyPoints?.color || "赤",
                 items: (parsedAdvice.luckyPoints && Array.isArray(parsedAdvice.luckyPoints.items) && parsedAdvice.luckyPoints.items.length > 0) ? 
@@ -170,24 +212,48 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
     // aiGeneratedAdviceがある場合は必要なフィールドを全て追加する
     if (aiGeneratedAdvice) {
       console.log('[MongoFortuneRepository] aiGeneratedAdviceの内容:', {
+        hasAdvice: !!aiGeneratedAdvice.advice,
+        hasLuckyPoints: !!aiGeneratedAdvice.luckyPoints,
+        // 旧形式のフィールド（移行用）
         hasSummary: !!aiGeneratedAdvice.summary,
         hasPersonalAdvice: !!aiGeneratedAdvice.personalAdvice,
-        hasTeamAdvice: !!aiGeneratedAdvice.teamAdvice,
-        hasLuckyPoints: !!aiGeneratedAdvice.luckyPoints
+        hasTeamAdvice: !!aiGeneratedAdvice.teamAdvice
       });
       
-      // 必要なフィールドが欠けていたら追加
-      if (!aiGeneratedAdvice.summary) {
-        console.log('[MongoFortuneRepository] aiGeneratedAdviceにsummaryが不足しているため追加します');
-        aiGeneratedAdvice.summary = "本日は五行のエネルギーを活かして行動しましょう。";
+      // 旧形式から新形式への変換（移行用コード）
+      if (aiGeneratedAdvice.advice === undefined && 
+          (aiGeneratedAdvice.summary || aiGeneratedAdvice.personalAdvice || aiGeneratedAdvice.teamAdvice)) {
+        // マークダウン形式のアドバイスを構築
+        let advice = '';
+        
+        if (aiGeneratedAdvice.summary) {
+          advice += `# 今日のあなたの運気\n${aiGeneratedAdvice.summary}\n\n`;
+        }
+        
+        if (aiGeneratedAdvice.personalAdvice) {
+          advice += `# 個人目標へのアドバイス\n${aiGeneratedAdvice.personalAdvice}\n\n`;
+        }
+        
+        if (aiGeneratedAdvice.teamAdvice) {
+          advice += `# チーム目標へのアドバイス\n${aiGeneratedAdvice.teamAdvice}\n\n`;
+        }
+        
+        // 新しい形式のオブジェクトを作成
+        aiGeneratedAdvice = {
+          advice: advice.trim(),
+          luckyPoints: aiGeneratedAdvice.luckyPoints || {
+            color: "赤",
+            items: ["鈴", "明るい色の文房具"],
+            number: 8,
+            action: "朝日を浴びる"
+          }
+        };
       }
-      if (!aiGeneratedAdvice.personalAdvice) {
-        console.log('[MongoFortuneRepository] aiGeneratedAdviceにpersonalAdviceが不足しているため追加します');
-        aiGeneratedAdvice.personalAdvice = "個人目標に向けて集中して取り組みましょう。";
-      }
-      if (!aiGeneratedAdvice.teamAdvice) {
-        console.log('[MongoFortuneRepository] aiGeneratedAdviceにteamAdviceが不足しているため追加します');
-        aiGeneratedAdvice.teamAdvice = "チームとの連携を大切にしてください。";
+      
+      // adviceフィールドの確認
+      if (!aiGeneratedAdvice.advice) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにadviceが不足しているため追加します');
+        aiGeneratedAdvice.advice = "# 今日のあなたの運気\n本日は五行のエネルギーを活かして行動しましょう。\n\n# 個人目標へのアドバイス\n個人目標に向けて集中して取り組みましょう。\n\n# チーム目標へのアドバイス\nチームとの連携を大切にしてください。";
       }
       
       // luckyPointsをチェック
@@ -217,9 +283,8 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
       
       // 更新内容をログ出力
       console.log('[MongoFortuneRepository] 完成したaiGeneratedAdvice構造:', {
-        hasSummary: !!aiGeneratedAdvice.summary,
-        hasPersonalAdvice: !!aiGeneratedAdvice.personalAdvice,
-        hasTeamAdvice: !!aiGeneratedAdvice.teamAdvice,
+        hasAdvice: !!aiGeneratedAdvice.advice,
+        adviceLength: aiGeneratedAdvice.advice ? aiGeneratedAdvice.advice.length : 0,
         hasLuckyPoints: !!aiGeneratedAdvice.luckyPoints,
         luckyPointsComplete: aiGeneratedAdvice.luckyPoints ? (
           !!aiGeneratedAdvice.luckyPoints.color && 
