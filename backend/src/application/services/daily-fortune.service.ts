@@ -342,6 +342,9 @@ export class DailyFortuneService {
            !!parsedAdvice.luckyPoints.action) : false
       });
       
+      // AIGeneratedAdviceが正常に生成されたことをログ
+      console.log('[DailyFortuneService] AIGeneratedAdvice生成完了:', parsedAdvice ? 'success' : 'failed');
+      
       // パース結果がない場合はデフォルト値を返す
       if (!parsedAdvice) {
         console.log('[DailyFortuneService] パース失敗 - デフォルト値を使用');
@@ -388,20 +391,58 @@ export class DailyFortuneService {
    * @param response AIからのテキスト回答
    * @returns 構造化された運勢アドバイス
    */
-  private parseAIResponse(response: string): any {
+  private parseAIResponse(response: string | object): any {
+    // デバッグ情報：レスポンスタイプのログ
+    console.log('[DailyFortuneService.parseAIResponse] レスポンスタイプ:', typeof response);
+    console.log('[DailyFortuneService.parseAIResponse] nullチェック:', response === null);
+    
+    // オブジェクトが直接渡された場合はそのまま使用
+    if (typeof response === 'object' && response !== null) {
+      console.log('[DailyFortuneService.parseAIResponse] オブジェクトが直接渡されました');
+      const objectResponse = response as any;
+      
+      // 必要な構造をチェック
+      const requiredFields = ['summary', 'personalAdvice', 'teamAdvice', 'luckyPoints'];
+      const missingFields = requiredFields.filter(field => !objectResponse[field]);
+      
+      if (missingFields.length > 0) {
+        console.log('[DailyFortuneService.parseAIResponse] 警告: オブジェクトに不足しているフィールドがあります:', missingFields);
+      }
+      
+      // luckyPointsがある場合は内部構造もチェック
+      if (objectResponse.luckyPoints) {
+        console.log('[DailyFortuneService.parseAIResponse] luckyPointsの検証:',{
+          hasColor: !!objectResponse.luckyPoints.color,
+          hasItems: !!objectResponse.luckyPoints.items,
+          isItemsArray: Array.isArray(objectResponse.luckyPoints.items),
+          hasNumber: !!objectResponse.luckyPoints.number,
+          hasAction: !!objectResponse.luckyPoints.action
+        });
+        
+        // luckyPoints.itemsが配列でない場合は配列に変換
+        if (objectResponse.luckyPoints.items && !Array.isArray(objectResponse.luckyPoints.items)) {
+          console.log('[DailyFortuneService.parseAIResponse] luckyPoints.itemsを配列に変換します');
+          objectResponse.luckyPoints.items = [String(objectResponse.luckyPoints.items)];
+        }
+      }
+      
+      return objectResponse;
+    }
+    
     if (!response) {
       console.error('[DailyFortuneService.parseAIResponse] 空のレスポンスを受信');
       return null;
     }
     
     try {
-      console.log('[DailyFortuneService.parseAIResponse] パース開始 - レスポンス長:', response.length);
+      const responseStr = String(response);
+      console.log('[DailyFortuneService.parseAIResponse] パース開始 - レスポンス長:', responseStr.length);
       
       // JSONオブジェクトの場合は、直接パースして返す
-      if (response.startsWith('{') && response.endsWith('}')) {
+      if (responseStr.startsWith('{') && responseStr.endsWith('}')) {
         try {
           console.log('[DailyFortuneService.parseAIResponse] JSONとして解析を試みます');
-          const jsonResult = JSON.parse(response);
+          const jsonResult = JSON.parse(responseStr);
           
           // 必要なプロパティが含まれているか確認
           if (jsonResult.summary && jsonResult.luckyPoints) {

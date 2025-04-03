@@ -63,12 +63,34 @@ export class ClaudeAIService {
           }
         );
         
-        // レスポンスの解析
+        // レスポンスの解析と詳細ログ出力
+        console.log('ClaudeAIService: APIレスポンス受信:', {
+          hasData: !!response.data,
+          hasContent: !!(response.data && response.data.content),
+          contentLength: response.data && response.data.content ? response.data.content.length : 0
+        });
+        
         if (response.data && response.data.content && response.data.content.length > 0) {
-          console.log('ClaudeAIService: Successfully received API response');
-          return response.data.content[0].text;
+          console.log('ClaudeAIService: APIレスポンス正常受信');
+          // レスポンステキストをJSONオブジェクトとしてパースを試みる
+          const responseText = response.data.content[0].text;
+          
+          try {
+            // JSON形式かどうかチェック
+            if (responseText.trim().startsWith('{') && responseText.trim().endsWith('}')) {
+              console.log('ClaudeAIService: JSONレスポンスをパース試行');
+              const parsedJson = JSON.parse(responseText);
+              console.log('ClaudeAIService: JSONとしてパース成功 - オブジェクトとして返します');
+              return parsedJson;
+            }
+          } catch (parseError) {
+            console.log('ClaudeAIService: JSONパース失敗 - テキストとして処理します');
+          }
+          
+          // 通常のテキストとして返す
+          return responseText;
         } else {
-          console.error('ClaudeAIService: Unexpected API response format:', response.data);
+          console.error('ClaudeAIService: 予期しないAPIレスポンス形式:', response.data);
           throw new Error('意図しないAPIレスポンス形式');
         }
       }
@@ -109,9 +131,9 @@ AIプロダクトの開発において、今日は特に「ユーザー体験」
 バイアウト目標達成のためには、今日は特に情報の共有と透明性を高めることが重要です。メンバー間での正確な情報伝達が、予期せぬ障害を事前に回避するカギとなります。木が根を張るように、強固な信頼関係を築きましょう。`;
       }
       
-      // 構造化されたオブジェクトを文字列として返す
-      // DailyFortuneService.parseAIResponseがテキスト処理を期待しているため
-      return JSON.stringify(structuredMockResponse);
+      // 構造化されたオブジェクトを直接返す
+      // オブジェクトとして直接返すことでパース処理をスキップ
+      return structuredMockResponse;
     } catch (error) {
       // エラー詳細のロギング
       console.error('Claude API呼び出し中にエラーが発生しました:', error);

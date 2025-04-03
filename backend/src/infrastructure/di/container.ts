@@ -280,24 +280,65 @@ export function configureContainer(): void {
   
   // Claude AI サービスを登録
   try {
-    // ClaudeAIServiceを登録
-    const { ClaudeAIService } = require('../external/ClaudeAIService');
+    // 環境変数を確認して詳細ログを出力
     const claudeApiKey = process.env.CLAUDE_API_KEY || 'dummy-api-key';
     const claudeApiUrl = process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/messages';
+    const claudeModel = process.env.CLAUDE_MODEL || 'claude-3-7-sonnet-20250219';
     
+    // APIキーが設定されているかチェック
+    const isKeyDummy = claudeApiKey === 'dummy-api-key';
+    const keyLength = claudeApiKey.length;
+    const keyPrefix = claudeApiKey.substring(0, 10);
+    const keySuffix = claudeApiKey.substring(keyLength - 5);
+    
+    console.log('ClaudeAI設定を確認:');
+    console.log(`- API URL: ${claudeApiUrl}`);
+    console.log(`- APIキー: ${isKeyDummy ? 'ダミーキー' : keyPrefix + '...' + keySuffix} (${keyLength}文字)`);
+    console.log(`- モデル: ${claudeModel}`);
+    
+    // ClaudeAIServiceを登録
+    const { ClaudeAIService } = require('../external/ClaudeAIService');
     container.register('ClaudeApiKey', { useValue: claudeApiKey });
     container.register('ClaudeApiUrl', { useValue: claudeApiUrl });
     container.register('IAIService', { useClass: ClaudeAIService });
+    
     console.log('ClaudeAIServiceが正常に登録されました');
+    console.log(`注意: ${isKeyDummy ? 'ダミーAPIキーが使用されています。モックレスポンスが返されます。' : '実際のAPIキーが設定されています。'}`);
   } catch (error) {
     console.error('ClaudeAIServiceの登録に失敗しました:', error);
+    if (error instanceof Error) {
+      console.error('エラー詳細:', error.message);
+      console.error('スタックトレース:', error.stack);
+    }
     
     // モックAIサービスを登録してエラーを回避
     class MockAIService {
       constructor() {}
-      async sendMessage(prompt) { return { content: "これはモックレスポンスです。" }; }
-      async generateText(prompt, options) { return "これはモックレスポンスです。本番環境では実際のAIからのレスポンスが返されます。"; }
-      async generateImage() { return "https://example.com/mock-image.png"; }
+      
+      async sendMessage(prompt) { 
+        console.log('MockAIService: sendMessage呼び出し');
+        return { content: "これはモックレスポンスです。" }; 
+      }
+      
+      async generateText(prompt, options) { 
+        console.log('MockAIService: generateText呼び出し');
+        // 構造化されたモックレスポンスを返す
+        return {
+          summary: "あなたは今日、清々しい風が吹き抜ける森のような運気です。新しいアイデアが自然と湧き上がり、周囲との調和も取れやすい一日となるでしょう。特に、チームでの創造的な活動が成功に結びつく暗示があります。思い切って新しい発想を形にすることで、大きな成果が期待できます。",
+          personalAdvice: "AIプロダクトの開発において、今日は特に「ユーザー体験」に焦点を当てると良いでしょう。技術的な側面よりも、実際の使用感や直感的な操作性を重視することで、より価値の高い成果が得られます。木の柔軟性のように臨機応変な対応を。",
+          teamAdvice: "バイアウト目標達成のためには、今日は特に情報の共有と透明性を高めることが重要です。メンバー間での正確な情報伝達が、予期せぬ障害を事前に回避するカギとなります。木が根を張るように、強固な信頼関係を築きましょう。",
+          luckyPoints: {
+            color: "緑",
+            items: ["観葉植物", "木製のアクセサリー"],
+            number: 3,
+            action: "朝日を浴びながら深呼吸する"
+          }
+        };
+      }
+      
+      async generateImage() { 
+        return "https://example.com/mock-image.png"; 
+      }
     }
     
     const claudeApiKey = process.env.CLAUDE_API_KEY || 'dummy-api-key';
@@ -306,7 +347,7 @@ export function configureContainer(): void {
     container.register('ClaudeApiKey', { useValue: claudeApiKey });
     container.register('ClaudeApiUrl', { useValue: claudeApiUrl });
     container.register('IAIService', { useClass: MockAIService });
-    console.log('MockAIServiceを代わりに登録しました');
+    console.log('MockAIServiceを代わりに登録しました - 構造化されたモックレスポンスを返します');
   }
   
   // ユースケース
