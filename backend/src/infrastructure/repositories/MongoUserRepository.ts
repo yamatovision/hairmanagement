@@ -3,7 +3,7 @@ import { Model } from 'mongoose';
 import { BaseRepository } from './base/BaseRepository';
 import { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { User } from '../../domain/user/entities/user.entity';
-import UserModel, { IUserDocument } from '../../domain/models/user.model';
+import UserModel, { IUserDocument, TodayFortune } from '../../domain/models/user.model';
 import { UserRole } from '../../domain/user/value-objects/user-role';
 import { UserStatus } from '../../domain/user/value-objects/user-status';
 import { ElementalProfile } from '../../domain/user/value-objects/elemental-profile';
@@ -136,6 +136,20 @@ export class MongoUserRepository extends BaseRepository<User, string> implements
     const result = await this.userModel.findByIdAndUpdate(
       userId,
       { password: hashedPassword }
+    ).exec();
+    return result !== null;
+  }
+  
+  /**
+   * 今日の運勢情報を更新する
+   * @param userId ユーザーID
+   * @param todayFortune 今日の運勢情報
+   * @returns 更新操作の結果
+   */
+  async updateTodayFortune(userId: string, todayFortune: TodayFortune): Promise<boolean> {
+    const result = await this.userModel.findByIdAndUpdate(
+      userId,
+      { todayFortune: todayFortune }
     ).exec();
     return result !== null;
   }

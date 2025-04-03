@@ -6,12 +6,38 @@
  * - 2025/03/26: 初期実装 (AppGenius)
  * - 2025/03/27: TypeScript型互換性修正 (AI-2)
  * - 2025/03/31: クリーンアーキテクチャに移行 (Claude)
+ * - 2025/04/03: todayFortune、サブスクリプション情報追加 (Claude)
  */
 
 import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 import { UserRole } from '../user/value-objects/user-role';
 import { UserStatus } from '../user/value-objects/user-status';
+
+// サブスクリプションプラン
+export enum SubscriptionPlan {
+  FREE = 'free',        // 無料プラン
+  STANDARD = 'standard', // 標準プラン (Haiku)
+  PREMIUM = 'premium'   // プレミアムプラン (Sonnet)
+}
+
+// 今日の運勢フィールド用インターフェース
+export interface TodayFortune {
+  date: string;              // 日付 YYYY-MM-DD
+  mainElement: string;       // 主要五行属性
+  yinYang: string;           // 陰陽
+  overallScore: number;      // 総合運勢スコア
+  advice: string;            // アドバイス
+  aiGeneratedAdvice?: {      // AI生成アドバイス
+    advice: string;          // マークダウン形式アドバイス
+    luckyPoints?: {          // ラッキーポイント
+      color: string;
+      items: string[];
+      number: number;
+      action: string;
+    }
+  };
+}
 
 // ユーザードキュメントのインターフェース
 export interface IUserDocument extends mongoose.Document {
@@ -30,6 +56,14 @@ export interface IUserDocument extends mongoose.Document {
   status: string;  // UserStatusの文字列表現
   isActive: boolean; // 後方互換性のため
   profilePicture?: string; // プロフィール画像URL
+  personalGoal?: string;   // 個人目標
+  
+  // サブスクリプション情報
+  plan?: string;           // サブスクリプションプラン
+  planExpiresAt?: Date;    // プラン有効期限
+  
+  // 今日の運勢情報（毎日更新される消耗品）
+  todayFortune?: TodayFortune;
   
   // メソッド
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -90,6 +124,55 @@ export interface IUserModel extends mongoose.Model<IUserDocument> {
   findByEmail(email: string): Promise<IUserDocument | null>;
 }
 
+// ラッキーポイントスキーマ（todayFortune用）
+const luckyPointsSchema = new Schema({
+  color: String,
+  items: [String],
+  number: Number,
+  action: String
+}, { _id: false });
+
+// AIアドバイススキーマ
+const aiGeneratedAdviceSchema = new Schema({
+  advice: String,
+  luckyPoints: luckyPointsSchema
+}, { _id: false });
+
+// 今日の運勢スキーマ
+const todayFortuneSchema = new Schema({
+  date: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v: string) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(v); // YYYY-MM-DD形式
+      },
+      message: (props: { value: string }) => `${props.value}は有効な日付形式ではありません。YYYY-MM-DD形式で入力してください。`
+    }
+  },
+  mainElement: {
+    type: String,
+    enum: ['木', '火', '土', '金', '水'],
+    required: true
+  },
+  yinYang: {
+    type: String,
+    enum: ['陰', '陽'],
+    required: true
+  },
+  overallScore: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 100
+  },
+  advice: {
+    type: String,
+    required: true
+  },
+  aiGeneratedAdvice: aiGeneratedAdviceSchema
+}, { _id: false });
+
 // ユーザースキーマ定義
 const userSchema: Schema = new Schema(
   {
@@ -141,6 +224,21 @@ const userSchema: Schema = new Schema(
     profilePicture: {
       type: String
     },
+    personalGoal: {
+      type: String,
+      trim: true
+    },
+    // サブスクリプション情報
+    plan: {
+      type: String,
+      enum: Object.values(SubscriptionPlan),
+      default: SubscriptionPlan.FREE
+    },
+    planExpiresAt: {
+      type: Date
+    },
+    // 今日の運勢情報
+    todayFortune: todayFortuneSchema,
     elementalType: {
       mainElement: {
         type: String,

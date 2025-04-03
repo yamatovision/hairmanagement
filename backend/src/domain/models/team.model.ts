@@ -4,6 +4,7 @@
  * 
  * 変更履歴:
  * - 2025/04/02: 初期実装 (Claude)
+ * - 2025/04/03: チームメンバー構造の更新（position追加）(Claude)
  */
 
 import mongoose, { Schema } from 'mongoose';
@@ -15,9 +16,13 @@ const teamMemberSchema = new Schema({
     ref: 'User',
     required: true
   },
-  role: {
+  position: {
     type: String,
-    required: true
+    trim: true
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false
   },
   joinedAt: {
     type: Date,
@@ -30,7 +35,6 @@ const teamSchema: Schema = new Schema(
   {
     name: {
       type: String,
-      required: true,
       trim: true
     },
     description: {
@@ -54,6 +58,7 @@ const teamSchema: Schema = new Schema(
     },
     goal: {
       type: String,
+      trim: true,
       default: ''
     }
   },
@@ -96,17 +101,18 @@ teamSchema.set('toJSON', {
 
 // モデル作成とエクスポート
 export interface ITeamDocument extends mongoose.Document {
-  name: string;
+  name?: string;
   description: string;
   ownerId: mongoose.Types.ObjectId;
   admins: mongoose.Types.ObjectId[];
   members: {
     userId: mongoose.Types.ObjectId;
-    role: string;
+    position?: string;
+    isAdmin: boolean;
     joinedAt: Date;
   }[];
   isActive: boolean;
-  goal: string;
+  goal?: string;
   createdAt: Date;
   updatedAt: Date;
 }

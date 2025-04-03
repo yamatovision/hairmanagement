@@ -105,6 +105,15 @@ export function configureContainer(): void {
     } else {
       console.log('既存のUserモデルを使用します');
     }
+    
+    // DailyCalendarInfo モデルが登録されているか確認
+    if (!mongoose.models.DailyCalendarInfo) {
+      console.log('DailyCalendarInfoモデルを登録...');
+      // モデルが登録されていない場合は明示的に読み込む
+      require('../../domain/models/daily-calendar-info.model');
+    } else {
+      console.log('既存のDailyCalendarInfoモデルを使用します');
+    }
   } catch (err) {
     console.error('モデル登録中にエラーが発生しました:', err);
   }
@@ -115,6 +124,23 @@ export function configureContainer(): void {
   // リポジトリ
   container.register<IUserRepository>('IUserRepository', { useClass: MongoUserRepository });
   container.register<IFortuneRepository>('IFortuneRepository', { useClass: MongoFortuneRepository });
+  
+  // DailyCalendarInfoリポジトリの登録
+  try {
+    const DailyCalendarInfoModel = mongoose.model('DailyCalendarInfo');
+    container.register('DailyCalendarInfoModel', { useValue: DailyCalendarInfoModel });
+    
+    const { MongoDailyCalendarInfoRepository, IDailyCalendarInfoRepository } = require('../repositories/MongoDailyCalendarInfoRepository');
+    container.register<IDailyCalendarInfoRepository>('IDailyCalendarInfoRepository', { 
+      useClass: MongoDailyCalendarInfoRepository 
+    });
+    console.log('DailyCalendarInfoRepositoryが正常に登録されました');
+  } catch (error) {
+    console.error('DailyCalendarInfoRepositoryの登録に失敗しました:', error);
+    if (error instanceof Error) {
+      console.error(error.stack);
+    }
+  }
   
   try {
     const { MongoSubscriptionRepository } = require('../repositories/MongoSubscriptionRepository');

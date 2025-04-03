@@ -2,6 +2,7 @@ import { IRepository } from './IRepository';
 import { User } from '../user/entities/user.entity';
 import { UserRole } from '../user/value-objects/user-role';
 import { ElementType } from '@shared';
+import { TodayFortune } from '../models/user.model';
 
 /**
  * ユーザーリポジトリインターフェース
@@ -36,4 +37,12 @@ export interface IUserRepository extends IRepository<User, string> {
    * @returns 更新操作の結果
    */
   updatePassword(userId: string, hashedPassword: string): Promise<boolean>;
+  
+  /**
+   * 今日の運勢情報を更新する
+   * @param userId ユーザーID
+   * @param todayFortune 今日の運勢情報
+   * @returns 更新操作の結果
+   */
+  updateTodayFortune(userId: string, todayFortune: TodayFortune): Promise<boolean>;
 }
