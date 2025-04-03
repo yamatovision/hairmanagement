@@ -32,6 +32,7 @@ import {
   ExpandLess as ExpandLessIcon,
   TipsAndUpdates as TipsIcon
 } from '@mui/icons-material';
+import { marked } from 'marked';
 
 // 型定義は型チェックのために参照しているため明示的にインポート
 import type { IFortune } from '../../types/models';
@@ -208,8 +209,8 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
     teamGoal = "年内30億円規模でバイアウト"
   } = dailyFortune;
   
-  // 新形式のアドバイス（aiGeneratedAdvice）があれば、それを使用
-  const todayAdvice = aiGeneratedAdvice?.summary || advice;
+  // 新形式のアドバイス（aiGeneratedAdvice.advice）があれば、それを使用
+  const todayAdvice = aiGeneratedAdvice?.advice || advice;
   
   // 五行要素の取得
   const mainElement = sajuData.mainElement || '火';
@@ -226,7 +227,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
   // APIレスポンスの内容をログ出力（デバッグ用）
   console.log('FortuneData:', {
     hasAiGeneratedAdvice: !!aiGeneratedAdvice,
-    aiAdviceSummary: aiGeneratedAdvice?.summary?.substring(0, 30),
+    aiAdvice: aiGeneratedAdvice?.advice?.substring(0, 30),
     luckyPoints: aiGeneratedAdvice?.luckyPoints,
     luckyPointsDetails: aiGeneratedAdvice?.luckyPoints ? {
       color: aiGeneratedAdvice.luckyPoints.color,
@@ -586,6 +587,64 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
 
         {/* 総合運気スコアのバーは表示されたまま */}
 
+        {/* マークダウンコンテンツの表示 */}
+        {aiGeneratedAdvice?.advice && (
+          <Box sx={{ mt: 2, mb: 4 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 600, 
+                mb: 2,
+                display: 'flex', 
+                alignItems: 'center',
+                color: theme.palette.primary.main
+              }}
+            >
+              <VisibilityIcon sx={{ mr: 1.5 }} />
+              詳細アドバイス
+            </Typography>
+            
+            <Box 
+              sx={{ 
+                p: 2, 
+                bgcolor: theme.palette.grey[50], 
+                borderRadius: 2,
+                border: `1px solid ${theme.palette.grey[200]}`,
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.05)',
+                '& h1': {
+                  fontSize: '1.5rem',
+                  fontWeight: 600,
+                  color: theme.palette.primary.main,
+                  mt: 2,
+                  mb: 1,
+                  pb: 0.5,
+                  borderBottom: `1px solid ${theme.palette.grey[200]}`
+                },
+                '& h2': {
+                  fontSize: '1.3rem',
+                  fontWeight: 600,
+                  color: elementStyle.color,
+                  mt: 2,
+                  mb: 1
+                },
+                '& p': {
+                  mb: 1.5,
+                  lineHeight: 1.7
+                },
+                '& ul': {
+                  mb: 1.5,
+                  pl: 2
+                },
+                '& li': {
+                  mb: 0.5
+                }
+              }}
+              // マークダウンをHTMLに変換して挿入
+              dangerouslySetInnerHTML={{ __html: marked.parse(aiGeneratedAdvice.advice) }}
+            />
+          </Box>
+        )}
+
         <Divider sx={{ 
           my: 3, 
           background: 'linear-gradient(90deg, transparent, rgba(0,0,0,0.1) 15%, rgba(0,0,0,0.1) 85%, transparent)'
@@ -624,7 +683,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
                 <Typography variant="body1">
                   個人目標「{personalGoal}」に向けて、今日は特に良い日です。
                   {sajuData.dayMaster}（{mainElement}）の持つ鋭さと明晰さは、AIシステムの論理構造を見極めるのに最適です。
-                  {aiGeneratedAdvice?.personalAdvice ? aiGeneratedAdvice.personalAdvice : "直感的なひらめきを大切に、システムの「骨格」となる部分に焦点を当て、余分な要素を削ぎ落としていきましょう。"}
+                  直感的なひらめきを大切に、システムの「骨格」となる部分に焦点を当て、余分な要素を削ぎ落としていきましょう。
                 </Typography>
               </Paper>
 
@@ -655,7 +714,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
                 <Typography variant="body1">
                   チーム目標「{teamGoal}」のため、今日はチーム内での役割分担を明確にし、
                   バイアウト計画の具体的なタイムラインを設定するのに最適な時期です。
-                  {aiGeneratedAdvice?.teamAdvice ? aiGeneratedAdvice.teamAdvice : "特に、財務面の詳細な検証と、戦略的な折衝ポイントを見極めることに注力すると良い結果につながります。"}
+                  特に、財務面の詳細な検証と、戦略的な折衝ポイントを見極めることに注力すると良い結果につながります。
                 </Typography>
               </Paper>
             </Box>
