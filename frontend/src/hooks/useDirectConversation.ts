@@ -10,6 +10,7 @@ export const useDirectConversation = (initialContextId?: string) => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [allConversations, setAllConversations] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+  const [type, setType] = useState<string | undefined>(undefined);
   
   // トースト通知の簡易実装
   const showToast = (message: string, severity: 'success' | 'error' | 'info' | 'warning') => {
@@ -112,8 +113,9 @@ export const useDirectConversation = (initialContextId?: string) => {
    * メッセージを送信する
    * @param content メッセージ内容
    * @param useStreaming ストリーミングモードを使用するかどうか
+   * @param overrideType メッセージ送信時に使用する会話タイプを上書き指定（オプション）
    */
-  const sendMessage = useCallback(async (content: string, useStreaming: boolean = true) => {
+  const sendMessage = useCallback(async (content: string, useStreaming: boolean = true, overrideType?: string) => {
     if (!content.trim()) {
       return;
     }
@@ -204,7 +206,7 @@ export const useDirectConversation = (initialContextId?: string) => {
               showToast('メッセージの送信中にエラーが発生しました', 'error');
             }
           },
-          undefined, // type
+          overrideType || type, // 会話タイプを渡す
           conversationId || undefined,
           currentMessages
         );
@@ -214,7 +216,7 @@ export const useDirectConversation = (initialContextId?: string) => {
         // 通常モード（ストリーミングなし）
         const result = await SimpleAiService.sendDirectMessage(
           content, 
-          undefined, 
+          overrideType || type, 
           conversationId || undefined, 
           currentMessages
         );

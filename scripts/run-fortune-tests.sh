@@ -63,6 +63,17 @@ fi
 echo -e "デイリーフォーチュンAPIテストを実行中..."
 node scripts/test-daily-fortune-api.js
 
+# 運勢会話APIテストの実行
+echo -e "\n${YELLOW}===============================================${NC}"
+echo -e "${YELLOW}     運勢会話API テスト実行                   ${NC}"
+echo -e "${YELLOW}===============================================${NC}"
+
+echo -e "基本テスト: 運勢タイプでの会話エンドポイントをテスト中..."
+node scripts/test-fortune-endpoint.js
+
+echo -e "\n高度なテスト: 運勢タイプでの会話APIをテスト中..."
+node scripts/test-fortune-api-advanced.js
+
 # 実行結果のチェック
 if [ $? -eq 0 ]; then
   echo -e "\n${GREEN}テスト実行が完了しました。結果ファイルを確認してください。${NC}"

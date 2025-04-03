@@ -13,6 +13,7 @@ export interface IConversationDocument extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId; // 所有者ユーザーID
   messages: Array<{
+    id?: string; // メッセージの一意識別子
     role: 'user' | 'assistant';
     content: string;
     timestamp: Date;
@@ -38,6 +39,10 @@ const conversationSchema: Schema = new Schema(
       index: true
     },
     messages: [{
+      id: {
+        type: String,
+        required: true
+      },
       role: {
         type: String,
         enum: ['user', 'assistant'],

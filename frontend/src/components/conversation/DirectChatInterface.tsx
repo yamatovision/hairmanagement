@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, TextField, IconButton, CircularProgress, Paper, Typography, Avatar, Divider, Button } from '@mui/material';
+import { Box, TextField, IconButton, CircularProgress, Paper, Typography, Avatar, Divider, Button, Alert, Snackbar } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import DownloadIcon from '@mui/icons-material/Download';
+import InfoIcon from '@mui/icons-material/Info';
 import { useDirectConversation } from '../../hooks/useDirectConversation';
 
 interface DirectChatInterfaceProps {
@@ -28,11 +29,13 @@ const DirectChatInterface: React.FC<DirectChatInterfaceProps> = ({
   
   const [inputMessage, setInputMessage] = useState(initialPrompt || '');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [infoAlert, setInfoAlert] = useState<boolean>(false);
   
   // コンポーネントマウント時に会話を開始
   useEffect(() => {
     const initializeConversation = async () => {
       try {
+        console.log('会話初期化 - タイプ:', type, '、コンテキストID:', contextId);
         await startConversation(type, contextId);
       } catch (error) {
         console.error('会話初期化エラー:', error);
@@ -47,12 +50,20 @@ const DirectChatInterface: React.FC<DirectChatInterfaceProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
+  // フォーチュンタイプの場合に運勢情報通知を表示
+  useEffect(() => {
+    if (type === 'fortune' && messages.length > 0) {
+      setInfoAlert(true);
+    }
+  }, [type, messages.length]);
+  
   // メッセージ送信ハンドラー
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() === '') return;
     
-    sendMessage(inputMessage);
+    // 会話タイプを指定して送信
+    sendMessage(inputMessage, true, type);
     setInputMessage('');
   };
   
@@ -71,9 +82,26 @@ const DirectChatInterface: React.FC<DirectChatInterfaceProps> = ({
         maxWidth: '100%',
         bgcolor: '#f5f5f5',
         borderRadius: 2,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        position: 'relative'
       }}
     >
+      {/* 運勢情報通知 */}
+      <Snackbar
+        open={infoAlert}
+        autoHideDuration={5000}
+        onClose={() => setInfoAlert(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          severity="info" 
+          icon={<InfoIcon />}
+          onClose={() => setInfoAlert(false)}
+          sx={{ width: '100%', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
+        >
+          今日の運勢情報をもとに会話を開始します
+        </Alert>
+      </Snackbar>
       {/* ヘッダー */}
       <Box
         sx={{

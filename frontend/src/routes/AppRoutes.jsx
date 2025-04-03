@@ -112,6 +112,18 @@ const AppRoutes = () => {
         } 
       />
       
+      {/* 運勢相談ページ（AIアシスタントとの運勢相談） */}
+      <Route 
+        path="/fortune-chat" 
+        element={
+          <ProtectedRoute>
+            <React.Suspense fallback={<div>読み込み中...</div>}>
+              <DirectChatPage initialType="fortune" />
+            </React.Suspense>
+          </ProtectedRoute>
+        } 
+      />
+      
       {/* 経営者ダッシュボードページ (manager/admin権限のみ) */}
       <Route 
         path="/dashboard" 

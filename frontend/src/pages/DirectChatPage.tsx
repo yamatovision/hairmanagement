@@ -6,7 +6,11 @@ import DirectChatInterface from '../components/conversation/DirectChatInterface'
 /**
  * 直接会話ページコンポーネント - direct-conversations APIを使用
  */
-const DirectChatPage: React.FC = () => {
+interface DirectChatPageProps {
+  initialType?: 'fortune' | 'team' | 'member';
+}
+
+const DirectChatPage: React.FC<DirectChatPageProps> = ({ initialType }) => {
   const theme = useTheme();
   const { type } = useParams<{ type?: string }>();
   const location = useLocation();
@@ -16,8 +20,8 @@ const DirectChatPage: React.FC = () => {
   const contextId = queryParams.get('contextId');
   const initialPrompt = queryParams.get('prompt');
   
-  // URLパラメータのバリデーション
-  const conversationType = (type || queryParams.get('type') || 'general') as 'fortune' | 'team' | 'member';
+  // URLパラメータのバリデーション（優先順位: props > URL path > URL query > default）
+  const conversationType = (initialType || type || queryParams.get('type') || 'general') as 'fortune' | 'team' | 'member';
   const validContextId = contextId || 'default';
   
   return (

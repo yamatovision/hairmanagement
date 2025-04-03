@@ -84,7 +84,7 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
             id: conv.id,
             title: conv.title || '無題の会話',
             messages: conv.messages.map(msg => ({
-              id: `${msg.role}-${new Date(msg.timestamp).getTime()}`,
+              id: msg.id || `${msg.role}-${new Date(msg.timestamp).getTime()}`,
               sender: msg.role,
               content: msg.content,
               timestamp: msg.timestamp
@@ -143,7 +143,7 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
           id: conversation.id,
           title: conversation.title || '無題の会話',
           messages: conversation.messages.map(msg => ({
-            id: `${msg.role}-${new Date(msg.timestamp).getTime()}`,
+            id: msg.id || `${msg.role}-${new Date(msg.timestamp).getTime()}`,
             sender: msg.role,
             content: msg.content,
             timestamp: msg.timestamp
@@ -266,22 +266,131 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         }
       }
       
+      // type=fortuneの場合、ユーザーの運勢情報と日次カレンダー情報を取得
+      let initialMessage = '';
+      if (type === 'fortune' && !contextId && !previousMessages?.length) {
+        console.log('フォーチュンタイプの新規会話を検出しました。運勢情報を取得します。');
+        
+        try {
+          // ユーザー情報の取得
+          const UserModel = mongoose.model('User');
+          const user = await UserModel.findById(new mongoose.Types.ObjectId(userId));
+          
+          if (user) {
+            console.log('ユーザー情報を取得しました:', user.name);
+            
+            // 当日の干支情報を取得
+            let todayCalendarInfo = null;
+            try {
+              const DailyCalendarInfoModel = mongoose.model('DailyCalendarInfo');
+              const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+              todayCalendarInfo = await DailyCalendarInfoModel.findOne({ date: today });
+              console.log('当日の干支情報:', todayCalendarInfo ? '取得成功' : '未取得');
+            } catch (calendarError) {
+              console.warn('当日の干支情報取得エラー:', calendarError.message);
+            }
+            
+            // 初期メッセージの構築
+            initialMessage = createFortuneInitialMessage(user, todayCalendarInfo);
+            console.log('運勢初期メッセージを作成しました（先頭100文字）:', initialMessage.substring(0, 100));
+          }
+        } catch (userInfoError) {
+          console.error('ユーザー情報取得エラー:', userInfoError);
+        }
+      }
+      
       // 会話が見つからない場合は新しく作成
       if (!conversation) {
         conversation = new ConversationModel({
           userId: new mongoose.Types.ObjectId(userId),
           messages: [],
-          title: '新しい会話',
+          title: type === 'fortune' ? '運勢相談' : '新しい会話',
           tags: type ? [type] : ['general']
         });
         console.log('新しい会話を作成しました');
+        
+        // 初期メッセージがある場合は追加（一意のIDを設定）
+        if (initialMessage) {
+          const initialMessageId = `user-${new Date().getTime()}`;
+          conversation.messages.push({
+            role: 'user',
+            content: initialMessage,
+            timestamp: new Date(),
+            id: initialMessageId
+          });
+          console.log('初期運勢メッセージをシステムユーザーとして追加しました');
+        }
+      }
+      
+      /**
+       * 運勢タイプの会話用の初期メッセージを生成する
+       */
+      function createFortuneInitialMessage(user, calendarInfo) {
+        // ユーザーの運勢情報
+        const todayFortune = user.todayFortune || {};
+        const sajuProfile = user.sajuProfile || {};
+        const personalGoal = user.personalGoal || '';
+        
+        // チーム情報 (現状は空)
+        const teamGoal = '';
+        
+        // 要素が存在しない場合のフォールバック
+        const mainElement = todayFortune.mainElement || sajuProfile.mainElement || '木';
+        const yinYang = todayFortune.yinYang || sajuProfile.yinYang || '陽';
+        const overallScore = todayFortune.overallScore || 50;
+        const rating = overallScore >= 80 ? '絶好調' : 
+                       overallScore >= 60 ? '好調' : 
+                       overallScore >= 40 ? '普通' : 
+                       overallScore >= 20 ? '要注意' : '厳しい';
+        
+        // アドバイス情報
+        const advice = todayFortune.advice || '';
+        const aiGeneratedAdvice = todayFortune.aiGeneratedAdvice?.advice || '';
+        
+        // 日次カレンダー情報
+        const today = new Date();
+        const dayElement = calendarInfo?.mainElement || '';
+        const dayYinYang = calendarInfo?.dayYinYang || '';
+        const dayPillar = calendarInfo?.dayPillar 
+                         ? `${calendarInfo.dayPillar.stem}${calendarInfo.dayPillar.branch}` 
+                         : '';
+        
+        // メッセージを構築
+        return `
+今日の運勢情報:
+五行属性: ${mainElement}の${yinYang}
+運勢スコア: ${overallScore}/100点 (${rating})
+${dayPillar ? `今日の干支: ${dayPillar}` : ''}
+${dayElement ? `今日の五行: ${dayElement}の${dayYinYang}` : ''}
+
+【運勢アドバイス】
+${advice}
+
+${aiGeneratedAdvice ? `【詳細アドバイス】
+${aiGeneratedAdvice.length > 300 ? aiGeneratedAdvice.substring(0, 300) + '...' : aiGeneratedAdvice}` : ''}
+
+${personalGoal ? `【個人目標】
+${personalGoal}` : ''}
+
+${teamGoal ? `【チーム目標】
+${teamGoal}` : ''}
+
+上記の情報を踏まえて、今日一日をどのように過ごすべきか相談したいです。`;
       }
       
       // Claude APIに送信するメッセージを準備
       let apiMessages = [];
       
-      // 前のメッセージがある場合は追加
-      if (previousMessages && Array.isArray(previousMessages) && previousMessages.length > 0) {
+      // 会話からメッセージ履歴を取得（初期メッセージがある場合はそれも含まれる）
+      if (conversation.messages && conversation.messages.length > 0) {
+        apiMessages = conversation.messages.map(msg => ({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }));
+        console.log(`会話からのメッセージ ${apiMessages.length}件を会話履歴に追加します`);
+      }
+      // 前のメッセージ（フロントエンドから渡されたもの）がある場合は追加
+      else if (previousMessages && Array.isArray(previousMessages) && previousMessages.length > 0) {
         apiMessages = previousMessages.map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.content
@@ -289,20 +398,26 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         console.log(`前のメッセージ ${apiMessages.length}件を会話履歴に追加します`);
       }
       
-      // 現在のメッセージを追加
-      apiMessages.push({ role: 'user', content: message });
-      
+      // 現在のメッセージを会話に追加
       try {
         // ストリーミングを使用するかどうかを確認
         const useStreaming = req.query.stream === 'true';
         
         // ユーザーメッセージをデータベースに保存
         const now = new Date();
+        const messageId = `user-${now.getTime()}`; // 一意のメッセージIDを生成
+        
+        // ユーザーメッセージを追加（重複しないように一度だけ）
         conversation.messages.push({
           role: 'user',
           content: message,
-          timestamp: now
+          timestamp: now,
+          id: messageId // 明示的にIDを設定
         });
+        
+        // APIメッセージには会話からメッセージを追加済みなので、
+        // フロントエンドから送信されたメッセージのみを追加
+        apiMessages.push({ role: 'user', content: message });
         
         // ストリーミングモードの場合
         if (useStreaming) {
@@ -382,7 +497,12 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
                     
                     // message_stop イベントの場合（メッセージ終了）
                     if (parsedData.type === 'message_stop') {
-                      const usage = parsedData.message.usage;
+                      // 安全に使用情報を取得（存在しない場合はデフォルト値を使用）
+                      const usage = parsedData.message?.usage || {
+                        input_tokens: 0,
+                        output_tokens: 0,
+                        total_tokens: 0
+                      };
                       
                       // 使用状況データをクライアントに送信
                       const finalEvent = {
@@ -466,11 +586,13 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
             aiResponse = 'AIからの応答を処理できませんでした。';
           }
           
-          // AIメッセージを追加
+          // AIメッセージを追加（一意のIDを生成）
+          const aiMessageId = `assistant-${now.getTime()+1}`; // ユーザーメッセージよりも1ms後のIDを保証
           conversation.messages.push({
             role: 'assistant',
             content: aiResponse,
-            timestamp: now
+            timestamp: now,
+            id: aiMessageId // 明示的にIDを設定
           });
           
           // 会話を保存
@@ -478,8 +600,7 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
           console.log(`会話を保存しました (ID: ${conversation.id})`);
           
           // フロントエンドが期待する形式でレスポンスを構築
-          const userMessageId = `user-${Date.now()}`;
-          const aiMessageId = `ai-${Date.now()}`;
+          // メッセージIDは会話からの実際のIDを使用するため、ここでの宣言は不要
           
           // 会話履歴と新しいメッセージを結合
           const allMessages = [];
@@ -487,7 +608,7 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
           // 会話からメッセージを取得してフロントエンド形式に変換
           conversation.messages.forEach(msg => {
             allMessages.push({
-              id: `${msg.role}-${new Date(msg.timestamp).getTime()}`,
+              id: msg.id || `${msg.role}-${new Date(msg.timestamp).getTime()}`,
               sender: msg.role,
               content: msg.content,
               timestamp: msg.timestamp
@@ -510,11 +631,13 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         // 会話データベースに保存するヘルパー関数
         async function saveConversation(conv, aiContent, timestamp) {
           try {
-            // AIメッセージを追加
+            // AIメッセージを追加（一意のIDを生成）
+            const aiMessageId = `assistant-${timestamp.getTime()+1}`; // 一意のメッセージIDを生成
             conv.messages.push({
               role: 'assistant',
               content: aiContent,
-              timestamp: timestamp
+              timestamp: timestamp,
+              id: aiMessageId // 明示的にIDを設定
             });
             
             // 会話を保存
@@ -529,22 +652,27 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         
         // Claude APIの代わりにモックレスポンスを返す
         const now = new Date();
+        
+        // ユーザーメッセージを追加（一意のIDを生成）
         const userMessageId = `user-${now.getTime()}`;
-        const aiMessageId = `ai-${now.getTime()}`;
+        // エラー時の応答はすでに追加済みかチェック
+        if (!conversation.messages.some(msg => msg.role === 'user' && msg.content === message)) {
+          conversation.messages.push({
+            role: 'user',
+            content: message,
+            timestamp: now,
+            id: userMessageId
+          });
+        }
         
-        // ユーザーメッセージを追加
-        conversation.messages.push({
-          role: 'user',
-          content: message,
-          timestamp: now
-        });
-        
-        // エラーメッセージを追加
+        // エラーメッセージを追加（一意のIDを生成）
         const errorMessage = `[API接続エラー] これはモックレスポンスです。あなたのメッセージ「${message}」を受け取りました。`;
+        const aiMessageId = `assistant-${now.getTime()+1}`;
         conversation.messages.push({
           role: 'assistant',
           content: errorMessage,
-          timestamp: now
+          timestamp: now,
+          id: aiMessageId
         });
         
         // 会話を保存
@@ -553,7 +681,7 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         
         // 会話履歴の準備
         const allMessages = conversation.messages.map(msg => ({
-          id: `${msg.role}-${new Date(msg.timestamp).getTime()}`,
+          id: msg.id || `${msg.role}-${new Date(msg.timestamp).getTime()}`,
           sender: msg.role,
           content: msg.content,
           timestamp: msg.timestamp

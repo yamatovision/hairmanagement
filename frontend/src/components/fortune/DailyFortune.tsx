@@ -630,7 +630,8 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail: _onClick
               <Button
                 variant="contained"
                 startIcon={<PsychologyIcon />}
-                onClick={() => navigate('/conversation/fortune')}
+                onClick={() => navigate('/fortune-chat')}
+                aria-label="運勢情報をもとにAIアシスタントに相談する"
                 sx={{
                   background: `linear-gradient(135deg, ${theme.palette.primary.main} 10%, ${theme.palette.primary.dark} 90%)`,
                   padding: '12px 24px',
@@ -643,7 +644,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail: _onClick
                   }
                 }}
               >
-                AIアシスタントに相談する
+                運勢をAIアシスタントに相談
               </Button>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                 今日の五行エネルギーをどう活かすか、AIがパーソナライズされたアドバイスを提供します
