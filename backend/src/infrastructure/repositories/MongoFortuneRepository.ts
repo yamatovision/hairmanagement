@@ -25,6 +25,31 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
    * @returns ドメインエンティティのFortune
    */
   protected toDomainEntity(doc: IFortuneDocument): Fortune {
+    // 変換前のログ出力
+    console.log(`[MongoFortuneRepository] toDomainEntity: docId=${doc._id}, hasAiGeneratedAdvice=${!!doc.aiGeneratedAdvice}`);
+    
+    // aiGeneratedAdviceを持つか確認し、適切に変換
+    let advice = doc.advice;
+    
+    // aiGeneratedAdviceを持っている場合、構造化データとして渡す
+    if (doc.aiGeneratedAdvice) {
+      console.log('[MongoFortuneRepository] aiGeneratedAdviceを構造化データとして処理します');
+    } else {
+      // 古いフォーマットでadviceがJSON文字列かどうかをチェック
+      try {
+        if (typeof doc.advice === 'string' && doc.advice.trim().startsWith('{') && doc.advice.trim().endsWith('}')) {
+          console.log('[MongoFortuneRepository] adviceをJSON文字列として解析を試みます');
+          const parsedAdvice = JSON.parse(doc.advice);
+          if (parsedAdvice.summary || parsedAdvice.luckyPoints) {
+            console.log('[MongoFortuneRepository] adviceからaiGeneratedAdviceを抽出しました');
+            doc.aiGeneratedAdvice = parsedAdvice;
+          }
+        }
+      } catch (error) {
+        console.log('[MongoFortuneRepository] adviceのJSON解析に失敗しました。通常の文字列として扱います');
+      }
+    }
+    
     return {
       id: doc._id.toString(),
       userId: doc.userId.toString(),
@@ -37,7 +62,8 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
         yin: doc.yinYang === '陰' ? 70 : 30,
         yang: doc.yinYang === '陽' ? 70 : 30
       },
-      advice: doc.advice,
+      advice: doc.aiGeneratedAdvice ? JSON.stringify(doc.aiGeneratedAdvice) : doc.advice,
+      aiGeneratedAdvice: doc.aiGeneratedAdvice, // 追加: aiGeneratedAdviceを直接保持
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt
     };
@@ -53,6 +79,39 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
     const dateStr = entity.date instanceof Date 
       ? entity.date.toISOString().split('T')[0]
       : new Date(entity.date).toISOString().split('T')[0];
+    
+    // entity.adviceがJSON文字列かオブジェクトか確認
+    let adviceText = entity.advice;
+    let aiGeneratedAdvice = entity.aiGeneratedAdvice;
+    
+    // adviceがJSON文字列で、aiGeneratedAdviceが直接設定されていない場合
+    if (typeof entity.advice === 'string' && 
+        entity.advice.trim().startsWith('{') && 
+        entity.advice.trim().endsWith('}') && 
+        !entity.aiGeneratedAdvice) {
+      try {
+        console.log('[MongoFortuneRepository] adviceをJSON文字列として解析を試みます');
+        const parsedAdvice = JSON.parse(entity.advice);
+        if (parsedAdvice.summary || parsedAdvice.luckyPoints) {
+          console.log('[MongoFortuneRepository] adviceからaiGeneratedAdviceを抽出しました');
+          aiGeneratedAdvice = parsedAdvice;
+          adviceText = parsedAdvice.summary || entity.advice; // 要約を通常のアドバイスとしても使用
+        }
+      } catch (error) {
+        console.log('[MongoFortuneRepository] adviceのJSON解析に失敗しました:', error.message);
+      }
+    }
+    
+    // aiGeneratedAdviceの処理状況をログ出力
+    console.log(`[MongoFortuneRepository] toModelData: entityId=${entity.id}, hasAiGeneratedAdvice=${!!aiGeneratedAdvice}`);
+    if (aiGeneratedAdvice) {
+      console.log('[MongoFortuneRepository] aiGeneratedAdviceの内容:', {
+        hasSummary: !!aiGeneratedAdvice.summary,
+        hasPersonalAdvice: !!aiGeneratedAdvice.personalAdvice,
+        hasTeamAdvice: !!aiGeneratedAdvice.teamAdvice,
+        hasLuckyPoints: !!aiGeneratedAdvice.luckyPoints
+      });
+    }
       
     return {
       userId: entity.userId,
@@ -67,7 +126,8 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
       creativeEnergyLuck: 0, // 互換性のために0を設定
       wealthLuck: Math.floor(Math.random() * 100) + 1, // 派生値として計算
       description: this.generateDescription(entity),
-      advice: entity.advice,
+      advice: adviceText, // テキスト形式のアドバイス
+      aiGeneratedAdvice: aiGeneratedAdvice, // 構造化されたアドバイス
       luckyColors: entity.luckyItems || [],
       luckyDirections: ['東', '南', '西', '北'].sort(() => Math.random() - 0.5).slice(0, 2),
       compatibleElements: this.getCompatibleElements(this.determineDailyElement(entity.date)),

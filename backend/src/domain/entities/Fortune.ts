@@ -62,6 +62,23 @@ export interface Fortune extends Entity<string> {
   
   /**
    * アドバイスメッセージ
+   * 文字列またはオブジェクト形式
    */
-  advice: string;
+  advice: string | Record<string, any>;
+  
+  /**
+   * AI生成運勢アドバイス
+   * 構造化された運勢情報
+   */
+  aiGeneratedAdvice?: {
+    summary: string;
+    personalAdvice: string;
+    teamAdvice: string;
+    luckyPoints?: {
+      color: string;
+      items: string[];
+      number: number;
+      action: string;
+    }
+  };
 }

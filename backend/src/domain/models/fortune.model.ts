@@ -29,6 +29,18 @@ export interface IFortuneDocument extends mongoose.Document {
   wealthLuck: number;
   description: string;
   advice: string;
+  // AIで生成されたアドバイス (構造化オブジェクト)
+  aiGeneratedAdvice?: {
+    summary: string;
+    personalAdvice: string;
+    teamAdvice: string;
+    luckyPoints?: {
+      color: string;
+      items: string[];
+      number: number;
+      action: string;
+    }
+  };
   luckyColors: string[];
   luckyDirections: string[];
   compatibleElements: ElementType[];
@@ -114,6 +126,17 @@ const FortuneSchema: Schema = new Schema(
     advice: {
       type: String,
       required: true
+    },
+    aiGeneratedAdvice: {
+      summary: { type: String },
+      personalAdvice: { type: String },
+      teamAdvice: { type: String },
+      luckyPoints: {
+        color: { type: String },
+        items: [{ type: String }],
+        number: { type: Number },
+        action: { type: String }
+      }
     },
     luckyColors: [{
       type: String
