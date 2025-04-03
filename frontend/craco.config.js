@@ -1,6 +1,13 @@
 const path = require('path');
 
 module.exports = {
+  devServer: {
+    // WebSocketの接続問題を解決するために設定
+    webSocketServer: false,
+    client: {
+      webSocketURL: false
+    }
+  },
   webpack: {
     configure: (webpackConfig) => {
       // パスの解決

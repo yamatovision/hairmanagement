@@ -1,264 +1,186 @@
 /**
- * Claude APIへの直接接続テスト
- * APIキーが正常に機能していることを確認します
+ * Claude APIへの直接アクセスで運勢アドバイスの生レスポンスを取得するテストスクリプト
+ * 設定: npm install axios dotenv
  */
 require('dotenv').config({ path: './backend/.env' });
 const axios = require('axios');
 
-/**
- * Claude APIに直接リクエストを送信
- */
-async function testClaudeApiDirect() {
-  console.log('\n=== Claude API 直接接続テスト ===');
-  
+// Claude APIの設定
+const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY || 'dummy-api-key';
+const CLAUDE_API_URL = process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/messages';
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-3-7-sonnet-20250219';
+
+// APIキーログ（セキュリティのため最初と最後の数文字のみ表示）
+const isKeyDummy = CLAUDE_API_KEY === 'dummy-api-key';
+const keyLength = CLAUDE_API_KEY.length;
+const keyPrefix = CLAUDE_API_KEY.substring(0, 5);
+const keySuffix = CLAUDE_API_KEY.substring(keyLength - 3);
+console.log(`APIキー情報: ${isKeyDummy ? 'ダミーキー' : keyPrefix + '...' + keySuffix} (${keyLength}文字)`);
+
+// サンプルユーザープロファイル
+const userProfile = {
+  dayStem: '丙',
+  dayBranch: '寅',
+  mainElement: '火',
+  yinYang: '陽'
+};
+
+// サンプル四柱情報
+const fourPillars = {
+  yearPillar: { stem: '己', branch: '巳', fullStemBranch: '己巳' },
+  monthPillar: { stem: '丙', branch: '子', fullStemBranch: '丙子' },
+  dayPillar: { stem: '丙', branch: '寅', fullStemBranch: '丙寅' },
+  hourPillar: { stem: '辛', branch: '午', fullStemBranch: '辛午' }
+};
+
+// サンプル十神関係
+const tenGodRelation = {
+  year: '傷官',
+  month: '比肩',
+  day: '比肩',
+  hour: '正財'
+};
+
+// Claude APIにリクエストを送信する関数
+async function sendRequestToClaude() {
   try {
-    // APIキーと接続先を取得
-    const apiKey = process.env.CLAUDE_API_KEY;
-    const apiUrl = process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/messages';
-    const model = process.env.CLAUDE_MODEL || 'claude-3-7-sonnet-20250219';
+    // 四柱情報をフォーマット
+    const formattedFourPillars = `年柱:${fourPillars.yearPillar.fullStemBranch}, 月柱:${fourPillars.monthPillar.fullStemBranch}, 日柱:${fourPillars.dayPillar.fullStemBranch}, 時柱:${fourPillars.hourPillar.fullStemBranch}`;
     
-    // APIキーのチェック
-    if (!apiKey) {
-      console.error('エラー: APIキーが設定されていません');
-      return false;
+    // 十神関係の解釈
+    const tenGodInterpretation = '自己の力が発揮されやすい日。積極的な行動が吉。';
+    
+    // プロンプト構築
+    const prompt = `
+あなたは四柱推命と五行の専門家です。以下の情報に基づいて今日の運勢とアドバイスを生成してください。
+
+## ユーザープロフィール
+- 五行属性: ${userProfile.yinYang}${userProfile.mainElement}
+- 四柱: ${formattedFourPillars}
+
+## 今日の暦情報
+- 今日の四柱: 年柱:乙巳, 月柱:己卯, 日柱:戊戌, 時柱:乙午
+- 十神関係: ${tenGodInterpretation}
+
+## 目標情報
+- 個人目標: AIプロダクト開発の効率化
+- チーム目標: 四半期バイアウト目標の達成
+
+## 出力形式
+以下の正確な形式で出力してください。各セクションの見出しを含め、正確に指定された形式を守ることが非常に重要です：
+
+1. 今日のあなたの運気
+（必ず「あなたは今日、〇〇のような運気です」という形で始め、100-150文字で具体的なイメージや比喩を使い、ポジティブな表現で記述してください）
+
+2. ラッキーポイント（五行理論に基づいて選定すること）
+- ラッキーカラー: （今日の五行と相性の良い色を具体的に1つ指定）
+- ラッキーアイテム: （今日の五行エネルギーを活かすアイテムを1-2つ）
+- ラッキーナンバー: （1-9の数字を1つ、五行相関に基づいて）
+- 開運アクション: （簡単にできる具体的な行動を15-20文字で）
+
+3. 個人目標へのアドバイス
+（「個人目標へのアドバイス」という見出しの後に、80-100文字で専門的かつ具体的なアドバイスを記述してください。ユーザーの個人目標「AIプロダクト開発の効率化」に関連したアドバイスを提供してください。）
+
+4. チーム目標へのアドバイス
+（「チーム目標へのアドバイス」という見出しの後に、80-100文字で職場での人間関係や協力に関する専門的なアドバイスを記述してください。チーム目標「四半期バイアウト目標の達成」に関連したアドバイスを提供してください。）
+
+※出力形式を厳密に守り、各セクションの見出しを必ず含めてください。
+※五行思想と十神関係に基づいた確かな裏付けのある内容にしてください。
+※ラッキーポイントは表現は親しみやすくしつつも、背後には伝統的な五行理論の確かなロジックを持たせてください。
+※ビジネス場面に適した内容を重視してください。
+※パースのため各セクションの見出しを正確に記載することが非常に重要です。
+`;
+
+    console.log('\n=== 送信するプロンプト ===\n');
+    console.log(prompt);
+    
+    // APIキーがダミーの場合は実際のリクエストを送信せず終了
+    if (isKeyDummy) {
+      console.error('ダミーAPIキーを使用しているため、実際のAPIリクエストは送信しません。');
+      console.error('.envファイルなどでCLAUDE_API_KEYを正しく設定してください。');
+      return;
     }
     
-    const keyLength = apiKey.length;
-    const keyPrefix = apiKey.substring(0, 8);
-    const keySuffix = apiKey.substring(keyLength - 4);
+    console.log('\n=== Claude APIにリクエスト送信中... ===\n');
     
-    console.log(`APIキー: ${keyPrefix}...${keySuffix} (${keyLength}文字)`);
-    console.log(`API URL: ${apiUrl}`);
-    console.log(`モデル: ${model}`);
-    
-    // テスト用の運勢生成プロンプト
-    const prompt = `
-あなたは四柱推命と五行の専門家です。今日の運勢とアドバイスを生成してください。
-
-出力は必ず以下のJSON形式で、タグや余計な説明なしに生成してください：
-{
-  "summary": "（今日の運勢の要約、100-150文字）",
-  "personalAdvice": "（個人目標へのアドバイス、80-100文字）",
-  "teamAdvice": "（チーム目標へのアドバイス、80-100文字）",
-  "luckyPoints": {
-    "color": "（今日のラッキーカラー）",
-    "items": ["（ラッキーアイテム1）", "（ラッキーアイテム2）"],
-    "number": （1-9の数字）,
-    "action": "（開運アクション、15-20文字）"
-  }
-}
-    `;
-
-    console.log('リクエスト送信中...');
-    console.time('API応答時間');
-    
-    // リクエスト送信
+    // Claude APIにリクエスト送信
     const response = await axios.post(
-      apiUrl,
+      CLAUDE_API_URL,
       {
-        model: model,
-        max_tokens: 1000,
+        model: CLAUDE_MODEL,
+        max_tokens: 5024,
         messages: [{ role: 'user', content: prompt }]
       },
       {
         headers: {
-          'x-api-key': apiKey,
+          'x-api-key': CLAUDE_API_KEY,
           'anthropic-version': '2023-06-01',
           'content-type': 'application/json'
         }
       }
     );
     
-    console.timeEnd('API応答時間');
+    console.log('=== APIレスポンス ステータス ===');
+    console.log(`ステータスコード: ${response.status}`);
+    console.log(`レスポンス時間: ${response.headers['x-request-id'] || 'N/A'}`);
     
-    // レスポンスのチェック
-    if (response.status !== 200) {
-      console.error(`エラー: APIが${response.status}を返しました`);
-      console.error('レスポンス:', response.data);
-      return false;
-    }
+    console.log('\n=== APIレスポンス 構造 ===');
+    console.log('レスポンスキー:', Object.keys(response.data));
     
-    if (!response.data || !response.data.content || !response.data.content.length) {
-      console.error('エラー: APIレスポンスの形式が無効です');
-      console.error('レスポンス:', response.data);
-      return false;
-    }
-    
-    // テキストの取得
-    const text = response.data.content[0].text;
-    console.log('\n--- APIレスポンステキスト ---');
-    console.log(text.substring(0, 300) + (text.length > 300 ? '...' : ''));
-    
-    // JSONとして解析を試みる
-    try {
-      // 行頭と行末の空白、コードブロック記号を削除
-      const cleanedText = text.trim().replace(/```json\s*|\s*```/g, '');
-      const jsonData = JSON.parse(cleanedText);
+    if (response.data.content && Array.isArray(response.data.content)) {
+      console.log('コンテンツタイプ:', response.data.content.map(item => item.type).join(', '));
       
-      console.log('\n--- パース済みJSONデータ ---');
-      console.log('summary:', jsonData.summary.substring(0, 50) + '...');
-      console.log('personalAdvice:', jsonData.personalAdvice.substring(0, 50) + '...');
-      console.log('teamAdvice:', jsonData.teamAdvice.substring(0, 50) + '...');
-      console.log('luckyPoints:', {
-        color: jsonData.luckyPoints.color,
-        items: jsonData.luckyPoints.items,
-        number: jsonData.luckyPoints.number,
-        action: jsonData.luckyPoints.action
-      });
+      // テキスト部分を抽出
+      const text = response.data.content
+        .filter(item => item.type === 'text')
+        .map(item => item.text)
+        .join('\n');
       
-      console.log('\nテスト結果: 成功 ✅ APIは正常に機能し、有効な形式のレスポンスを返しました');
-      return true;
-    } catch (parseError) {
-      console.error('エラー: JSONの解析に失敗しました');
-      console.error('解析エラー:', parseError.message);
-      console.error('解析を試みたテキスト:', text.substring(0, 100) + '...');
-      return false;
+      console.log('\n=== 生の応答テキスト ===\n');
+      console.log(text);
+      
+      // JSONとしてパース可能か試す
+      try {
+        if (text.trim().startsWith('{') && text.trim().endsWith('}')) {
+          console.log('\n=== JSONとしてパース ===\n');
+          const parsed = JSON.parse(text);
+          console.log(JSON.stringify(parsed, null, 2));
+        }
+      } catch (error) {
+        console.log('\n=== JSONパース失敗 ===\n');
+        console.log('レスポンスはJSON形式ではありません');
+      }
+    } else {
+      console.log('\n=== 完全なレスポンスデータ ===\n');
+      console.log(JSON.stringify(response.data, null, 2));
     }
     
+    // 使用トークン情報
+    if (response.data.usage) {
+      console.log('\n=== トークン使用状況 ===');
+      console.log(`入力トークン: ${response.data.usage.input_tokens}`);
+      console.log(`出力トークン: ${response.data.usage.output_tokens}`);
+      console.log(`合計トークン: ${response.data.usage.input_tokens + response.data.usage.output_tokens}`);
+    }
   } catch (error) {
-    console.error('エラー: API接続に失敗しました');
-    console.error('エラーメッセージ:', error.message);
+    console.error('\n=== エラー発生 ===\n');
     
     if (error.response) {
+      // APIからのエラーレスポンス
       console.error('ステータスコード:', error.response.status);
-      console.error('レスポンスデータ:', error.response.data);
+      console.error('エラーデータ:', error.response.data);
+      console.error('エラーヘッダー:', error.response.headers);
+    } else if (error.request) {
+      // リクエストは送信されたがレスポンスが得られなかった場合
+      console.error('レスポンスが受信できませんでした:', error.request);
+    } else {
+      // リクエスト設定時に発生したエラー
+      console.error('エラーメッセージ:', error.message);
     }
     
-    return false;
+    console.error('エラー詳細:', error);
   }
 }
 
-/**
- * APIからのレスポンスのDailyFortuneService処理をシミュレート
- */
-function processApiResponse(jsonResponse) {
-  console.log('\n=== API JSON処理テスト ===');
-  
-  try {
-    console.log('受信したJSONデータの検証...');
-    
-    // 必須フィールドの確認
-    const requiredFields = ['summary', 'personalAdvice', 'teamAdvice', 'luckyPoints'];
-    const missingFields = requiredFields.filter(field => !jsonResponse[field]);
-    
-    if (missingFields.length > 0) {
-      console.error('警告: 必須フィールドが欠けています:', missingFields);
-      return false;
-    }
-    
-    // luckyPointsの検証
-    if (jsonResponse.luckyPoints) {
-      const luckyRequiredFields = ['color', 'items', 'number', 'action'];
-      const missingLuckyFields = luckyRequiredFields.filter(field => 
-        jsonResponse.luckyPoints[field] === undefined);
-      
-      if (missingLuckyFields.length > 0) {
-        console.error('警告: luckyPointsに必須フィールドが欠けています:', missingLuckyFields);
-        return false;
-      }
-      
-      // itemsが配列かチェック
-      if (!Array.isArray(jsonResponse.luckyPoints.items)) {
-        console.log('luckyPoints.itemsが配列ではありません。配列に変換します。');
-        jsonResponse.luckyPoints.items = [String(jsonResponse.luckyPoints.items)];
-      }
-      
-      console.log('luckyPoints構造の検証:', {
-        hasColor: !!jsonResponse.luckyPoints.color,
-        itemsIsArray: Array.isArray(jsonResponse.luckyPoints.items),
-        itemsCount: jsonResponse.luckyPoints.items.length,
-        numberIsValid: Number.isInteger(jsonResponse.luckyPoints.number),
-        hasAction: !!jsonResponse.luckyPoints.action
-      });
-    } else {
-      console.error('警告: luckyPointsフィールドがありません');
-      return false;
-    }
-    
-    // 運勢エンティティを生成（実際のサービスをシミュレート）
-    const fortuneEntity = {
-      id: 'fortune-test-' + Date.now(),
-      userId: 'test-user-id',
-      date: new Date(),
-      overallScore: 80,
-      rating: 'excellent',
-      advice: jsonResponse, // AIからのレスポンスをそのまま格納
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    // フロントエンド用にエンリッチ
-    const enrichedFortune = {
-      id: fortuneEntity.id,
-      date: fortuneEntity.date.toISOString().split('T')[0],
-      overallScore: fortuneEntity.overallScore,
-      starRating: 4,
-      rating: fortuneEntity.rating,
-      aiGeneratedAdvice: fortuneEntity.advice, // AIアドバイスをそのまま使用
-      createdAt: fortuneEntity.createdAt.toISOString()
-    };
-    
-    console.log('エンリッチされた運勢データ:', {
-      id: enrichedFortune.id,
-      date: enrichedFortune.date,
-      rating: enrichedFortune.rating,
-      summary: enrichedFortune.aiGeneratedAdvice.summary.substring(0, 30) + '...',
-      luckyColor: enrichedFortune.aiGeneratedAdvice.luckyPoints.color
-    });
-    
-    console.log('テスト結果: 成功 ✅ API JSONデータを正常に処理し、運勢データに変換できました');
-    return true;
-  } catch (error) {
-    console.error('エラー: JSONデータの処理中にエラーが発生しました');
-    console.error(error);
-    return false;
-  }
-}
-
-/**
- * テスト実行
- */
-(async () => {
-  console.log('=== Claude API実機能テスト ===');
-  console.log('テスト開始:', new Date().toISOString());
-  
-  // 環境変数の確認
-  const apiKey = process.env.CLAUDE_API_KEY;
-  if (!apiKey) {
-    console.error('エラー: APIキーが設定されていません');
-    process.exit(1);
-  }
-  
-  // APIに直接リクエスト
-  const apiSuccess = await testClaudeApiDirect();
-  
-  if (apiSuccess) {
-    // テスト用のJSONレスポンス
-    const sampleResponse = {
-      summary: "あなたは今日、清々しい風が吹き抜ける森のような運気です。新しいアイデアが自然と湧き上がり、周囲との調和も取れやすい一日となるでしょう。特に、チームでの創造的な活動が成功に結びつく暗示があります。思い切って新しい発想を形にすることで、大きな成果が期待できます。",
-      personalAdvice: "AIプロダクトの開発において、今日は特に「ユーザー体験」に焦点を当てると良いでしょう。技術的な側面よりも、実際の使用感や直感的な操作性を重視することで、より価値の高い成果が得られます。",
-      teamAdvice: "バイアウト目標達成のためには、今日は特に情報の共有と透明性を高めることが重要です。メンバー間での正確な情報伝達が、予期せぬ障害を事前に回避するカギとなります。",
-      luckyPoints: {
-        color: "緑",
-        items: ["観葉植物", "木製のアクセサリー"],
-        number: 3,
-        action: "朝日を浴びながら深呼吸する"
-      }
-    };
-    
-    // JSONデータの処理シミュレーション
-    const processSuccess = processApiResponse(sampleResponse);
-    
-    console.log('\n=== テスト総合結果 ===');
-    console.log('API接続テスト:', apiSuccess ? '成功 ✅' : '失敗 ❌');
-    console.log('JSON処理テスト:', processSuccess ? '成功 ✅' : '失敗 ❌');
-    
-    if (apiSuccess && processSuccess) {
-      console.log('\n全体結果: 成功 ✅ APIキーは正常に機能しており、レスポンスを適切に処理できます。');
-    } else {
-      console.log('\n全体結果: 一部の問題 ⚠️ 詳細なログを確認してください。');
-    }
-  } else {
-    console.log('\n全体結果: 失敗 ❌ API接続に問題があります。');
-  }
-})();
+// スクリプト実行
+sendRequestToClaude();

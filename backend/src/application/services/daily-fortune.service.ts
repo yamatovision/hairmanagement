@@ -322,10 +322,38 @@ export class DailyFortuneService {
       // AIサービスでアドバイス生成
       console.log('[DailyFortuneService] AIサービスにリクエスト送信 - プロンプト長:', prompt.length);
       const response = await this.aiService.generateText(prompt, { model });
-      console.log('[DailyFortuneService] AIからのレスポンス受信 - レスポンス長:', response ? response.length : 0);
       
-      // レスポンス全体をログ出力（開発デバッグ用）
+      // 生のレスポンスを詳細にログ出力
+      console.log('[DailyFortuneService] AIからのレスポンス受信 - レスポンス長:', response ? response.length : 0);
       console.log('[DailyFortuneService] AIレスポンス全文 (デバッグ用):\n', response);
+      console.log('[DailyFortuneService] レスポンスタイプ:', typeof response);
+      console.log('[DailyFortuneService] レスポンス概要:', {
+        isNull: response === null,
+        isString: typeof response === 'string',
+        isObject: typeof response === 'object',
+        hasContent: !!response,
+        topLevelKeys: typeof response === 'object' && response !== null ? Object.keys(response) : '文字列またはnull'
+      });
+      
+      // レスポンスがオブジェクトで、contentフィールドがある場合（Claude API形式）
+      if (typeof response === 'object' && response !== null && 'content' in response) {
+        console.log('[DailyFortuneService] Claude API形式レスポンス検出:', {
+          contentType: typeof response.content,
+          isArray: Array.isArray(response.content),
+          contentLength: Array.isArray(response.content) ? response.content.length : 'not array'
+        });
+        
+        // ContentブロックからテキストのみをJSON.stringifyで出力
+        if (Array.isArray(response.content)) {
+          console.log('[DailyFortuneService] Contentブロック詳細:', 
+            JSON.stringify(response.content.map(item => ({
+              type: item.type,
+              textLength: item.text ? item.text.length : 'no text',
+              textSnippet: item.text ? item.text.substring(0, 50) + '...' : 'no text'
+            })), null, 2)
+          );
+        }
+      }
       
       // レスポンスを解析して構造化
       const parsedAdvice = this.parseAIResponse(response);
@@ -407,6 +435,32 @@ export class DailyFortuneService {
       
       if (missingFields.length > 0) {
         console.log('[DailyFortuneService.parseAIResponse] 警告: オブジェクトに不足しているフィールドがあります:', missingFields);
+        
+        // 不足しているフィールドを補完
+        if (!objectResponse.summary) {
+          console.log('[DailyFortuneService.parseAIResponse] summaryフィールドを追加');
+          objectResponse.summary = "本日は五行のエネルギーを活かして行動しましょう。";
+        }
+        
+        if (!objectResponse.personalAdvice) {
+          console.log('[DailyFortuneService.parseAIResponse] personalAdviceフィールドを追加');
+          objectResponse.personalAdvice = "個人目標に向けて集中して取り組みましょう。";
+        }
+        
+        if (!objectResponse.teamAdvice) {
+          console.log('[DailyFortuneService.parseAIResponse] teamAdviceフィールドを追加');
+          objectResponse.teamAdvice = "チームとの連携を大切にしてください。";
+        }
+        
+        if (!objectResponse.luckyPoints) {
+          console.log('[DailyFortuneService.parseAIResponse] luckyPointsフィールドを追加');
+          objectResponse.luckyPoints = {
+            color: "赤",
+            items: ["鈴", "明るい色の文房具"],
+            number: 8,
+            action: "朝日を浴びる"
+          };
+        }
       }
       
       // luckyPointsがある場合は内部構造もチェック
@@ -419,10 +473,32 @@ export class DailyFortuneService {
           hasAction: !!objectResponse.luckyPoints.action
         });
         
-        // luckyPoints.itemsが配列でない場合は配列に変換
-        if (objectResponse.luckyPoints.items && !Array.isArray(objectResponse.luckyPoints.items)) {
+        // 内部フィールドの補完
+        if (!objectResponse.luckyPoints.color) {
+          console.log('[DailyFortuneService.parseAIResponse] luckyPoints.colorを追加');
+          objectResponse.luckyPoints.color = "赤";
+        }
+        
+        // luckyPoints.itemsのチェックと補完
+        if (!objectResponse.luckyPoints.items) {
+          console.log('[DailyFortuneService.parseAIResponse] luckyPoints.itemsを追加');
+          objectResponse.luckyPoints.items = ["鈴", "明るい色の文房具"];
+        } else if (!Array.isArray(objectResponse.luckyPoints.items)) {
           console.log('[DailyFortuneService.parseAIResponse] luckyPoints.itemsを配列に変換します');
           objectResponse.luckyPoints.items = [String(objectResponse.luckyPoints.items)];
+        } else if (objectResponse.luckyPoints.items.length === 0) {
+          console.log('[DailyFortuneService.parseAIResponse] 空のluckyPoints.itemsを補完');
+          objectResponse.luckyPoints.items = ["鈴", "明るい色の文房具"];
+        }
+        
+        if (!objectResponse.luckyPoints.number) {
+          console.log('[DailyFortuneService.parseAIResponse] luckyPoints.numberを追加');
+          objectResponse.luckyPoints.number = 8;
+        }
+        
+        if (!objectResponse.luckyPoints.action) {
+          console.log('[DailyFortuneService.parseAIResponse] luckyPoints.actionを追加');
+          objectResponse.luckyPoints.action = "朝日を浴びる";
         }
       }
       
@@ -460,8 +536,6 @@ export class DailyFortuneService {
         }
       }
       
-      console.log('[DailyFortuneService.parseAIResponse] パース開始 - レスポンス長:', response.length);
-      
       // 初期化
       const result = {
         summary: "",
@@ -478,13 +552,13 @@ export class DailyFortuneService {
       // 1. 運気を抽出（最初の段落を抽出）
       console.log('[DailyFortuneService.parseAIResponse] 運気サマリー抽出中...');
       // 「あなたは今日」で始まる段落全体を抽出
-      const summaryMatch = response.match(/あなたは今日[^\n]+([\s\S]+?)(?=\n\n|ラッキーポイント|ラッキーカラー|$)/);
+      const summaryMatch = responseStr.match(/あなたは今日[^\n]+([\s\S]+?)(?=\n\n|ラッキーポイント|ラッキーカラー|$)/);
       if (summaryMatch && summaryMatch[0]) {
         result.summary = summaryMatch[0].trim();
         console.log('[DailyFortuneService.parseAIResponse] メインパターンでサマリー抽出成功:', result.summary.substring(0, 50) + '...');
       } else {
         // バックアップパターン：最初の段落を抽出
-        const firstParagraph = response.split(/\n\n/)[0];
+        const firstParagraph = responseStr.split(/\n\n/)[0];
         if (firstParagraph) {
           result.summary = firstParagraph.trim();
           console.log('[DailyFortuneService.parseAIResponse] バックアップパターンでサマリー抽出:', result.summary.substring(0, 50) + '...');
@@ -497,7 +571,7 @@ export class DailyFortuneService {
       console.log('[DailyFortuneService.parseAIResponse] ラッキーポイント抽出中...');
       
       // 色
-      const colorMatch = response.match(/ラッキーカラー[:：]\s*(.+?)(?=\n|$)/);
+      const colorMatch = responseStr.match(/ラッキーカラー[:：]\s*(.+?)(?=\n|$)/);
       if (colorMatch && colorMatch[1]) {
         result.luckyPoints.color = colorMatch[1].trim();
         console.log('[DailyFortuneService.parseAIResponse] ラッキーカラー抽出成功:', result.luckyPoints.color);
@@ -506,7 +580,7 @@ export class DailyFortuneService {
       }
       
       // アイテム
-      const itemsMatch = response.match(/ラッキーアイテム[:：]\s*(.+?)(?=\n|$)/);
+      const itemsMatch = responseStr.match(/ラッキーアイテム[:：]\s*(.+?)(?=\n|$)/);
       if (itemsMatch && itemsMatch[1]) {
         // カンマまたは読点で複数アイテムとして分割
         const items = itemsMatch[1].split(/[、,]/).map(item => item.trim());
@@ -517,7 +591,7 @@ export class DailyFortuneService {
       }
       
       // 数字
-      const numberMatch = response.match(/ラッキーナンバー[:：]\s*(\d+)/);
+      const numberMatch = responseStr.match(/ラッキーナンバー[:：]\s*(\d+)/);
       if (numberMatch && numberMatch[1]) {
         result.luckyPoints.number = parseInt(numberMatch[1], 10);
         console.log('[DailyFortuneService.parseAIResponse] ラッキーナンバー抽出成功:', result.luckyPoints.number);
@@ -526,7 +600,7 @@ export class DailyFortuneService {
       }
       
       // 行動
-      const actionMatch = response.match(/開運アクション[:：]\s*(.+?)(?=\n|$)/);
+      const actionMatch = responseStr.match(/開運アクション[:：]\s*(.+?)(?=\n|$)/);
       if (actionMatch && actionMatch[1]) {
         result.luckyPoints.action = actionMatch[1].trim();
         console.log('[DailyFortuneService.parseAIResponse] 開運アクション抽出成功:', result.luckyPoints.action);
@@ -537,7 +611,7 @@ export class DailyFortuneService {
       // 3. 個人目標へのアドバイスを抽出
       console.log('[DailyFortuneService.parseAIResponse] 個人目標アドバイス抽出中...');
       // "個人目標へのアドバイス" の見出し後の文章を抽出
-      const personalAdviceMatch = response.match(/個人目標へのアドバイス(?:[^\n]*\n+)([\s\S]+?)(?=\n\n|チーム目標|$)/);
+      const personalAdviceMatch = responseStr.match(/個人目標へのアドバイス(?:[^\n]*\n+)([\s\S]+?)(?=\n\n|チーム目標|$)/);
       if (personalAdviceMatch && personalAdviceMatch[1]) {
         result.personalAdvice = personalAdviceMatch[1].trim();
         console.log('[DailyFortuneService.parseAIResponse] メインパターンで個人目標アドバイス抽出成功:', 
@@ -548,7 +622,7 @@ export class DailyFortuneService {
         const personalKeywords = ["個人目標", "個人の目標", "あなたの目標"];
         let foundMatch = false;
         for (const keyword of personalKeywords) {
-          const match = response.match(new RegExp(`${keyword}[^\\n]+(\\S[\\s\\S]+?)(?=\\n\\n|チーム|$)`));
+          const match = responseStr.match(new RegExp(`${keyword}[^\\n]+(\\S[\\s\\S]+?)(?=\\n\\n|チーム|$)`));
           if (match && match[0]) {
             result.personalAdvice = match[0].trim();
             console.log('[DailyFortuneService.parseAIResponse] バックアップパターンで個人目標アドバイス抽出成功:', 
@@ -565,7 +639,7 @@ export class DailyFortuneService {
       // 4. チーム目標へのアドバイスを抽出
       console.log('[DailyFortuneService.parseAIResponse] チームアドバイス抽出中...');
       // "チーム目標へのアドバイス" の見出し後の文章を抽出
-      const teamAdviceMatch = response.match(/チーム目標へのアドバイス(?:[^\n]*\n+)([\s\S]+?)(?=\n\n|$)/);
+      const teamAdviceMatch = responseStr.match(/チーム目標へのアドバイス(?:[^\n]*\n+)([\s\S]+?)(?=\n\n|$)/);
       if (teamAdviceMatch && teamAdviceMatch[1]) {
         result.teamAdvice = teamAdviceMatch[1].trim();
         console.log('[DailyFortuneService.parseAIResponse] メインパターンでチームアドバイス抽出成功:', 
@@ -576,7 +650,7 @@ export class DailyFortuneService {
         const teamKeywords = ["チーム目標", "チームの目標", "協力", "連携"];
         let foundMatch = false;
         for (const keyword of teamKeywords) {
-          const match = response.match(new RegExp(`${keyword}[^\\n]+(\\S[\\s\\S]+?)(?=\\n\\n|$)`));
+          const match = responseStr.match(new RegExp(`${keyword}[^\\n]+(\\S[\\s\\S]+?)(?=\\n\\n|$)`));
           if (match && match[0]) {
             result.teamAdvice = match[0].trim();
             console.log('[DailyFortuneService.parseAIResponse] バックアップパターンでチームアドバイス抽出成功:', 
@@ -610,6 +684,12 @@ export class DailyFortuneService {
       if (!Array.isArray(result.luckyPoints.items)) {
         console.log('[DailyFortuneService.parseAIResponse] ラッキーアイテムが配列でないため修正します');
         result.luckyPoints.items = [String(result.luckyPoints.items || "鈴")];
+      }
+      
+      // アイテムが空の配列なら、デフォルト値を設定
+      if (Array.isArray(result.luckyPoints.items) && result.luckyPoints.items.length === 0) {
+        console.log('[DailyFortuneService.parseAIResponse] ラッキーアイテムが空配列のためデフォルト値を設定します');
+        result.luckyPoints.items = ["鈴", "明るい色の文房具"];
       }
       
       // ラッキーポイントの完全性を確認
@@ -662,39 +742,45 @@ export class DailyFortuneService {
     const starRating = this.convertToStarRating(fortune.overallScore);
     
     // AIアドバイスがオブジェクトか文字列かを確認
-    const isObjectAdvice = typeof fortune.advice === 'object';
+    const isObjectAdvice = typeof fortune.advice === 'object' && fortune.advice !== null;
     console.log('[DailyFortuneService.enrichFortuneData] アドバイスタイプ:', isObjectAdvice ? 'オブジェクト' : '文字列');
     
+    // AIアドバイスオブジェクトを型安全に扱う
+    const adviceObj = isObjectAdvice ? (fortune.advice as unknown) as Record<string, any> : null;
+    
     // AIアドバイスオブジェクトの詳細をログ出力
-    if (isObjectAdvice) {
+    if (isObjectAdvice && adviceObj) {
       console.log('[DailyFortuneService.enrichFortuneData] AIアドバイスオブジェクトの詳細:', {
-        hasAdvice: !!fortune.advice,
-        adviceType: typeof fortune.advice,
-        hasSummary: !!fortune.advice.summary,
-        hasPersonalAdvice: !!fortune.advice.personalAdvice,
-        hasTeamAdvice: !!fortune.advice.teamAdvice,
-        hasLuckyPoints: !!fortune.advice.luckyPoints
+        hasAdvice: !!adviceObj,
+        adviceType: typeof adviceObj,
+        hasSummary: !!adviceObj.summary,
+        hasPersonalAdvice: !!adviceObj.personalAdvice,
+        hasTeamAdvice: !!adviceObj.teamAdvice,
+        hasLuckyPoints: !!adviceObj.luckyPoints
       });
       
       // ラッキーポイントの詳細をログ出力
-      if (fortune.advice && fortune.advice.luckyPoints) {
+      if (adviceObj.luckyPoints) {
+        const luckyPoints = adviceObj.luckyPoints as Record<string, any>;
         console.log('[DailyFortuneService.enrichFortuneData] ラッキーポイント詳細:', {
-          color: fortune.advice.luckyPoints.color,
-          items: fortune.advice.luckyPoints.items,
-          isItemsArray: Array.isArray(fortune.advice.luckyPoints.items),
-          itemsLength: Array.isArray(fortune.advice.luckyPoints.items) ? 
-            fortune.advice.luckyPoints.items.length : 'not an array',
-          number: fortune.advice.luckyPoints.number,
-          action: fortune.advice.luckyPoints.action
+          color: luckyPoints.color,
+          items: luckyPoints.items,
+          isItemsArray: Array.isArray(luckyPoints.items),
+          itemsLength: Array.isArray(luckyPoints.items) ? 
+            luckyPoints.items.length : 'not an array',
+          number: luckyPoints.number,
+          action: luckyPoints.action
         });
       }
     }
     
     // ラッキーアイテムが配列でない場合は配列に変換
-    const aiAdvice = isObjectAdvice ? fortune.advice : null;
-    if (aiAdvice && aiAdvice.luckyPoints && !Array.isArray(aiAdvice.luckyPoints.items)) {
-      console.log('[DailyFortuneService.enrichFortuneData] ラッキーアイテムが配列でないため修正します');
-      aiAdvice.luckyPoints.items = [String(aiAdvice.luckyPoints.items || "鈴")];
+    if (adviceObj && adviceObj.luckyPoints) {
+      const luckyPoints = adviceObj.luckyPoints as Record<string, any>;
+      if (luckyPoints.items && !Array.isArray(luckyPoints.items)) {
+        console.log('[DailyFortuneService.enrichFortuneData] ラッキーアイテムが配列でないため修正します');
+        luckyPoints.items = [String(luckyPoints.items || "鈴")];
+      }
     }
     
     // 拡張データを生成
@@ -707,7 +793,7 @@ export class DailyFortuneService {
       categories: fortune.categories,
       advice: isObjectAdvice ? 'アドバイスは構造化形式で提供されています' : String(fortune.advice || ''),
       // 新しい構造化されたアドバイス形式
-      aiGeneratedAdvice: aiAdvice,
+      aiGeneratedAdvice: adviceObj,
       // 四柱推命データを追加（実際の実装では、これをセッションや計算済みデータから取得）
       sajuData: {
         mainElement: '未設定', // 実際にはユーザー情報から取得
@@ -725,7 +811,7 @@ export class DailyFortuneService {
       date: enrichedData.date,
       overallScore: enrichedData.overallScore,
       hasAiGeneratedAdvice: !!enrichedData.aiGeneratedAdvice,
-      hasLuckyPoints: enrichedData.aiGeneratedAdvice && !!enrichedData.aiGeneratedAdvice.luckyPoints
+      hasLuckyPoints: enrichedData.aiGeneratedAdvice && !!(enrichedData.aiGeneratedAdvice as Record<string, any>).luckyPoints
     });
     
     return enrichedData;

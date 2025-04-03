@@ -51,19 +51,39 @@ export class ElementalCalculatorService {
     const today = new Date();
     
     try {
+      console.log(`[運勢フローログ] ElementalCalculatorService.getDailyFortune 開始 - ユーザー: ${userId}, 生年月日: ${birthDate}`);
+      
       // データベースからユーザーの今日の運勢を検索
+      console.log(`[運勢フローログ] MongoFortuneRepository.findByUserIdAndDate を呼び出し - 日付: ${today.toISOString()}`);
       let fortune = await this.fortuneRepository.findByUserIdAndDate(userId, today);
+      console.log(`[運勢フローログ] findByUserIdAndDate の結果: ${fortune ? '運勢が見つかりました' : '運勢が見つかりませんでした'}`);
       
       // 存在しない場合は新規生成して保存
       if (!fortune) {
+        console.log(`[運勢フローログ] 新しい運勢の生成を開始します`);
         const generatedFortune = await this.generateFortuneEntity(userId, birthDate, today);
+        console.log(`[運勢フローログ] 生成された運勢: `, {
+          userId: generatedFortune.userId,
+          date: generatedFortune.date,
+          overallScore: generatedFortune.overallScore,
+          advice: typeof generatedFortune.advice === 'string' ? 
+            `${generatedFortune.advice.substring(0, 30)}...` : 'オブジェクト型'
+        });
+        
+        console.log(`[運勢フローログ] MongoFortuneRepository.create を呼び出し`);
         const savedFortune = await this.fortuneRepository.create(generatedFortune);
+        console.log(`[運勢フローログ] 保存された運勢ID: ${savedFortune.id}`);
         return savedFortune;
       }
       
+      console.log(`[運勢フローログ] ElementalCalculatorService.getDailyFortune 完了 - 運勢ID: ${fortune.id}`);
       return fortune;
     } catch (error) {
-      console.error('運勢データの取得/生成中にエラーが発生しました:', error);
+      console.error('[運勢フローログ] 運勢データの取得/生成中にエラーが発生しました:', error);
+      if (error instanceof Error) {
+        console.error('[運勢フローログ] エラー詳細:', error.message);
+        console.error('[運勢フローログ] スタックトレース:', error.stack);
+      }
       throw error;
     }
   }

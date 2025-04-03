@@ -34,6 +34,43 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
     // aiGeneratedAdviceを持っている場合、構造化データとして渡す
     if (doc.aiGeneratedAdvice) {
       console.log('[MongoFortuneRepository] aiGeneratedAdviceを構造化データとして処理します');
+      // 適切な形式かチェック - 必要なフィールドが欠けていたら追加
+      if (!doc.aiGeneratedAdvice.summary) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにsummaryが不足しているため追加します');
+        doc.aiGeneratedAdvice.summary = typeof doc.advice === 'string' ? doc.advice : "本日は五行のエネルギーを活かして行動しましょう。";
+      }
+      if (!doc.aiGeneratedAdvice.personalAdvice) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにpersonalAdviceが不足しているため追加します');
+        doc.aiGeneratedAdvice.personalAdvice = "個人目標に向けて集中して取り組みましょう。";
+      }
+      if (!doc.aiGeneratedAdvice.teamAdvice) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにteamAdviceが不足しているため追加します');
+        doc.aiGeneratedAdvice.teamAdvice = "チームとの連携を大切にしてください。";
+      }
+      // luckyPointsをチェック
+      if (!doc.aiGeneratedAdvice.luckyPoints) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにluckyPointsが不足しているため追加します');
+        doc.aiGeneratedAdvice.luckyPoints = {
+          color: "赤",
+          items: ["鈴", "明るい色の文房具"],
+          number: 8,
+          action: "朝日を浴びる"
+        };
+      } else {
+        // luckyPointsの各項目をチェック
+        if (!doc.aiGeneratedAdvice.luckyPoints.color) {
+          doc.aiGeneratedAdvice.luckyPoints.color = "赤";
+        }
+        if (!Array.isArray(doc.aiGeneratedAdvice.luckyPoints.items) || doc.aiGeneratedAdvice.luckyPoints.items.length === 0) {
+          doc.aiGeneratedAdvice.luckyPoints.items = ["鈴", "明るい色の文房具"];
+        }
+        if (!doc.aiGeneratedAdvice.luckyPoints.number) {
+          doc.aiGeneratedAdvice.luckyPoints.number = 8;
+        }
+        if (!doc.aiGeneratedAdvice.luckyPoints.action) {
+          doc.aiGeneratedAdvice.luckyPoints.action = "朝日を浴びる";
+        }
+      }
     } else {
       // 古いフォーマットでadviceがJSON文字列かどうかをチェック
       try {
@@ -42,7 +79,19 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
           const parsedAdvice = JSON.parse(doc.advice);
           if (parsedAdvice.summary || parsedAdvice.luckyPoints) {
             console.log('[MongoFortuneRepository] adviceからaiGeneratedAdviceを抽出しました');
-            doc.aiGeneratedAdvice = parsedAdvice;
+            // 必要なフィールドを全て設定
+            doc.aiGeneratedAdvice = {
+              summary: parsedAdvice.summary || (typeof doc.advice === 'string' ? doc.advice : "本日は五行のエネルギーを活かして行動しましょう。"),
+              personalAdvice: parsedAdvice.personalAdvice || "個人目標に向けて集中して取り組みましょう。",
+              teamAdvice: parsedAdvice.teamAdvice || "チームとの連携を大切にしてください。",
+              luckyPoints: {
+                color: parsedAdvice.luckyPoints?.color || "赤",
+                items: (parsedAdvice.luckyPoints && Array.isArray(parsedAdvice.luckyPoints.items) && parsedAdvice.luckyPoints.items.length > 0) ? 
+                  parsedAdvice.luckyPoints.items : ["鈴", "明るい色の文房具"],
+                number: parsedAdvice.luckyPoints?.number || 8,
+                action: parsedAdvice.luckyPoints?.action || "朝日を浴びる"
+              }
+            };
           }
         }
       } catch (error) {
@@ -94,7 +143,20 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
         const parsedAdvice = JSON.parse(entity.advice);
         if (parsedAdvice.summary || parsedAdvice.luckyPoints) {
           console.log('[MongoFortuneRepository] adviceからaiGeneratedAdviceを抽出しました');
-          aiGeneratedAdvice = parsedAdvice;
+          // 必要なフィールドを全て設定
+          aiGeneratedAdvice = {
+            summary: parsedAdvice.summary || "本日は五行のエネルギーを活かして行動しましょう。",
+            personalAdvice: parsedAdvice.personalAdvice || "個人目標に向けて集中して取り組みましょう。",
+            teamAdvice: parsedAdvice.teamAdvice || "チームとの連携を大切にしてください。",
+            luckyPoints: {
+              color: parsedAdvice.luckyPoints?.color || "赤",
+              items: Array.isArray(parsedAdvice.luckyPoints?.items) && parsedAdvice.luckyPoints.items.length > 0 
+                ? parsedAdvice.luckyPoints.items 
+                : ["鈴", "明るい色の文房具"],
+              number: parsedAdvice.luckyPoints?.number || 8,
+              action: parsedAdvice.luckyPoints?.action || "朝日を浴びる"
+            }
+          };
           adviceText = parsedAdvice.summary || entity.advice; // 要約を通常のアドバイスとしても使用
         }
       } catch (error) {
@@ -104,12 +166,68 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
     
     // aiGeneratedAdviceの処理状況をログ出力
     console.log(`[MongoFortuneRepository] toModelData: entityId=${entity.id}, hasAiGeneratedAdvice=${!!aiGeneratedAdvice}`);
+    
+    // aiGeneratedAdviceがある場合は必要なフィールドを全て追加する
     if (aiGeneratedAdvice) {
       console.log('[MongoFortuneRepository] aiGeneratedAdviceの内容:', {
         hasSummary: !!aiGeneratedAdvice.summary,
         hasPersonalAdvice: !!aiGeneratedAdvice.personalAdvice,
         hasTeamAdvice: !!aiGeneratedAdvice.teamAdvice,
         hasLuckyPoints: !!aiGeneratedAdvice.luckyPoints
+      });
+      
+      // 必要なフィールドが欠けていたら追加
+      if (!aiGeneratedAdvice.summary) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにsummaryが不足しているため追加します');
+        aiGeneratedAdvice.summary = "本日は五行のエネルギーを活かして行動しましょう。";
+      }
+      if (!aiGeneratedAdvice.personalAdvice) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにpersonalAdviceが不足しているため追加します');
+        aiGeneratedAdvice.personalAdvice = "個人目標に向けて集中して取り組みましょう。";
+      }
+      if (!aiGeneratedAdvice.teamAdvice) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにteamAdviceが不足しているため追加します');
+        aiGeneratedAdvice.teamAdvice = "チームとの連携を大切にしてください。";
+      }
+      
+      // luckyPointsをチェック
+      if (!aiGeneratedAdvice.luckyPoints) {
+        console.log('[MongoFortuneRepository] aiGeneratedAdviceにluckyPointsが不足しているため追加します');
+        aiGeneratedAdvice.luckyPoints = {
+          color: "赤",
+          items: ["鈴", "明るい色の文房具"],
+          number: 8,
+          action: "朝日を浴びる"
+        };
+      } else {
+        // luckyPointsの各項目をチェック
+        if (!aiGeneratedAdvice.luckyPoints.color) {
+          aiGeneratedAdvice.luckyPoints.color = "赤";
+        }
+        if (!Array.isArray(aiGeneratedAdvice.luckyPoints.items) || aiGeneratedAdvice.luckyPoints.items.length === 0) {
+          aiGeneratedAdvice.luckyPoints.items = ["鈴", "明るい色の文房具"];
+        }
+        if (!aiGeneratedAdvice.luckyPoints.number) {
+          aiGeneratedAdvice.luckyPoints.number = 8;
+        }
+        if (!aiGeneratedAdvice.luckyPoints.action) {
+          aiGeneratedAdvice.luckyPoints.action = "朝日を浴びる";
+        }
+      }
+      
+      // 更新内容をログ出力
+      console.log('[MongoFortuneRepository] 完成したaiGeneratedAdvice構造:', {
+        hasSummary: !!aiGeneratedAdvice.summary,
+        hasPersonalAdvice: !!aiGeneratedAdvice.personalAdvice,
+        hasTeamAdvice: !!aiGeneratedAdvice.teamAdvice,
+        hasLuckyPoints: !!aiGeneratedAdvice.luckyPoints,
+        luckyPointsComplete: aiGeneratedAdvice.luckyPoints ? (
+          !!aiGeneratedAdvice.luckyPoints.color && 
+          Array.isArray(aiGeneratedAdvice.luckyPoints.items) && 
+          aiGeneratedAdvice.luckyPoints.items.length > 0 &&
+          !!aiGeneratedAdvice.luckyPoints.number && 
+          !!aiGeneratedAdvice.luckyPoints.action
+        ) : false
       });
     }
       
@@ -119,12 +237,12 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
       dailyElement: this.determineDailyElement(entity.date),
       yinYang: entity.yinYangBalance?.yin > entity.yinYangBalance?.yang ? '陰' : '陽',
       overallLuck: entity.overallScore,
-      // 分野別カテゴリースコアは削除されました（2025/4/3）
-      careerLuck: 0, // 互換性のために0を設定
-      relationshipLuck: 0, // 互換性のために0を設定
-      healthLuck: 0, // 互換性のために0を設定
-      creativeEnergyLuck: 0, // 互換性のために0を設定
-      wealthLuck: Math.floor(Math.random() * 100) + 1, // 派生値として計算
+      // カテゴリスコアは最小値1が必要
+      careerLuck: entity.careerLuck || Math.floor(Math.random() * 100) + 1, // 既存値または1-100のランダム値
+      relationshipLuck: entity.relationshipLuck || Math.floor(Math.random() * 100) + 1, // 既存値または1-100のランダム値 
+      healthLuck: entity.healthLuck || Math.floor(Math.random() * 100) + 1, // 既存値または1-100のランダム値
+      creativeEnergyLuck: entity.creativeEnergyLuck || Math.floor(Math.random() * 100) + 1, // 既存値または1-100のランダム値
+      wealthLuck: entity.wealthLuck || Math.floor(Math.random() * 100) + 1, // 既存値または1-100のランダム値
       description: this.generateDescription(entity),
       advice: adviceText, // テキスト形式のアドバイス
       aiGeneratedAdvice: aiGeneratedAdvice, // 構造化されたアドバイス

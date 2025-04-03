@@ -39,6 +39,7 @@ export class User extends Entity<string> {
     public readonly birthLocation?: string,
     public readonly profileImage?: string,
     public readonly lastLoginAt?: Date,
+    public readonly personalGoal?: string,
     createdAt?: Date,
     updatedAt?: Date
   ) {
@@ -107,6 +108,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       this.profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -132,6 +134,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -157,6 +160,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       this.profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -182,6 +186,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       this.profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -207,6 +212,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       this.profileImage,
       lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -232,6 +238,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       this.profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -257,6 +264,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       this.profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -282,6 +290,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       this.profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -307,6 +316,7 @@ export class User extends Entity<string> {
       this.birthLocation,
       this.profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
@@ -332,8 +342,59 @@ export class User extends Entity<string> {
       birthLocation,
       this.profileImage,
       this.lastLoginAt,
+      this.personalGoal,
       this.createdAt,
       new Date()
     );
+  }
+  
+  /**
+   * 個人目標を更新した新しいユーザーエンティティを作成する
+   * @param personalGoal 新しい個人目標
+   * @returns 更新されたユーザーエンティティ
+   */
+  withUpdatedPersonalGoal(personalGoal: string): User {
+    return new User(
+      this.id,
+      this.email,
+      this.name,
+      this.password,
+      this.birthDate,
+      this.role,
+      this.status,
+      this.elementalProfile,
+      this.sajuProfile,
+      this.birthHour,
+      this.birthLocation,
+      this.profileImage,
+      this.lastLoginAt,
+      personalGoal,
+      this.createdAt,
+      new Date()
+    );
+  }
+  
+  /**
+   * JSONオブジェクトに変換する
+   * @returns JSONオブジェクト
+   */
+  toJSON(): Record<string, any> {
+    return {
+      id: this.id,
+      email: this.email,
+      name: this.name,
+      birthDate: this.birthDate instanceof Date ? this.birthDate.toISOString() : this.birthDate,
+      role: this.role,
+      status: this.status,
+      elementalProfile: this.elementalProfile,
+      sajuProfile: this.sajuProfile ? this.sajuProfile.toPlain() : undefined,
+      birthHour: this.birthHour,
+      birthLocation: this.birthLocation,
+      profileImage: this.profileImage,
+      lastLoginAt: this.lastLoginAt instanceof Date ? this.lastLoginAt.toISOString() : this.lastLoginAt,
+      personalGoal: this.personalGoal,
+      createdAt: this.createdAt instanceof Date ? this.createdAt.toISOString() : this.createdAt,
+      updatedAt: this.updatedAt instanceof Date ? this.updatedAt.toISOString() : this.updatedAt
+    };
   }
 }

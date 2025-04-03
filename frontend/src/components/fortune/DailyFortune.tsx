@@ -269,10 +269,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
       aiGeneratedAdvice.luckyPoints.items[0] : defaultLuckyPoints.items[0]
   });
 
-  // 命式との相性スコア計算（APIから取得した値を使用）
-  // 全体スコアを70点満点と30点満点に分配
-  const compatibilityScore = Math.round((overallScore / 100) * 70); // 70点満点中の相性スコア
-  const balanceScore = Math.round((overallScore / 100) * 30); // 30点満点中のバランススコア
+  // 注: 相性スコアと五行バランス補完スコアの分割計算は削除されました
 
   return (
     <Card 
@@ -420,7 +417,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
         </Typography>
 
         <Typography sx={{ lineHeight: 1.7, fontSize: '1.05rem', mb: 3 }}>
-          {todayAdvice}
+          {typeof todayAdvice === 'string' ? todayAdvice : "本日の運勢アドバイスを準備中です。"}
         </Typography>
         
         {/* ラッキーポイント - 常に表示（API応答またはデフォルト値を使用） */}
@@ -525,10 +522,8 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
               </Typography>
               <Box sx={{ fontSize: '1.5rem', mb: 0.5 }}>🎁</Box>
               <Typography variant="body2" fontWeight="medium" textAlign="center">
-                {aiGeneratedAdvice?.luckyPoints && 
-                 Array.isArray(aiGeneratedAdvice.luckyPoints.items) && 
-                 aiGeneratedAdvice.luckyPoints.items.length > 0 ? 
-                  aiGeneratedAdvice.luckyPoints.items[0] : defaultLuckyPoints.items[0]}
+                {/* 配列が空の場合はデフォルト値を使用するよう修正 */}
+                {aiGeneratedAdvice?.luckyPoints?.items?.[0] || defaultLuckyPoints.items[0]}
               </Typography>
             </Box>
             
@@ -589,67 +584,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
           </Box>
         </Box>
 
-        {/* 命式との相性スコア */}
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">命式との相性</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>{compatibilityScore}/70</Typography>
-          </Box>
-          <Box sx={{ height: 10, bgcolor: theme.palette.grey[200], borderRadius: 5, overflow: 'hidden' }}>
-            <Box 
-              sx={{ 
-                height: '100%', 
-                width: scoreAnimated ? `${compatibilityScore / 70 * 100}%` : '0%',
-                background: `linear-gradient(90deg, ${elementStyle.color}80 0%, ${elementStyle.color} 100%)`,
-                transition: 'width 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                borderRadius: 5
-              }} 
-            />
-          </Box>
-        </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">五行バランス補完</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>{balanceScore}/30</Typography>
-          </Box>
-          <Box sx={{ height: 10, bgcolor: theme.palette.grey[200], borderRadius: 5, overflow: 'hidden' }}>
-            <Box 
-              sx={{ 
-                height: '100%', 
-                width: scoreAnimated ? `${balanceScore / 30 * 100}%` : '0%',
-                background: `linear-gradient(90deg, ${elementStyle.color}80 0%, ${elementStyle.color} 100%)`,
-                transition: 'width 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                borderRadius: 5
-              }} 
-            />
-          </Box>
-        </Box>
-
-        {/* AIアシスタントへの相談ボタン */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Button
-            variant="contained"
-            startIcon={<PsychologyIcon />}
-            onClick={() => navigate('/conversation/fortune')}
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              padding: '12px 24px',
-              borderRadius: '30px',
-              boxShadow: '0 4px 16px rgba(106, 27, 154, 0.25)',
-              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-              '&:hover': {
-                transform: 'translateY(-3px)',
-                boxShadow: '0 8px 24px rgba(106, 27, 154, 0.35)'
-              }
-            }}
-          >
-            AIアシスタントに相談する
-          </Button>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-            今日の五行エネルギーをどう活かすか、AIがパーソナライズされたアドバイスを提供します
-          </Typography>
-        </Box>
+        {/* 総合運気スコアのバーは表示されたまま */}
 
         <Divider sx={{ 
           my: 3, 
@@ -723,6 +658,31 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
                   {aiGeneratedAdvice?.teamAdvice ? aiGeneratedAdvice.teamAdvice : "特に、財務面の詳細な検証と、戦略的な折衝ポイントを見極めることに注力すると良い結果につながります。"}
                 </Typography>
               </Paper>
+            </Box>
+
+            {/* AIアシスタントへの相談ボタン */}
+            <Box sx={{ textAlign: 'center', mt: 4, mb: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<PsychologyIcon />}
+                onClick={() => navigate('/conversation/fortune')}
+                sx={{
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  padding: '12px 24px',
+                  borderRadius: '30px',
+                  boxShadow: '0 4px 16px rgba(106, 27, 154, 0.25)',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 8px 24px rgba(106, 27, 154, 0.35)'
+                  }
+                }}
+              >
+                AIアシスタントに相談する
+              </Button>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                今日の五行エネルギーをどう活かすか、AIがパーソナライズされたアドバイスを提供します
+              </Typography>
             </Box>
           </>
         )}

@@ -181,8 +181,8 @@ export class UserController {
       
       // パスワードフィールドを除外
       const safeUsers = users.map(user => {
-        const userObj = user.toJSON ? user.toJSON() : user;
-        const { password, ...safeUser } = userObj;
+        const userObj = user.toJSON ? user.toJSON() : (user as any);
+        const { password, ...safeUser } = userObj as Record<string, any>;
         return safeUser;
       });
       

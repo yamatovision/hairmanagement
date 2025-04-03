@@ -556,7 +556,23 @@ export class FortuneController {
     const dayElement = this.getElementFromStem(dayMaster);
     
     // AIアドバイスが構造化されているか確認
-    const aiGeneratedAdvice = typeof fortune.advice === 'object' ? fortune.advice : null;
+    let aiGeneratedAdvice = fortune.aiGeneratedAdvice;
+    
+    // aiGeneratedAdviceが存在しない場合に、adviceがオブジェクトならそれを使用（後方互換性）
+    if (!aiGeneratedAdvice && typeof fortune.advice === 'object') {
+      aiGeneratedAdvice = fortune.advice;
+    }
+    
+    // AIアドバイスのログ出力
+    console.log('[FortuneController.formatFortuneResponse] AIGeneratedAdvice確認:', {
+      adviceType: typeof fortune.advice,
+      hasAIGeneratedAdvice: !!fortune.aiGeneratedAdvice,
+      isObject: typeof fortune.advice === 'object',
+      hasAdvice: !!fortune.advice,
+      summary: aiGeneratedAdvice?.summary ? aiGeneratedAdvice.summary.substring(0, 30) + '...' : null,
+      luckyPoints: aiGeneratedAdvice?.luckyPoints ? 'あり' : 'なし',
+      aiGeneratedAdviceType: typeof aiGeneratedAdvice
+    });
     
     // ドメインモデルからフロントエンド用のレスポンス形式に変換
     return {
@@ -575,7 +591,21 @@ export class FortuneController {
       },
       advice: typeof fortune.advice === 'string' ? fortune.advice : 'アドバイスは構造化形式で提供されています',
       // 新しい構造化されたアドバイス形式
-      aiGeneratedAdvice: aiGeneratedAdvice,
+      // aiGeneratedAdviceが存在しない場合でも、常にオブジェクトを返す（nullは返さない）
+      aiGeneratedAdvice: {
+        summary: aiGeneratedAdvice?.summary || (typeof fortune.advice === 'string' ? fortune.advice : "本日は五行のエネルギーを活かして行動しましょう。"),
+        personalAdvice: aiGeneratedAdvice?.personalAdvice || "個人目標に向けて集中して取り組みましょう。",
+        teamAdvice: aiGeneratedAdvice?.teamAdvice || "チームとの連携を大切にしてください。",
+        luckyPoints: {
+          color: aiGeneratedAdvice?.luckyPoints?.color || "赤",
+          items: (aiGeneratedAdvice?.luckyPoints && 
+                 Array.isArray(aiGeneratedAdvice.luckyPoints.items) && 
+                 aiGeneratedAdvice.luckyPoints.items.length > 0) ? 
+                  aiGeneratedAdvice.luckyPoints.items : ["鈴", "明るい色の文房具"],
+          number: aiGeneratedAdvice?.luckyPoints?.number || 8,
+          action: aiGeneratedAdvice?.luckyPoints?.action || "朝日を浴びる"
+        }
+      },
       personalGoal: fortune.personalGoal || '',
       teamGoal: fortune.teamGoal || '',
       luckyItems: fortune.luckyItems || [],

@@ -4,9 +4,9 @@
  */
 require('dotenv').config({ path: './backend/.env' });
 const mongoose = require('mongoose');
-const { container } = require('./backend/src/infrastructure/di/container');
-require('./backend/src/domain/models/fortune.model');
-require('./backend/src/domain/models/user.model');
+const { container } = require('./backend/dist/infrastructure/di/container');
+require('./backend/dist/domain/models/fortune.model');
+require('./backend/dist/domain/models/user.model');
 
 // DailyFortuneServiceのインスタンスをテスト
 async function testDailyFortuneService() {

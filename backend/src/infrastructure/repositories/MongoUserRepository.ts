@@ -59,6 +59,7 @@ export class MongoUserRepository extends BaseRepository<User, string> implements
       doc.birthLocation,
       doc.profilePicture,
       doc.lastLoginAt,
+      undefined, // personalGoal
       doc.createdAt,
       doc.updatedAt
     );

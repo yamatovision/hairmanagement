@@ -74,6 +74,12 @@ export interface User extends Entity<string> {
   password?: string;
 
   /**
+   * 個人目標
+   * ユーザーが設定した個人的な目標
+   */
+  personalGoal?: string;
+
+  /**
    * パスワードを検証する
    * @param plainPassword 平文パスワード
    * @returns 一致する場合はtrue
@@ -110,4 +116,10 @@ export interface User extends Entity<string> {
    * @returns 更新されたユーザーエンティティ
    */
   withUpdatedSajuProfile(sajuProfile: SajuProfile): User;
+
+  /**
+   * JSONオブジェクトに変換する
+   * @returns JSONオブジェクト
+   */
+  toJSON(): Record<string, any>;
 }

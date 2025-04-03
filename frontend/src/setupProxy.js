@@ -19,7 +19,7 @@ module.exports = function(app) {
     createProxyMiddleware({
       target: 'http://localhost:5001',
       changeOrigin: true,
-      ws: true, // WebSocketサポート
+      ws: false, // WebSocketサポートを無効化
       pathRewrite: {
         '^/__server_sent_events__': '/__server_sent_events__', 
       },

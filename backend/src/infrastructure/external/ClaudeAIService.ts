@@ -65,30 +65,90 @@ export class ClaudeAIService {
         
         // レスポンスの解析と詳細ログ出力
         console.log('ClaudeAIService: APIレスポンス受信:', {
+          status: response.status,
           hasData: !!response.data,
+          dataKeys: Object.keys(response.data || {}),
           hasContent: !!(response.data && response.data.content),
-          contentLength: response.data && response.data.content ? response.data.content.length : 0
+          contentType: response.data && response.data.content ? typeof response.data.content : 'undefined',
+          isArray: response.data && response.data.content ? Array.isArray(response.data.content) : false,
+          contentLength: response.data && response.data.content ? 
+            (Array.isArray(response.data.content) ? response.data.content.length : 'not an array') : 0
         });
         
-        if (response.data && response.data.content && response.data.content.length > 0) {
+        // 完全なレスポンスデータのログを出力
+        console.log('ClaudeAIService: 完全なレスポンスデータ（最初の1000文字）:',
+          JSON.stringify(response.data).substring(0, 1000));
+        
+        if (response.data) {
           console.log('ClaudeAIService: APIレスポンス正常受信');
-          // レスポンステキストをJSONオブジェクトとしてパースを試みる
-          const responseText = response.data.content[0].text;
           
-          try {
-            // JSON形式かどうかチェック
-            if (responseText.trim().startsWith('{') && responseText.trim().endsWith('}')) {
-              console.log('ClaudeAIService: JSONレスポンスをパース試行');
-              const parsedJson = JSON.parse(responseText);
-              console.log('ClaudeAIService: JSONとしてパース成功 - オブジェクトとして返します');
-              return parsedJson;
+          // Claude API v2形式
+          if (response.data.content && Array.isArray(response.data.content) && response.data.content.length > 0) {
+            // contentがある場合の処理（Claude API形式）
+            console.log('ClaudeAIService: Claude API v2形式のレスポンスを検出');
+            
+            // contentの各項目を分析
+            response.data.content.forEach((item, index) => {
+              console.log(`ClaudeAIService: content[${index}]:`, {
+                type: item.type,
+                hasText: !!item.text,
+                textLength: item.text ? item.text.length : 0,
+                textStart: item.text ? item.text.substring(0, 50) + '...' : 'なし'
+              });
+            });
+            
+            // テキスト部分を取得
+            const responseText = response.data.content[0].text;
+            console.log('ClaudeAIService: レスポンステキスト（最初の100文字）:', 
+              responseText.substring(0, 100) + '...');
+            
+            try {
+              // JSON形式かどうかチェック
+              if (responseText.trim().startsWith('{') && responseText.trim().endsWith('}')) {
+                console.log('ClaudeAIService: JSONレスポンスをパース試行');
+                const parsedJson = JSON.parse(responseText);
+                console.log('ClaudeAIService: JSONとしてパース成功 - オブジェクトとして返します', {
+                  hasAIGeneratedAdvice: true,
+                  fields: Object.keys(parsedJson),
+                  hasLuckyPoints: !!parsedJson.luckyPoints,
+                  luckyPointsFields: parsedJson.luckyPoints ? Object.keys(parsedJson.luckyPoints) : 'なし'
+                });
+                return parsedJson;
+              }
+            } catch (parseError) {
+              console.log('ClaudeAIService: JSONパース失敗 - テキストとして処理します', parseError.message);
             }
-          } catch (parseError) {
-            console.log('ClaudeAIService: JSONパース失敗 - テキストとして処理します');
+            
+            // 通常のテキストとして返す
+            return responseText;
+          } 
+          // 他のAPIレスポンス形式の可能性を考慮
+          else if (response.data.text || response.data.message || response.data.output) {
+            // 別の既知のAPI形式の処理
+            const responseText = response.data.text || response.data.message || response.data.output || '';
+            console.log('ClaudeAIService: 代替APIレスポンス形式のテキストを検出', {
+              length: responseText.length,
+              start: responseText.substring(0, 50) + '...'
+            });
+            
+            try {
+              // JSON形式かどうかチェック
+              if (responseText.trim().startsWith('{') && responseText.trim().endsWith('}')) {
+                const parsedJson = JSON.parse(responseText);
+                console.log('ClaudeAIService: 代替形式からJSONをパース成功');
+                return parsedJson;
+              }
+            } catch (parseError) {
+              console.log('ClaudeAIService: 代替形式からのJSONパース失敗');
+            }
+            
+            return responseText;
+          } 
+          // 未知の形式の処理
+          else {
+            console.log('ClaudeAIService: 不明なレスポンス形式 - 完全なレスポンスを返します');
+            return response.data;
           }
-          
-          // 通常のテキストとして返す
-          return responseText;
         } else {
           console.error('ClaudeAIService: 予期しないAPIレスポンス形式:', response.data);
           throw new Error('意図しないAPIレスポンス形式');

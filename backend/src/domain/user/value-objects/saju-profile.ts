@@ -10,6 +10,7 @@ export interface Pillar {
   fullStemBranch: string;
   hiddenStems?: string[]; // 蔵干（地支に隠れた天干）
   fortune?: string; // 十二運星
+  branchTenGod?: string; // 地支の十神関係
 }
 
 export interface FourPillars {

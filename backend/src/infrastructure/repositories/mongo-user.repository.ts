@@ -63,8 +63,9 @@ export class MongoUserRepository extends MongoRepositoryBase<User, string> imple
       doc.birthLocation, // 出生地
       doc.profilePicture, // プロフィール画像
       doc.lastLoginAt ? new Date(doc.lastLoginAt) : undefined, // 最終ログイン日時
-      doc.createdAt ? new Date(doc.createdAt) : undefined, // 作成日時
-      doc.updatedAt ? new Date(doc.updatedAt) : undefined // 更新日時
+      doc.personalGoal, // 個人目標
+      doc.createdAt instanceof Date ? doc.createdAt : new Date(doc.createdAt || Date.now()), // 作成日時
+      doc.updatedAt instanceof Date ? doc.updatedAt : new Date(doc.updatedAt || Date.now()) // 更新日時
     );
   }
 
@@ -179,7 +180,7 @@ export class MongoUserRepository extends MongoRepositoryBase<User, string> imple
   async updateLastLogin(userId: string, loginTime: Date): Promise<boolean> {
     const result = await this.getModel().findByIdAndUpdate(
       userId,
-      { lastLoginAt: loginTime.toISOString() }
+      { lastLoginAt: loginTime instanceof Date ? loginTime : new Date(loginTime) }
     ).exec();
     
     return result !== null;

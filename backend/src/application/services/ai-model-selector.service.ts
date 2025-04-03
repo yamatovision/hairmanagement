@@ -82,6 +82,16 @@ export class AiModelSelectorService {
   }
   
   /**
+   * 運勢生成用のAIモデルを選択する
+   * サブスクリプションタイプに依存せずに最適なモデルを返す
+   * @returns モデルタイプ
+   */
+  async selectModelForFortune(): Promise<AiModelType> {
+    // 運勢生成には常に高品質なモデルを使用
+    return AiModelType.SONNET;
+  }
+  
+  /**
    * 使用タイプに基づくデフォルトモデルを返す
    * @param usageType 使用タイプ
    * @returns モデルタイプ
