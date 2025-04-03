@@ -28,14 +28,14 @@ import {
   Person as PersonIcon,
   Groups as GroupsIcon,
   Visibility as VisibilityIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
+  ExpandMore as _ExpandMoreIcon,  // 未使用
+  ExpandLess as _ExpandLessIcon,  // 未使用
   TipsAndUpdates as TipsIcon
 } from '@mui/icons-material';
 import { marked } from 'marked';
 
 // 型定義は型チェックのために参照しているため明示的にインポート
-import type { IFortune } from '../../types/models';
+import type { IFortune as _IFortune } from '../../types/models'; // 未使用
 import { useFortune } from '../../hooks/useFortune';
 
 interface DailyFortuneProps {
@@ -94,7 +94,7 @@ const getLuckLevelText = (score: number): string => {
   return '厳しい';
 };
 
-const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
+const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail: _onClickViewDetail }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { dailyFortune, loading, error, fetchDailyFortune } = useFortune();
@@ -112,7 +112,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
   }, [dailyFortune, scoreAnimated]);
 
   // 詳細表示の開閉を切り替え
-  const toggleExpanded = () => {
+  const _toggleExpanded = () => {
     setExpanded(!expanded);
   };
 
@@ -615,6 +615,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
             </Typography>
             
             <Box 
+              component="div"
               sx={{ 
                 p: 2, 
                 bgcolor: theme.palette.grey[50], 
@@ -650,7 +651,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
                 }
               }}
               // マークダウンをHTMLに変換して挿入
-              dangerouslySetInnerHTML={{ __html: marked.parse(aiGeneratedAdvice.advice) }}
+              dangerouslySetInnerHTML={{ __html: marked.parse(aiGeneratedAdvice.advice).toString() }}
             />
           </Box>
         )}
@@ -663,71 +664,7 @@ const DailyFortune: React.FC<DailyFortuneProps> = ({ onClickViewDetail }) => {
         {/* 拡張可能なコンテンツ */}
         {expanded && (
           <>
-            {/* 目標へのアドバイス */}
-            <Box sx={{ mb: 3 }}>
-              {/* 個人目標 */}
-              <Paper 
-                elevation={1} 
-                sx={{ 
-                  p: 3, 
-                  mb: 2, 
-                  borderRadius: 2, 
-                  bgcolor: theme.palette.grey[100],
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 16px rgba(0,0,0,0.1)'
-                  }
-                }}
-              >
-                <Typography sx={{ 
-                  fontWeight: 600, 
-                  mb: 1.5, 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  color: theme.palette.primary.main
-                }}>
-                  <PersonIcon sx={{ mr: 1.5 }} />
-                  個人目標へのアドバイス
-                </Typography>
-                <Typography variant="body1">
-                  個人目標「{personalGoal}」に向けて、今日は特に良い日です。
-                  {sajuData.dayMaster}（{mainElement}）の持つ鋭さと明晰さは、AIシステムの論理構造を見極めるのに最適です。
-                  直感的なひらめきを大切に、システムの「骨格」となる部分に焦点を当て、余分な要素を削ぎ落としていきましょう。
-                </Typography>
-              </Paper>
-
-              {/* チーム目標 */}
-              <Paper 
-                elevation={1} 
-                sx={{ 
-                  p: 3, 
-                  borderRadius: 2, 
-                  bgcolor: theme.palette.grey[100],
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 16px rgba(0,0,0,0.1)'
-                  }
-                }}
-              >
-                <Typography sx={{ 
-                  fontWeight: 600, 
-                  mb: 1.5, 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  color: theme.palette.primary.main
-                }}>
-                  <GroupsIcon sx={{ mr: 1.5 }} />
-                  チーム目標へのアドバイス
-                </Typography>
-                <Typography variant="body1">
-                  チーム目標「{teamGoal}」のため、今日はチーム内での役割分担を明確にし、
-                  バイアウト計画の具体的なタイムラインを設定するのに最適な時期です。
-                  特に、財務面の詳細な検証と、戦略的な折衝ポイントを見極めることに注力すると良い結果につながります。
-                </Typography>
-              </Paper>
-            </Box>
+            {/* 目標へのアドバイス - 詳細アドバイスに統合したため削除 */}
 
             {/* AIアシスタントへの相談ボタン */}
             <Box sx={{ textAlign: 'center', mt: 4, mb: 2 }}>
