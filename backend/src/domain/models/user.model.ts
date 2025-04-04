@@ -107,6 +107,7 @@ export interface IUserDocument extends mongoose.Document {
     secondaryElement?: string;
     yinYang?: string;
     tenGods?: Map<string, string>;
+    branchTenGods?: Map<string, string>; // 地支十神関係を追加
   };
   
   // 通知設定
@@ -294,6 +295,10 @@ const userSchema: Schema = new Schema(
         enum: ['陰', '陽']
       },
       tenGods: {
+        type: Map,
+        of: String
+      },
+      branchTenGods: {
         type: Map,
         of: String
       }
