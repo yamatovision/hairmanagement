@@ -365,19 +365,47 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
       
       // 2. 次に会話からメッセージ履歴を取得（初期メッセージがある場合はそれも含まれる）
       if (conversation.messages && conversation.messages.length > 0) {
-        apiMessages = conversation.messages.map(msg => ({
+        // システムメッセージを保持するために、完全な置き換えではなく追加に変更
+        const conversationMessages = conversation.messages.map(msg => ({
           role: msg.role === 'user' ? 'user' : 'assistant',
           content: msg.content
         }));
-        console.log(`会話からのメッセージ ${apiMessages.length}件を会話履歴に追加します（システムメッセージは別途追加）`);
+        
+        // 既にシステムメッセージが含まれているかチェック
+        const hasSystemMessage = apiMessages.some(msg => msg.role === 'system');
+        
+        if (hasSystemMessage) {
+          // システムメッセージを保持しつつ、会話メッセージを追加
+          const systemMessages = apiMessages.filter(msg => msg.role === 'system');
+          apiMessages = [...systemMessages, ...conversationMessages];
+          console.log(`システムメッセージを保持しつつ、会話からのメッセージ ${conversationMessages.length}件を追加しました`);
+        } else {
+          // システムメッセージがなければ単に会話メッセージを使用
+          apiMessages = conversationMessages;
+          console.log(`会話からのメッセージ ${conversationMessages.length}件を会話履歴に追加します`);
+        }
       }
       // 3. 前のメッセージ（フロントエンドから渡されたもの）がある場合は追加
       else if (previousMessages && Array.isArray(previousMessages) && previousMessages.length > 0) {
-        apiMessages = previousMessages.map(msg => ({
+        // システムメッセージを保持するために、完全な置き換えではなく追加に変更
+        const prevMessages = previousMessages.map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.content
         }));
-        console.log(`前のメッセージ ${apiMessages.length}件を会話履歴に追加します（システムメッセージは別途追加）`);
+        
+        // 既にシステムメッセージが含まれているかチェック
+        const hasSystemMessage = apiMessages.some(msg => msg.role === 'system');
+        
+        if (hasSystemMessage) {
+          // システムメッセージを保持しつつ、前のメッセージを追加
+          const systemMessages = apiMessages.filter(msg => msg.role === 'system');
+          apiMessages = [...systemMessages, ...prevMessages];
+          console.log(`システムメッセージを保持しつつ、前のメッセージ ${prevMessages.length}件を追加しました`);
+        } else {
+          // システムメッセージがなければ単に前のメッセージを使用
+          apiMessages = prevMessages;
+          console.log(`前のメッセージ ${prevMessages.length}件を会話履歴に追加します`);
+        }
       }
       
       // 現在のメッセージを会話に追加
@@ -397,9 +425,38 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
           id: messageId // 明示的にIDを設定
         });
         
-        // APIメッセージには会話からメッセージを追加済みなので、
-        // フロントエンドから送信されたメッセージのみを追加
+        // フィルタリング: 初期メッセージと現在のメッセージが同一の場合は初期メッセージを削除
+        // これにより「今日の運勢情報:...」と実際のユーザーメッセージの重複を防止
+        const initialContentPattern = /今日の運勢情報[\s\S]*上記の情報を踏まえて/;
+        
+        if (initialContentPattern.test(message)) {
+          // 現在のメッセージが初期メッセージと同じパターンの場合、初期メッセージを削除
+          console.log('⚠️ 初期メッセージと重複するユーザーメッセージを検出しました。初期メッセージを削除します');
+          apiMessages = apiMessages.filter(msg => 
+            msg.role !== 'user' || !initialContentPattern.test(msg.content)
+          );
+        }
+        
+        // フロントエンドから送信されたメッセージを追加
         apiMessages.push({ role: 'user', content: message });
+        
+        // APIに送信されるメッセージ構成のデバッグログ
+        console.log('===== APIに送信されるメッセージ構成 =====');
+        console.log(`メッセージ総数: ${apiMessages.length}`);
+        console.log('システムメッセージの有無:', apiMessages.some(msg => msg.role === 'system') ? 'あり ✓' : 'なし ✗');
+        
+        // システムメッセージの内容を表示
+        const sysMsg = apiMessages.find(msg => msg.role === 'system');
+        if (sysMsg) {
+          console.log('システムメッセージ内容:');
+          console.log(sysMsg.content.substring(0, 200) + '...');
+        }
+        
+        // 全メッセージの役割を表示
+        apiMessages.forEach((msg, idx) => {
+          console.log(`[${idx}] ${msg.role}: ${msg.content.substring(0, 50)}...`);
+        });
+        console.log('======================================');
         
         // ストリーミングモードの場合
         if (useStreaming) {
@@ -426,14 +483,30 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
           
           try {
             // Claude APIにリクエストを送信（ストリーミングモード）
+            
+            // システムメッセージを抽出
+            const systemMessage = apiMessages.find(msg => msg.role === 'system');
+            const userAssistantMessages = apiMessages.filter(msg => msg.role !== 'system');
+            
+            // API V2に合わせたリクエスト形式に変換
+            const requestBody = {
+              model: CLAUDE_MODEL,
+              max_tokens: 1000,
+              stream: true, // ストリーミングを有効化
+              messages: userAssistantMessages
+            };
+            
+            // システムメッセージがあればトップレベルパラメータとして追加
+            if (systemMessage) {
+              requestBody.system = systemMessage.content;
+              console.log('システムメッセージをトップレベルパラメータに移動しました');
+            }
+            
+            console.log('リクエスト内容（ストリーミングモード）:', JSON.stringify(requestBody, null, 2));
+            
             const response = await axios.post(
               CLAUDE_API_URL,
-              {
-                model: CLAUDE_MODEL,
-                max_tokens: 1000,
-                stream: true, // ストリーミングを有効化
-                messages: apiMessages
-              },
+              requestBody,
               {
                 headers: {
                   'x-api-key': CLAUDE_API_KEY,
@@ -528,9 +601,46 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
             
           } catch (streamError) {
             console.error('ストリーミングリクエストエラー:', streamError);
+            
+            // エラーの詳細を取得して表示
+            let errorDetails = 'APIリクエスト中にエラーが発生しました';
+            if (streamError.response) {
+              console.error('エラーステータス:', streamError.response.status);
+              console.error('エラーデータ:', streamError.response.data);
+              
+              // レスポンスボディの安全な読み取り
+              if (streamError.response.data) {
+                try {
+                  let responseBody = '';
+                  
+                  // ストリーム形式かどうかをチェック
+                  if (typeof streamError.response.data.read === 'function') {
+                    const chunk = streamError.response.data.read();
+                    if (chunk !== null) {
+                      responseBody = chunk.toString();
+                    } else {
+                      responseBody = '(空のレスポンスボディ)';
+                    }
+                  } else if (typeof streamError.response.data === 'object') {
+                    // オブジェクト形式の場合はJSONに変換
+                    responseBody = JSON.stringify(streamError.response.data);
+                  } else {
+                    // その他のケース
+                    responseBody = String(streamError.response.data);
+                  }
+                  
+                  console.error('エラーレスポンスボディ:', responseBody);
+                  errorDetails += ` (${streamError.response.status}: ${responseBody})`;
+                } catch (readError) {
+                  console.error('レスポンスボディの読み取りエラー:', readError);
+                }
+              }
+            }
+            
+            // クライアントにエラーを通知
             const errorEvent = {
               success: false,
-              error: 'APIリクエスト中にエラーが発生しました'
+              error: errorDetails
             };
             res.write(`event: error\ndata: ${JSON.stringify(errorEvent)}\n\n`);
             res.end();
@@ -538,13 +648,29 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         } else {
           // 通常モード（ストリーミングなし）
           console.log('通常モードでClaudeAPIにリクエストを送信します...');
+          
+          // システムメッセージを抽出
+          const systemMessage = apiMessages.find(msg => msg.role === 'system');
+          const userAssistantMessages = apiMessages.filter(msg => msg.role !== 'system');
+          
+          // API V2に合わせたリクエスト形式に変換
+          const requestBody = {
+            model: CLAUDE_MODEL,
+            max_tokens: 1000,
+            messages: userAssistantMessages
+          };
+          
+          // システムメッセージがあればトップレベルパラメータとして追加
+          if (systemMessage) {
+            requestBody.system = systemMessage.content;
+            console.log('システムメッセージをトップレベルパラメータに移動しました');
+          }
+          
+          console.log('リクエスト内容（通常モード）:', JSON.stringify(requestBody, null, 2));
+          
           const response = await axios.post(
             CLAUDE_API_URL,
-            {
-              model: CLAUDE_MODEL,
-              max_tokens: 1000,
-              messages: apiMessages
-            },
+            requestBody,
             {
               headers: {
                 'x-api-key': CLAUDE_API_KEY,
