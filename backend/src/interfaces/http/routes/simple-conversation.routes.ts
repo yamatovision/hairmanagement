@@ -4,6 +4,7 @@ import axios from 'axios';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import mongoose from 'mongoose';
 import ConversationModel from '../../../domain/models/conversation.model';
+import { SystemMessageBuilderService } from '../../../application/services/system-message-builder.service';
 
 /**
  * 直接会話APIルート - 履歴を保存するシンプルな会話
@@ -290,8 +291,9 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
               console.warn('当日の干支情報取得エラー:', calendarError.message);
             }
             
-            // 初期メッセージの構築
-            initialMessage = createFortuneInitialMessage(user, todayCalendarInfo);
+            // SystemMessageBuilderServiceを使用して初期メッセージを構築
+            const systemMessageBuilder = container.resolve<SystemMessageBuilderService>('SystemMessageBuilderService');
+            initialMessage = systemMessageBuilder.createFortuneInitialMessage(user, todayCalendarInfo);
             console.log('運勢初期メッセージを作成しました（先頭100文字）:', initialMessage.substring(0, 100));
           }
         } catch (userInfoError) {
@@ -319,83 +321,63 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
             id: initialMessageId
           });
           console.log('初期運勢メッセージをシステムユーザーとして追加しました');
+          console.log('⚠️注意: これは単なる初期メッセージであり、詳細な地支十神情報を含むシステムメッセージとは異なります');
+          console.log('⚠️詳細な四柱推命情報を含むシステムメッセージはdirect-chat.tsで構築されます');
         }
       }
       
-      /**
-       * 運勢タイプの会話用の初期メッセージを生成する
-       */
-      function createFortuneInitialMessage(user, calendarInfo) {
-        // ユーザーの運勢情報
-        const todayFortune = user.todayFortune || {};
-        const sajuProfile = user.sajuProfile || {};
-        const personalGoal = user.personalGoal || '';
-        
-        // チーム情報 (現状は空)
-        const teamGoal = '';
-        
-        // 要素が存在しない場合のフォールバック
-        const mainElement = todayFortune.mainElement || sajuProfile.mainElement || '木';
-        const yinYang = todayFortune.yinYang || sajuProfile.yinYang || '陽';
-        const overallScore = todayFortune.overallScore || 50;
-        const rating = overallScore >= 80 ? '絶好調' : 
-                       overallScore >= 60 ? '好調' : 
-                       overallScore >= 40 ? '普通' : 
-                       overallScore >= 20 ? '要注意' : '厳しい';
-        
-        // アドバイス情報
-        const advice = todayFortune.advice || '';
-        const aiGeneratedAdvice = todayFortune.aiGeneratedAdvice?.advice || '';
-        
-        // 日次カレンダー情報
-        const today = new Date();
-        const dayElement = calendarInfo?.mainElement || '';
-        const dayYinYang = calendarInfo?.dayYinYang || '';
-        const dayPillar = calendarInfo?.dayPillar 
-                         ? `${calendarInfo.dayPillar.stem}${calendarInfo.dayPillar.branch}` 
-                         : '';
-        
-        // メッセージを構築
-        return `
-今日の運勢情報:
-五行属性: ${mainElement}の${yinYang}
-運勢スコア: ${overallScore}/100点 (${rating})
-${dayPillar ? `今日の干支: ${dayPillar}` : ''}
-${dayElement ? `今日の五行: ${dayElement}の${dayYinYang}` : ''}
-
-【運勢アドバイス】
-${advice}
-
-${aiGeneratedAdvice ? `【詳細アドバイス】
-${aiGeneratedAdvice.length > 300 ? aiGeneratedAdvice.substring(0, 300) + '...' : aiGeneratedAdvice}` : ''}
-
-${personalGoal ? `【個人目標】
-${personalGoal}` : ''}
-
-${teamGoal ? `【チーム目標】
-${teamGoal}` : ''}
-
-上記の情報を踏まえて、今日一日をどのように過ごすべきか相談したいです。`;
-      }
+      // 初期メッセージの生成機能はSystemMessageBuilderServiceに移行しました
       
       // Claude APIに送信するメッセージを準備
       let apiMessages = [];
       
-      // 会話からメッセージ履歴を取得（初期メッセージがある場合はそれも含まれる）
+      // 1. 最初にシステムメッセージを準備
+      if (type === 'fortune' && userId) {
+        console.log('四柱推命システムメッセージを準備中...');
+        
+        try {
+          // SystemMessageBuilderServiceを使用してシステムメッセージを構築
+          const systemMessageBuilder = container.resolve<SystemMessageBuilderService>('SystemMessageBuilderService');
+          const context = await systemMessageBuilder.buildFortuneContextFromUserId(userId);
+          
+          if (context) {
+            // システムメッセージを生成
+            const systemMessageContent = systemMessageBuilder.buildSystemMessage(context);
+            
+            // システムメッセージをメッセージリストの先頭に追加
+            apiMessages.unshift({
+              role: 'system',
+              content: systemMessageContent
+            });
+            
+            console.log('四柱推命システムメッセージを追加しました');
+            console.log('===== システムメッセージプレビュー =====');
+            console.log(systemMessageContent.substring(0, 200) + '...');
+            console.log('====================================');
+          } else {
+            console.log('四柱推命コンテキストの取得に失敗したため、システムメッセージの追加をスキップします');
+          }
+        } catch (error) {
+          console.error('システムメッセージ構築エラー:', error instanceof Error ? error.message : '不明なエラー');
+          console.log('エラーのため、システムメッセージの追加をスキップします');
+        }
+      }
+      
+      // 2. 次に会話からメッセージ履歴を取得（初期メッセージがある場合はそれも含まれる）
       if (conversation.messages && conversation.messages.length > 0) {
         apiMessages = conversation.messages.map(msg => ({
           role: msg.role === 'user' ? 'user' : 'assistant',
           content: msg.content
         }));
-        console.log(`会話からのメッセージ ${apiMessages.length}件を会話履歴に追加します`);
+        console.log(`会話からのメッセージ ${apiMessages.length}件を会話履歴に追加します（システムメッセージは別途追加）`);
       }
-      // 前のメッセージ（フロントエンドから渡されたもの）がある場合は追加
+      // 3. 前のメッセージ（フロントエンドから渡されたもの）がある場合は追加
       else if (previousMessages && Array.isArray(previousMessages) && previousMessages.length > 0) {
         apiMessages = previousMessages.map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.content
         }));
-        console.log(`前のメッセージ ${apiMessages.length}件を会話履歴に追加します`);
+        console.log(`前のメッセージ ${apiMessages.length}件を会話履歴に追加します（システムメッセージは別途追加）`);
       }
       
       // 現在のメッセージを会話に追加

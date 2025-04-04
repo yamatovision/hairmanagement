@@ -20,6 +20,7 @@ import { MongoFortuneRepository } from '../repositories/MongoFortuneRepository';
 // アプリケーションレイヤー - サービス
 import { ITokenService, JwtTokenService } from '../../application/services/token.service';
 import { ElementalCalculatorService } from '../../application/services/elemental-calculator.service';
+import { SystemMessageBuilderService } from '../../application/services/system-message-builder.service';
 
 // アプリケーションレイヤー - ユースケース
 import { UserAuthenticationUseCase } from '../../application/user/use-cases/user-authentication.use-case';
@@ -231,6 +232,7 @@ export function configureContainer(): void {
   // サービス
   container.register<ITokenService>('ITokenService', { useClass: JwtTokenService });
   container.register('ElementalCalculatorService', { useClass: ElementalCalculatorService });
+  container.register('SystemMessageBuilderService', { useClass: SystemMessageBuilderService });
   
   // 運勢サービスを登録
   try {
