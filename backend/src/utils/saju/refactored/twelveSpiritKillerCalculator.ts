@@ -5,6 +5,8 @@
  * 十二神殺は四柱（年・月・日・時）の干支関係から特定の凶運や障害を示します。
  */
 
+import { TerrestrialBranch } from '../../../shared/types/saju/core';
+
 // 地支の六害関係（互いに害を及ぼす関係にある地支のペア）
 const SIX_HARMS = {
   '子': '未', '丑': '午', '寅': '酉',
@@ -177,10 +179,11 @@ export function isWealthSpirit(
   
   // 日柱を中心とした財関係を確認（日柱の地支に対する財の地支が他の柱に存在するか）
   if (WEALTH_RELATIONSHIPS[dayBranch]) {
-    const wealthBranches = WEALTH_RELATIONSHIPS[dayBranch];
-    if (wealthBranches.includes(yearBranch as any) || 
-        wealthBranches.includes(monthBranch as any) || 
-        wealthBranches.includes(hourBranch as any)) {
+    const wealthBranches = WEALTH_RELATIONSHIPS[dayBranch as keyof typeof WEALTH_RELATIONSHIPS];
+    if (wealthBranches && (
+        wealthBranches.includes(yearBranch as TerrestrialBranch) || 
+        wealthBranches.includes(monthBranch as TerrestrialBranch) || 
+        wealthBranches.includes(hourBranch as TerrestrialBranch))) {
       return true;
     }
   }

@@ -1,0 +1,25 @@
+フェーズ1: データモデル標準化（2日）
+
+  - User.sajuProfileの構造整理（elementalTypeとの統合）
+  - Fortuneモデルの拡張（DailyCalendarInfoとの明示的関連付け）
+  - 十神情報と地支十神情報の表現統一
+
+  フェーズ2: データフロー強化（3日）
+
+  - DailyCalendarInfo生成の自動化
+  - 運勢計算フローの改善（四柱情報の完全活用）
+  - SystemMessageBuilderの強化（四柱情報の完全伝達）
+
+  フェーズ3: システム統合（2日）
+
+  - 会話システムの統一（direct-chatとconversation.controllerの統合）
+  - データアクセス層の標準化
+  - API応答形式の統一
+
+  フェーズ4: テストと検証（2日）
+
+  - ユニットテスト拡充
+  - エンドツーエンドテスト実装
+  - パフォーマンス検証
+
+  総工数: 9日間

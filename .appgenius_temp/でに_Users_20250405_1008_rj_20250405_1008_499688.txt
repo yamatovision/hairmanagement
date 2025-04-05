@@ -1,0 +1,10 @@
+でに /Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/backend/src/domain/user/factories/saju-profile.factory.ts
+  ファイルが作成されていました。先ほど確認したコードを見ると、このファクトリーはすでに実装されていて、以下の機能を提供しています：
+
+  1. createSajuProfile() - プレーンオブジェクトからSajuProfileインスタンスを生成
+  2. cloneSajuProfile() - 既存のSajuProfileをクローンして新しいインスタンスを作成
+  3. fromPlainObject() - JSONやDBから取得したデータを安全にSajuProfileに変換
+
+  また、SajuProfileクラス自体も /Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/backend/src/domain/user/value-objects/saju-profile.ts に定義されています。
+
+  TypeScriptエラーの修正を続けるため、system-message-builder.service.tsのその他の型の問題を修正しましょうか？

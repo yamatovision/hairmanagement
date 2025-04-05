@@ -1,0 +1,42 @@
+ステップ1: tsconfig.jsonの修正（AI担当者Fの指示）
+
+  あなたはTypeScriptリファクタリングプロジェクトのフェーズ0を担当する
+  AI開発者です。まず最初にtsconfig.jsonの設定を修正して、大量発生して
+  いるデコレータ関連のエラーを解消する役割を担います。
+
+  【課題】
+  現在、561個のTypeScriptエラーが発生しており、そのうち多数がデコレー
+  タ関連のエラーです。これはtsconfig.jsonにデコレータサポートの設定が
+  ないことが原因です。
+
+  【主要タスク】
+  1. tsconfig.jsonに以下の設定を追加
+     - experimentalDecorators: true の追加
+     - emitDecoratorMetadata: true の追加
+     - エラーが多発しているフォルダのいくつかを一時的にexcludeに追加
+  （段階的に対応するため）
+
+  2. 優先対応ファイルの修正
+     - saju-calculator.service.tsのFortuneMap型問題修正
+     - デコレータが最も多用されているサービス層の修正
+
+  【修正例】
+  ```json
+  {
+    "compilerOptions": {
+      // 既存の設定...
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
+    },
+    "exclude": [
+      "node_modules",
+      "dist",
+      // 一時的に除外して段階的に対応
+      "src/tests",
+      "src/utils/saju/refactored/tests"
+    ]
+  }
+
+  作業完了後、再度TypeScriptエラー数を確認し、デコレータ関連のエラー
+  が解消されたことを確認してください。その後、優先度の高いsaju-calcul
+  ator.service.tsのFortuneMap型問題に対応してください。

@@ -17,13 +17,13 @@ class MongoSubscriptionRepository extends BaseRepository<Subscription, string> i
     // モデルがロードされているか確認
     let model: Model<ISubscriptionDocument>;
     if (mongoose.models.Subscription) {
-      model = mongoose.model('Subscription');
+      model = mongoose.model<ISubscriptionDocument>('Subscription');
     } else {
       // モデルが未登録の場合は明示的に読み込む
       require('../../domain/models/subscription.model');
-      model = mongoose.model('Subscription');
+      model = mongoose.model<ISubscriptionDocument>('Subscription');
     }
-    super(model as Model<mongoose.Document>);
+    super(model as unknown as Model<mongoose.Document>);
   }
 
   /**

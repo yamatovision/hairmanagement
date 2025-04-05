@@ -31,7 +31,7 @@ export interface SajuResult {
     month: number;
     day: number;
     isLeapMonth: boolean;
-  };
+  } | null;
   tenGods: Record<string, string>;
   elementProfile: {
     mainElement: string;
@@ -554,7 +554,7 @@ export class SajuEngine {
       // 12. 結果を返す
       return {
         fourPillars,
-        lunarDate: processedDateTime.lunarDate,
+        lunarDate: processedDateTime.lunarDate || undefined,
         tenGods,
         elementProfile,
         processedDateTime,

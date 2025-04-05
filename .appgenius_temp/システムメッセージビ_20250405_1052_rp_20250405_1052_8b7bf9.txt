@@ -1,0 +1,25 @@
+システムメッセージビルダーのキャスト問題は修正できましたが、まだsaj
+  u-calculator.serviceにおけるFortuneMapの問題が残っています。また、
+  テストやリファクタリング中のファイルにも多くのエラーがありますが、
+  それらは別途対応が必要です。
+
+  まとめると、以下の修正を行いました：
+
+  1. result.util.tsを追加して、型安全な結果ハンドリングをサポート
+  2. shared/types/models.tsのIFortuneインターフェースにaiGeneratedAdv
+  iceとsajuDataプロパティを追加
+  3. shared/types/saju/index.tsにFortuneMap型を定義
+  4. shared/types/saju/core.tsのTenGodType型を拡張して互換性を向上
+  5. system-message-builder.service.tsの不適切なキャストを削除
+
+  まだ以下の問題が残っています：
+
+  1. saju-calculator.service.tsにおけるRecord<string,
+  string>からFortuneMapへの変換問題
+  2.
+  デコレータ関連の問題（現在のtsconfig.jsonの設定で発生している問題）
+  3. その他、テストファイルや開発中のファイルのエラー
+
+  これらの問題を解決するためには、さらなる修正が必要です。特にFortune
+  Map型の問題は、レコードから適切な型へ変換するアダプターを実装する必
+  要があります。

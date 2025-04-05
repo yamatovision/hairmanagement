@@ -1,0 +1,61 @@
+{
+  "sajuProfile": {
+    "fourPillars": {
+      "yearPillar": {
+        "stem": "丙",
+        "branch": "寅",
+        "fullStemBranch": "丙寅",
+        "hiddenStems": [
+          "甲",
+          "丙",
+          "戊"
+        ]
+      },
+      "monthPillar": {
+        "stem": "己",
+        "branch": "丑",
+        "fullStemBranch": "己丑",
+        "hiddenStems": [
+          "己",
+          "辛",
+          "癸"
+        ]
+      },
+      "dayPillar": {
+        "stem": "甲",
+        "branch": "午",
+        "fullStemBranch": "甲午",
+        "hiddenStems": [
+          "丙",
+          "己",
+          "庚"
+        ]
+      },
+      "hourPillar": {
+        "stem": "壬",
+        "branch": "申",
+        "fullStemBranch": "壬申",
+        "hiddenStems": [
+          "庚",
+          "壬",
+          "戊"
+        ]
+      }
+    },
+    "mainElement": "木",
+    "secondaryElement": "火",
+    "yinYang": "陽",
+    "tenGods": {
+      "年柱": "偏印",
+      "月柱": "劫財",
+      "日柱": "日主",
+      "時柱": "食神"
+    },
+    "branchTenGods": {
+      "年柱地支": "比肩",
+      "月柱地支": "財星",
+      "日柱地支": "官星",
+      "時柱地支": "傷官"
+    }
+  }
+}

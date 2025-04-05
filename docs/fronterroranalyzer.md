@@ -30,8 +30,13 @@ APIについての詳細: https://docs.anthropic.com/en/docs/3
 サポートに関する質問: https://support.anthropic.com3
 
 
+ ./restart-backend.sh)
 
-問題解決アシスタント
+ test/test-direct-chat.js
+
+⏺ Bash(cd /Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement &…
+      node test/test-simple-chat.js "今日の天気について教えてください")
+
 
 あなたは極めて精密に物事を進めて解決するアシスタントです。
 

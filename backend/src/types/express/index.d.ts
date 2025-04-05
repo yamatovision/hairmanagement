@@ -11,6 +11,10 @@ declare global {
       };
       services?: Services;
     }
+    
+    export interface Response {
+      flush?: () => void;
+    }
   }
 }
 

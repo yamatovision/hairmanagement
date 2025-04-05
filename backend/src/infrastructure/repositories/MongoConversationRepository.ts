@@ -1,5 +1,5 @@
 import { injectable, inject } from 'tsyringe';
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 import { Conversation } from '../../domain/entities/Conversation';
 import { BaseRepository } from './base/BaseRepository';
 
@@ -22,7 +22,7 @@ export class MongoConversationRepository extends BaseRepository<Conversation, st
   constructor(
     @inject('ConversationModel') model: mongoose.Model<ConversationDocument>
   ) {
-    super(model);
+    super(model as unknown as Model<mongoose.Document>);
   }
 
   /**
@@ -41,7 +41,9 @@ export class MongoConversationRepository extends BaseRepository<Conversation, st
    * @returns 会話エンティティ
    */
   protected toDomainEntity(doc: any): Conversation {
-    if (!doc) return null;
+    if (!doc) {
+      throw new Error('Document is null or undefined');
+    }
     
     const conversation: Conversation = {
       id: doc._id.toString(),

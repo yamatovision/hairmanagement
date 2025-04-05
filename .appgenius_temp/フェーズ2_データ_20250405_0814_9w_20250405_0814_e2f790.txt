@@ -1,0 +1,102 @@
+フェーズ2: データフロー強化 - 実装計画
+
+  主要課題:
+
+  1. システムメッセージビルダーサービスの地支十神情報伝達改善
+  2. 会話システムの統一（direct-chatとconversation-controller）
+
+  実装計画:
+
+  1. システムメッセージビルダーサービスの地支十神情報伝達改善
+
+  対象ファイル: /backend/src/application/services/system-message-builder.service.ts
+
+  現状の問題点:
+  - 地支十神情報が一部不完全に伝達されている
+  - 十神情報の取得と表示が最適化されていない
+
+  改善内容:
+  1. 地支十神情報を正確に抽出し、AIプロンプトに含めるロジックを強化
+  2. SajuDataTransformerとの連携を追加
+  3. システムメッセージのフォーマットを改善
+
+  実装ステップ:
+  1. SystemMessageBuilderServiceにSajuDataTransformerの依存性注入を追加
+  2. buildFortuneMessageメソッドでbranchTenGods情報の取得と処理を改善
+  3. AIシステムプロンプトに地支十神情報を適切にフォーマットして追加
+
+  2. 会話システムの統一（direct-chatとconversation-controller）
+
+  対象ファイル: /backend/src/interfaces/http/controllers/conversation.controller.ts
+
+  現状の問題点:
+  - direct-chatとconversation-controllerが別々に実装されている
+  - 重複するビジネスロジックとデータ処理が存在
+  - 一貫したデータフローが確立されていない
+
+  改善内容:
+  1. コントローラーを統合し、単一のエンドポイントを提供
+  2. SystemMessageBuilderServiceを一貫して使用
+  3. 共通のデータ変換と処理ロジックを実装
+
+  実装ステップ:
+  1. ConversationControllerの既存メソッドの機能分析と整理
+  2. direct-chatの機能をConversationControllerに統合
+  3. 統一されたレスポンス形式の実装
+  4. SajuDataTransformerとSystemMessageBuilderの一貫した使用
+
+  フェーズ3: システム統合 - 実装計画
+
+  主要課題:
+
+  1. 四柱推命データを考慮したプロンプト生成システムの改善
+  2. フロントエンド十神関係表示の最適化
+
+  実装計画:
+
+  1. AI-プロンプト生成サービスの実装
+
+  対象ファイル: /backend/src/application/services/ai-prompt-generation.service.ts (新規作成)
+
+  実装内容:
+  1. 四柱推命データを考慮したプロンプト生成専用のサービス実装
+  2. SystemMessageBuilderServiceとの連携
+  3. 複数タイプのAI対話のためのプロンプトテンプレート最適化
+
+  実装ステップ:
+  1. AIPromptGenerationService クラスの設計と実装
+  2. 3タイプの対話（運勢・チーム・経営）に最適化されたプロンプトテンプレート作成
+  3. 四柱推命データの解析と関連コンテキスト情報の抽出ロジック実装
+  4. DIコンテナへの登録
+
+  2. フロントエンド十神関係表示の最適化
+
+  対象ファイル: /frontend/src/components/team/TeamSajuView.tsx
+
+  実装内容:
+  1. チームメンバー間の十神関係を視覚的に表示するコンポーネント改善
+  2. バックエンドAPIとの連携強化
+  3. 使いやすいUIでの十神関係情報の提示
+
+  実装ステップ:
+  1. バックエンドAPIからの十神関係データ取得処理の改善
+  2. 十神関係の視覚的表現の設計と実装
+  3. インタラクティブな表示機能の追加
+  4. 五行バランス分析結果の表示コンポーネント実装
+
+  実装順序と依存関係:
+
+  1. 最初に取り組む課題:
+    - SystemMessageBuilderServiceの地支十神情報伝達改善
+    - この改善はデータフローの根幹部分であり、他の実装の基盤となる
+  2. 次に取り組む課題:
+    - 会話システムの統一（ConversationController改善）
+    - SystemMessageBuilderServiceの改善を活用する形で実装
+  3. フェーズ3に向けた準備:
+    - AIPromptGenerationServiceの実装
+    - 改善されたSystemMessageBuilderとConversationControllerを基盤として活用
+  4. フロントエンド改善:
+    - バックエンド変更が完了した後にTeamSajuViewの改善に着手
+    - 新しいAPIエンドポイントと連携した形での十神関係表示実装
+
+  この実装計画は、データフローを根本から改善し、サービス間の一貫性と統合を強化することで、四柱推命情報の正確な伝達と活用を実現します。各ステップは論理的な依存関係を考慮し、基盤となる部分から順に改善を進めていきます。

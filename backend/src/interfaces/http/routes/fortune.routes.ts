@@ -34,7 +34,7 @@ export const registerFortuneRoutes = (router: Router): void => {
     fortuneController.getDailyFortune(req, res)
   );
   
-  router.get('/fortune/date/:date', auth, (req, res) => 
+  router.get('/fortune/date/:date([0-9]{4}-[0-9]{2}-[0-9]{2})', auth, (req, res) => 
     fortuneController.getFortuneByDate(req, res)
   );
   

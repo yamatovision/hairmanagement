@@ -961,7 +961,14 @@ function runTests(): void {
   markdownReport += `| 説明 | 期待値 | 計算結果 | 一致 |\n`;
   markdownReport += `|------|--------|---------|------|\n`;
   testResults.forEach(result => {
-    markdownReport += `| ${result.description} | ${result.expected} | ${result.actual} | ${result.matches} |\n`;
+    // 型安全なアクセス
+    const testResult = result as { 
+      description: string; 
+      expected: string; 
+      actual: string; 
+      matches: string 
+    };
+    markdownReport += `| ${testResult.description} | ${testResult.expected} | ${testResult.actual} | ${testResult.matches} |\n`;
   });
   
   markdownReport += `\n## 4. 改善が必要な主な問題点\n\n`;

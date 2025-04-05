@@ -1,0 +1,970 @@
+/**
+ * SystemMessageBuilderサービス
+ * 
+ * 会話タイプに応じたシステムメッセージを構築する責務を持つサービス
+ * 3つの会話タイプ（運勢、チーム、経営）に対応したメッセージビルド機能を提供
+ * 初期メッセージの生成機能も含む
+ * 
+ * 作成日: 2025/04/04
+ * 更新日: 2025/04/05 - 型安全性向上のためのインターフェースを追加
+ */
+import { injectable, inject } from 'tsyringe';
+import { IUserRepository } from '../../domain/repositories/IUserRepository';
+import { IFortuneRepository } from '../../domain/repositories/IFortuneRepository';
+import { ITeamRepository } from '../../domain/repositories/ITeamRepository';
+import { SajuDataTransformer } from './saju-data-transformer.service';
+import mongoose from 'mongoose';
+import { createSajuProfile } from '../../domain/user/factories/saju-profile.factory';
+import { User } from '../../domain/entities/User';
+import { Team, TeamMember } from '../../domain/entities/Team';
+import { UserRole } from '../../domain/user/value-objects/user-role';
+import { UserStatus } from '../../domain/user/value-objects/user-status';
+import { ElementalProfile } from '../../domain/user/value-objects/elemental-profile';
+import { SajuProfile } from '../../domain/user/value-objects/saju-profile';
+import { 
+  ElementType, 
+  YinYangType, 
+  CelestialStem, 
+  PillarType, 
+  TenGodType,
+  TenGodMap
+} from '../../shared/types/saju';
+
+/**
+ * User型のプロパティのみを持つシンプルなインターフェース
+ * エンティティメソッドを持たないため、プレーンオブジェクトとして扱える
+ */
+interface SimpleUser {
+  _id?: string;
+  id?: string;
+  email: string;
+  name: string;
+  birthDate: Date;
+  birthHour?: number;
+  birthLocation?: string;
+  role: UserRole;
+  status: UserStatus;
+  elementalProfile: ElementalProfile;
+  sajuProfile?: SajuProfile;
+  personalGoal?: string;
+  profileImage?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Team型のプロパティのみを持つシンプルなインターフェース
+ * エンティティメソッドを持たないため、プレーンオブジェクトとして扱える
+ */
+interface SimpleTeam {
+  id: string;
+  name: string;
+  description: string;
+  ownerId: string;
+  isActive: boolean;
+  admins: string[];
+  members: TeamMember[];
+  goal: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * システムメッセージコンテキストインターフェース
+ * ビルダーに渡すコンテキスト情報を定義
+ */
+export interface SystemMessageContext {
+  type: 'fortune' | 'team' | 'management';
+  user: {
+    sajuProfile?: any;
+    personalGoal?: string;
+    todayFortune?: any;
+    _id?: string;
+    [key: string]: any;
+  }; // ユーザー情報
+  dailyFortune?: {
+    rating?: string;
+    aiGeneratedAdvice?: {
+      advice?: string;
+    };
+    [key: string]: any;
+  }; // デイリー運勢情報
+  targetMember?: {
+    sajuProfile?: any;
+    name?: string;
+    _id?: string;
+    [key: string]: any;
+  }; // チームメンバー情報（team タイプ用）
+  team?: {
+    name?: string;
+    goal?: string;
+    members?: any[];
+    _id?: string;
+    [key: string]: any;
+  }; // チーム情報（management タイプ用）
+  todayCalendarInfo?: {
+    dayPillar?: {
+      stem?: CelestialStem;
+      branch?: string;
+    };
+    mainElement?: ElementType;
+    yinYang?: YinYangType;
+    dayYinYang?: YinYangType;
+    [key: string]: any;
+  }; // 当日の干支情報
+}
+
+/**
+ * 3つの会話タイプに対応するシステムメッセージを構築するサービス
+ */
+@injectable()
+export class SystemMessageBuilderService {
+  constructor(
+    @inject('IUserRepository') private userRepository: IUserRepository,
+    @inject('IFortuneRepository') private fortuneRepository: IFortuneRepository,
+    @inject('ITeamRepository') private teamRepository: ITeamRepository,
+    private sajuDataTransformer: SajuDataTransformer
+  ) {}
+  
+  // ユーザークラスの型に関するTypeScriptエラーを回避するための型定義
+  private readonly anyType = (obj: any) => obj;
+
+  /**
+   * メインのビルドメソッド - コンテキストに基づいて適切なメッセージを構築
+   * フェーズ2: データ検証とエラーハンドリング強化
+   */
+  public buildSystemMessage(context: SystemMessageContext): string {
+    if (!context) {
+      console.warn('[SystemMessageBuilder] コンテキストがnullまたはundefinedです');
+      return this.buildDefaultMessage();
+    }
+    
+    try {
+      // コンテキストタイプに基づいて適切なメッセージを構築
+      switch (context.type) {
+        case 'fortune':
+          if (!context.user) {
+            console.warn('[SystemMessageBuilder] ユーザー情報がないため、デフォルトの運勢メッセージを使用します');
+          }
+          return this.buildFortuneMessage(context.user, context.dailyFortune, context.todayCalendarInfo);
+          
+        case 'team':
+          if (!context.user || !context.targetMember) {
+            console.warn('[SystemMessageBuilder] ユーザーまたはターゲットメンバー情報が不足しています');
+            if (!context.user) console.warn('- ユーザー情報なし');
+            if (!context.targetMember) console.warn('- ターゲットメンバー情報なし');
+            
+            return 'チームに関する相談を受け付けます。正確な相互関係情報を提供するには、両ユーザーの情報が必要です。';
+          }
+          return this.buildTeamMessage(context.user, context.targetMember);
+          
+        case 'management':
+          if (!context.user || !context.team) {
+            console.warn('[SystemMessageBuilder] ユーザーまたはチーム情報が不足しています');
+            if (!context.user) console.warn('- ユーザー情報なし');
+            if (!context.team) console.warn('- チーム情報なし');
+            
+            return 'チーム経営と管理に関する相談を受け付けます。より詳細な分析には、チーム情報が必要です。';
+          }
+          return this.buildManagementMessage(context.user, context.team);
+          
+        default:
+          console.warn(`[SystemMessageBuilder] 未知のコンテキストタイプ: ${context.type}`);
+          return this.buildDefaultMessage();
+      }
+    } catch (error) {
+      console.error('[SystemMessageBuilder] システムメッセージ構築エラー:', error);
+      if (error instanceof Error) {
+        console.error('エラー詳細:', error.message);
+        console.error('スタックトレース:', error.stack);
+      }
+      
+      // エラー発生時はフォールバックメッセージを返す
+      return 'システムメッセージの構築中にエラーが発生しました。一般的な質問に答えることはできますが、詳細な情報は提供できない場合があります。';
+    }
+  }
+
+  /**
+   * 運勢タイプのシステムメッセージを構築
+   * ユーザーの四柱推命情報（四柱、十神、地支十神など）を含む
+   */
+  private buildFortuneMessage(user: any, fortune: any, todayCalendarInfo?: any): string {
+    // ユーザーが存在しない場合はデフォルトメッセージを返す
+    if (!user) {
+      return '運勢に関する相談を受け付けます。どのようなことでも相談してください。';
+    }
+
+    // システムメッセージの構築
+    let systemMessage = '';
+
+    // 四柱推命プロファイルが存在する場合は詳細情報を含める
+    if (user.sajuProfile && user.sajuProfile.fourPillars) {
+      const { fourPillars, mainElement, yinYang, tenGods } = user.sajuProfile;
+      
+      // 地支十神情報の取得（SajuDataTransformer から最適化されたデータ取得）
+      let branchTenGods = user.sajuProfile.branchTenGods;
+      
+      try {
+        // sajuProfile が存在し、branchTenGods が存在しない場合、
+        // またはデータが不完全な場合は SajuDataTransformer で生成
+        if (!branchTenGods || Object.keys(branchTenGods).length === 0) {
+          console.log('[SystemMessageBuilder] 地支十神情報が不足しているため生成します');
+          branchTenGods = this.sajuDataTransformer.extractBranchTenGods(user.sajuProfile);
+        }
+      } catch (error) {
+        console.warn('[SystemMessageBuilder] 地支十神情報生成エラー:', 
+          error instanceof Error ? error.message : '不明なエラー');
+      }
+      
+      // データの存在確認
+      const tenGodsExists = tenGods && Object.keys(tenGods).length > 0;
+      const branchTenGodsExists = branchTenGods && Object.keys(branchTenGods).length > 0;
+      
+      console.log('[SystemMessageBuilder] 十神情報検証:', {
+        tenGodsExists,
+        branchTenGodsExists,
+        tenGodsKeys: tenGodsExists ? Object.keys(tenGods) : [],
+        branchTenGodsKeys: branchTenGodsExists ? Object.keys(branchTenGods) : []
+      });
+      
+      systemMessage = `デイリー運勢に基づく相談を受け付けます。本日の運勢は「${fortune?.rating || '良好'}」です。\n\n`;
+      
+      // 基本情報
+      systemMessage += `【基本情報】\n`;
+      systemMessage += `- 主要五行: ${mainElement || '木'}\n`;
+      systemMessage += `- 陰陽: ${yinYang || '陽'}\n`;
+      
+      // 四柱情報（存在する場合）
+      if (fourPillars) {
+        systemMessage += `\n【四柱】\n`;
+        if (fourPillars.yearPillar) {
+          systemMessage += `- 年柱: ${fourPillars.yearPillar.fullStemBranch || `${fourPillars.yearPillar.stem}${fourPillars.yearPillar.branch}`}\n`;
+        }
+        if (fourPillars.monthPillar) {
+          systemMessage += `- 月柱: ${fourPillars.monthPillar.fullStemBranch || `${fourPillars.monthPillar.stem}${fourPillars.monthPillar.branch}`}\n`;
+        }
+        if (fourPillars.dayPillar) {
+          systemMessage += `- 日柱: ${fourPillars.dayPillar.fullStemBranch || `${fourPillars.dayPillar.stem}${fourPillars.dayPillar.branch}`} (日主)\n`;
+        }
+        if (fourPillars.hourPillar) {
+          systemMessage += `- 時柱: ${fourPillars.hourPillar.fullStemBranch || `${fourPillars.hourPillar.stem}${fourPillars.hourPillar.branch}`}\n`;
+        }
+      }
+      
+      // 十神関係（存在する場合）- 天干の十神関係
+      if (tenGodsExists) {
+        systemMessage += `\n【十神関係】\n`;
+        Object.entries(tenGods).forEach(([key, value]) => {
+          // キーをわかりやすく変換
+          const pillarName = this.getPillarDisplayName(key);
+          systemMessage += `- ${pillarName}柱: ${value}\n`;
+        });
+      }
+      
+      // 地支十神関係（存在する場合）- 地支の十神関係
+      if (branchTenGodsExists) {
+        systemMessage += `\n【地支十神関係】\n`;
+        Object.entries(branchTenGods).forEach(([key, value]) => {
+          // キーをわかりやすく変換
+          const pillarName = this.getPillarDisplayName(key);
+          systemMessage += `- ${pillarName}柱地支: ${value}\n`;
+        });
+      }
+      
+      // 個人目標（存在する場合）
+      if (user.personalGoal) {
+        systemMessage += `\n【個人目標】\n${user.personalGoal}\n`;
+      }
+      
+      // 当日の干支情報（存在する場合）
+      if (todayCalendarInfo) {
+        systemMessage += `\n【今日の干支情報】\n`;
+        if (todayCalendarInfo.dayPillar) {
+          systemMessage += `- 日柱: ${todayCalendarInfo.dayPillar.stem}${todayCalendarInfo.dayPillar.branch}\n`;
+        }
+        if (todayCalendarInfo.mainElement) {
+          systemMessage += `- 五行: ${todayCalendarInfo.mainElement}の${todayCalendarInfo.yinYang || '陽'}\n`;
+        }
+        
+        // 今日の干支とユーザーの日柱の十神関係を抽出（可能な場合）
+        if (fourPillars?.dayPillar?.stem && todayCalendarInfo.dayPillar?.stem) {
+          try {
+            const userDayMaster = fourPillars.dayPillar.stem;
+            const todayDayStem = todayCalendarInfo.dayPillar.stem;
+            const todayDayBranch = todayCalendarInfo.dayPillar.branch;
+            
+            // SajuDataTransformerを使って十神関係を計算
+            const sajuData = this.sajuDataTransformer.createFortuneCompatibilityData(
+              todayCalendarInfo, 
+              userDayMaster as CelestialStem, 
+              mainElement as ElementType || '木' as ElementType,
+              branchTenGods as Record<string, TenGodType>
+            );
+            
+            if (sajuData && sajuData.isSuccess) {
+              const sajuDataValue = sajuData.getValue();
+              systemMessage += `- 十神関係: ${sajuDataValue.tenGod}\n`;
+              systemMessage += `- 地支十神: ${sajuDataValue.branchTenGod}\n`;
+              systemMessage += `- 相性スコア: ${sajuDataValue.compatibility}/100\n`;
+            }
+          } catch (error) {
+            console.warn('[SystemMessageBuilder] 今日の相性計算エラー:', 
+              error instanceof Error ? error.message : '不明なエラー');
+          }
+        }
+      }
+      
+      systemMessage += `\nこの情報をもとに、ユーザーの質問に回答してください。四柱推命の原理に基づいた深い洞察と実用的なアドバイスを提供してください。特に、ユーザーの「日主」と十神関係を重視し、今日の運勢に合わせたアドバイスを心がけてください。`;
+    } else {
+      // 四柱推命情報がない場合は基本的なプロンプトを返す
+      systemMessage = `デイリー運勢に基づく相談を受け付けます。本日の運勢は「${fortune?.rating || '良好'}」で、「${user.sajuProfile?.mainElement || '木'}」の「${user.sajuProfile?.yinYang || '陽'}」が特徴です。${user.personalGoal ? `あなたの目標「${user.personalGoal}」も考慮します。` : ''}どのようなことでも相談してください。`;
+    }
+
+    return systemMessage;
+  }
+  
+  /**
+   * 柱タイプの英語表記を日本語表記に変換するヘルパーメソッド
+   * @param pillarType 柱タイプの英語表記（'year', 'month', 'day', 'hour'）
+   * @returns 日本語表記（'年', '月', '日', '時'）
+   */
+  private getPillarDisplayName(pillarType: string): string {
+    const pillarMap: Record<string, string> = {
+      'year': '年',
+      'month': '月',
+      'day': '日',
+      'hour': '時'
+    };
+    
+    return pillarMap[pillarType] || pillarType;
+  }
+
+  /**
+   * チームタイプのメッセージを構築
+   * ユーザーとターゲットメンバーの間の相性情報を含む
+   * SajuDataTransformerを使用して相性情報を強化
+   */
+  private buildTeamMessage(user: any, targetMember: any): string {
+    // ユーザーまたはターゲットメンバーが存在しない場合はデフォルトメッセージを返す
+    if (!user || !targetMember) {
+      return 'チームに関する相談を受け付けます。チームのメンバー構成や目標に関するアドバイスを提供します。';
+    }
+
+    let systemMessage = 'チームメンバーとの相性に関する相談を受け付けます。\n\n';
+
+    // 相性情報の計算
+    let compatibilityScore = 50;
+    let tenGodRelation = '未計算';
+    let branchTenGodRelation = '未計算';
+    
+    try {
+      // 自分と相手の四柱データが揃っている場合は相性計算
+      if (user.sajuProfile?.fourPillars?.dayPillar?.stem && 
+          targetMember.sajuProfile?.fourPillars?.dayPillar?.stem) {
+        
+        // 相手の四柱情報を模擬的なDailyCalendarInfoとして使用
+        const mockCalendarInfo: any = {
+          dayPillar: targetMember.sajuProfile.fourPillars.dayPillar,
+          mainElement: targetMember.sajuProfile.mainElement || '木',
+          dayYinYang: targetMember.sajuProfile.yinYang || '陽'
+        };
+        
+        // 自分の情報
+        const userDayMaster = user.sajuProfile.fourPillars.dayPillar.stem;
+        const userMainElement = user.sajuProfile.mainElement || '木';
+        
+        // SajuDataTransformerを使用して相性を計算
+        const sajuData = this.sajuDataTransformer.createFortuneCompatibilityData(
+          mockCalendarInfo,
+          userDayMaster as CelestialStem,
+          userMainElement as ElementType,
+          user.sajuProfile.branchTenGods as Record<string, TenGodType>
+        );
+        
+        if (sajuData && sajuData.isSuccess) {
+          const sajuDataValue = sajuData.getValue();
+          compatibilityScore = sajuDataValue.compatibility;
+          tenGodRelation = sajuDataValue.tenGod;
+          branchTenGodRelation = sajuDataValue.branchTenGod;
+        }
+      }
+    } catch (error) {
+      console.warn('[SystemMessageBuilder] チーム相性計算エラー:', 
+        error instanceof Error ? error.message : '不明なエラー');
+    }
+    
+    // 相性の言語的表現
+    const compatibilityRating = 
+      compatibilityScore >= 80 ? '非常に良好' : 
+      compatibilityScore >= 60 ? '良好' : 
+      compatibilityScore >= 40 ? '中立' : 
+      compatibilityScore >= 20 ? '要注意' : '困難';
+
+    // ユーザー情報
+    systemMessage += `【あなたの情報】\n`;
+    if (user.sajuProfile) {
+      systemMessage += `- 主要五行: ${user.sajuProfile.mainElement || '木'}\n`;
+      systemMessage += `- 陰陽: ${user.sajuProfile.yinYang || '陽'}\n`;
+      if (user.sajuProfile.fourPillars && user.sajuProfile.fourPillars.dayPillar) {
+        systemMessage += `- 日主: ${user.sajuProfile.fourPillars.dayPillar.stem || ''}${user.sajuProfile.fourPillars.dayPillar.branch || ''}\n`;
+      }
+      
+      // 地支十神情報があれば追加
+      if (user.sajuProfile.branchTenGods && Object.keys(user.sajuProfile.branchTenGods).length > 0) {
+        systemMessage += `- 日柱地支十神: ${user.sajuProfile.branchTenGods.day || '未計算'}\n`;
+      }
+    }
+
+    // ターゲットメンバー情報
+    systemMessage += `\n【メンバーの情報】\n`;
+    if (targetMember.sajuProfile) {
+      systemMessage += `- 名前: ${targetMember.name || '名前未設定'}\n`;
+      systemMessage += `- 主要五行: ${targetMember.sajuProfile.mainElement || '木'}\n`;
+      systemMessage += `- 陰陽: ${targetMember.sajuProfile.yinYang || '陽'}\n`;
+      if (targetMember.sajuProfile.fourPillars && targetMember.sajuProfile.fourPillars.dayPillar) {
+        systemMessage += `- 日主: ${targetMember.sajuProfile.fourPillars.dayPillar.stem || ''}${targetMember.sajuProfile.fourPillars.dayPillar.branch || ''}\n`;
+      }
+      
+      // 地支十神情報があれば追加
+      if (targetMember.sajuProfile.branchTenGods && Object.keys(targetMember.sajuProfile.branchTenGods).length > 0) {
+        systemMessage += `- 日柱地支十神: ${targetMember.sajuProfile.branchTenGods.day || '未計算'}\n`;
+      }
+    }
+    
+    // 相性情報
+    systemMessage += `\n【相性情報】\n`;
+    systemMessage += `- 相性スコア: ${compatibilityScore}/100 (${compatibilityRating})\n`;
+    systemMessage += `- 十神関係: ${tenGodRelation}\n`;
+    systemMessage += `- 地支十神関係: ${branchTenGodRelation}\n`;
+
+    systemMessage += `\nこの情報をもとに、お互いの五行属性と十神関係を考慮した実用的なアドバイスを提供してください。特に「${tenGodRelation}」の関係性に基づいた協力関係の強化方法、コミュニケーションのコツ、潜在的な課題と解決策などについて具体的に説明してください。`;
+
+    return systemMessage;
+  }
+
+  /**
+   * 経営タイプのメッセージを構築
+   * チーム全体の五行バランスと目標達成のためのアドバイスを含む
+   * 地支十神情報を含めた強化版
+   */
+  private buildManagementMessage(user: any, team: any): string {
+    // ユーザーまたはチームが存在しない場合はデフォルトメッセージを返す
+    if (!user || !team) {
+      return '経営管理に関する相談を受け付けます。チーム全体の目標達成や人員配置に関するアドバイスを提供します。';
+    }
+
+    let systemMessage = 'チーム経営と管理に関する相談を受け付けます。\n\n';
+
+    // マネージャー情報
+    systemMessage += `【マネージャー情報】\n`;
+    if (user.sajuProfile) {
+      systemMessage += `- 主要五行: ${user.sajuProfile.mainElement || '木'}\n`;
+      systemMessage += `- 陰陽: ${user.sajuProfile.yinYang || '陽'}\n`;
+      if (user.sajuProfile.fourPillars && user.sajuProfile.fourPillars.dayPillar) {
+        systemMessage += `- 日主: ${user.sajuProfile.fourPillars.dayPillar.stem || ''}${user.sajuProfile.fourPillars.dayPillar.branch || ''}\n`;
+      }
+      
+      // 地支十神情報があれば追加
+      if (user.sajuProfile.branchTenGods && Object.keys(user.sajuProfile.branchTenGods).length > 0) {
+        systemMessage += `- 日柱地支十神: ${user.sajuProfile.branchTenGods.day || '未計算'}\n`;
+      }
+    }
+
+    // チーム情報
+    systemMessage += `\n【チーム情報】\n`;
+    systemMessage += `- チーム名: ${team.name || '名称未設定チーム'}\n`;
+    systemMessage += `- チーム目標: ${team.goal || '目標未設定'}\n`;
+    
+    if (team.members && team.members.length > 0) {
+      systemMessage += `- メンバー数: ${team.members.length}人\n`;
+      
+      // 五行分布の集計
+      const elementalDistribution = {
+        '木': 0, '火': 0, '土': 0, '金': 0, '水': 0
+      };
+      
+      // 十神分布の集計
+      const tenGodDistribution: Record<string, number> = {};
+      
+      team.members.forEach((member: any) => {
+        // 五行分布の集計
+        if (member.sajuProfile && member.sajuProfile.mainElement) {
+          const mainElement = member.sajuProfile.mainElement as ElementType;
+          elementalDistribution[mainElement]++;
+        }
+        
+        // 十神関係の計算（マネージャー日主に対する十神）
+        try {
+          if (user.sajuProfile?.fourPillars?.dayPillar?.stem && 
+              member.sajuProfile?.fourPillars?.dayPillar?.stem) {
+            
+            // 相手の四柱情報を模擬的なDailyCalendarInfoとして使用
+            const mockCalendarInfo: any = {
+              dayPillar: member.sajuProfile.fourPillars.dayPillar,
+              mainElement: member.sajuProfile.mainElement || '木',
+              dayYinYang: member.sajuProfile.yinYang || '陽'
+            };
+            
+            // 自分の情報
+            const userDayMaster = user.sajuProfile.fourPillars.dayPillar.stem;
+            const userMainElement = user.sajuProfile.mainElement || '木';
+            
+            // SajuDataTransformerを使用して十神関係を計算
+            const sajuData = this.sajuDataTransformer.createFortuneCompatibilityData(
+              mockCalendarInfo,
+              userDayMaster as CelestialStem,
+              userMainElement as ElementType,
+              user.sajuProfile.branchTenGods as Record<string, TenGodType>
+            );
+            
+            if (sajuData && sajuData.isSuccess) {
+              const sajuDataValue = sajuData.getValue();
+              // 十神分布をカウント
+              if (sajuDataValue.tenGod) {
+                tenGodDistribution[sajuDataValue.tenGod] = (tenGodDistribution[sajuDataValue.tenGod] || 0) + 1;
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('[SystemMessageBuilder] メンバー十神計算エラー:', 
+            error instanceof Error ? error.message : '不明なエラー');
+        }
+      });
+      
+      // 五行分布の表示
+      systemMessage += `- 五行分布: `;
+      Object.entries(elementalDistribution).forEach(([element, count]) => {
+        if (count > 0) {
+          systemMessage += `${element}(${count}) `;
+        }
+      });
+      systemMessage += `\n`;
+      
+      // 十神分布の表示（存在する場合）
+      if (Object.keys(tenGodDistribution).length > 0) {
+        systemMessage += `- 十神分布: `;
+        Object.entries(tenGodDistribution).forEach(([tenGod, count]) => {
+          systemMessage += `${tenGod}(${count}) `;
+        });
+        systemMessage += `\n`;
+      }
+      
+      // チームメンバーの詳細情報（最大5名まで表示）
+      systemMessage += `\n【チームメンバー詳細】\n`;
+      const displayMembers = team.members.slice(0, 5); // 最大5名まで表示
+      
+      displayMembers.forEach((member: any, index: number) => {
+        if (!member.sajuProfile) return;
+        
+        const memberName = member.name || `メンバー${index + 1}`;
+        const mainElement = member.sajuProfile.mainElement || '未定義';
+        const dayPillar = member.sajuProfile.fourPillars?.dayPillar?.stem && member.sajuProfile.fourPillars?.dayPillar?.branch 
+          ? `${member.sajuProfile.fourPillars.dayPillar.stem}${member.sajuProfile.fourPillars.dayPillar.branch}` 
+          : '未定義';
+        
+        systemMessage += `- ${memberName}: ${mainElement}の${member.sajuProfile.yinYang || '陽'}, 日主${dayPillar}`;
+        
+        // マネージャーとの十神関係（計算可能な場合）
+        try {
+          if (user.sajuProfile?.fourPillars?.dayPillar?.stem && 
+              member.sajuProfile?.fourPillars?.dayPillar?.stem) {
+            
+            // 相手の四柱情報を模擬的なDailyCalendarInfoとして使用
+            const mockCalendarInfo: any = {
+              dayPillar: member.sajuProfile.fourPillars.dayPillar,
+              mainElement: member.sajuProfile.mainElement || '木',
+              dayYinYang: member.sajuProfile.yinYang || '陽'
+            };
+            
+            // 自分の情報
+            const userDayMaster = user.sajuProfile.fourPillars.dayPillar.stem;
+            const userMainElement = user.sajuProfile.mainElement || '木';
+            
+            // SajuDataTransformerを使用して十神関係を計算
+            const sajuData = this.sajuDataTransformer.createFortuneCompatibilityData(
+              mockCalendarInfo,
+              userDayMaster as CelestialStem,
+              userMainElement as ElementType,
+              user.sajuProfile.branchTenGods as Record<string, TenGodType>
+            );
+            
+            if (sajuData && sajuData.isSuccess) {
+              const sajuDataValue = sajuData.getValue();
+              systemMessage += `, 十神:${sajuDataValue.tenGod}`;
+            }
+          }
+        } catch (error) {
+          // エラーは無視（表示のみの目的）
+        }
+        
+        systemMessage += `\n`;
+      });
+      
+      // メンバーが多すぎる場合は省略を表示
+      if (team.members.length > 5) {
+        systemMessage += `- 他 ${team.members.length - 5} 名\n`;
+      }
+    }
+
+    systemMessage += `\nこの情報をもとに、チーム全体の五行バランスと十神関係を考慮した経営管理アドバイスを提供してください。最適な人員配置、リーダーシップアプローチ、目標達成のための戦略などについて具体的に説明してください。`;
+
+    return systemMessage;
+  }
+
+  /**
+   * デフォルトメッセージを構築
+   */
+  private buildDefaultMessage(): string {
+    return '何かお手伝いできることはありますか？';
+  }
+
+  /**
+   * ユーザーIDを使用して運勢タイプのシステムメッセージコンテキストを構築するユーティリティメソッド
+   * direct-chat.tsとsimple-conversation.routes.tsからの移行を容易にするため
+   */
+  public async buildFortuneContextFromUserId(userId: string): Promise<SystemMessageContext | null> {
+    try {
+      // ユーザー情報の取得
+      let user = await this.userRepository.findById(userId);
+      
+      if (!user) {
+        console.log(`ユーザー情報が見つかりません: ID=${userId}`);
+        return null;
+      }
+      
+      // 今日の日付を取得
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // 今日の運勢情報を取得
+      const dailyFortune = await this.fortuneRepository.findByUserIdAndDate(userId, today);
+      
+      // 当日の干支情報を取得（あれば）
+      let todayCalendarInfo = null;
+      try {
+        const DailyCalendarInfoModel = mongoose.model('DailyCalendarInfo');
+        const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+        todayCalendarInfo = await DailyCalendarInfoModel.findOne({ date: todayStr });
+      } catch (calendarError) {
+        console.warn('当日の干支情報取得エラー:', calendarError instanceof Error ? calendarError.message : '不明なエラー');
+      }
+      
+      // コンテキストを構築
+      // ユーザーとFortuneをSystemMessageContextの要件に合わせて変換
+      const contextUser = {
+        ...user,
+        sajuProfile: user.sajuProfile ? user.sajuProfile : undefined,
+        personalGoal: user.personalGoal || ''
+      };
+      
+      const contextFortune = dailyFortune ? {
+        ...dailyFortune,
+        rating: dailyFortune.rating || '良好',
+        aiGeneratedAdvice: dailyFortune.aiGeneratedAdvice || { advice: '' }
+      } : undefined;
+      
+      return {
+        type: 'fortune',
+        user: contextUser,
+        dailyFortune: contextFortune,
+        todayCalendarInfo: todayCalendarInfo || undefined
+      };
+    } catch (error) {
+      console.error('運勢コンテキスト構築エラー:', error instanceof Error ? error.message : '不明なエラー');
+      return null;
+    }
+  }
+  
+  /**
+   * ユーザーIDを使用してチームタイプのシステムメッセージコンテキストを構築するユーティリティメソッド
+   * SajuDataTransformerを使用して相性情報を強化
+   */
+  public async buildTeamContextFromUserId(userId: string, targetMemberId: string): Promise<SystemMessageContext | null> {
+    try {
+      // ユーザー情報の取得
+      let user = await this.userRepository.findById(userId);
+      
+      if (!user) {
+        console.log(`ユーザー情報が見つかりません: ID=${userId}`);
+        return null;
+      }
+      
+      // ターゲットメンバー情報の取得
+      let targetMember = await this.userRepository.findById(targetMemberId);
+      
+      if (!targetMember) {
+        console.log(`ターゲットメンバー情報が見つかりません: ID=${targetMemberId}`);
+        return null;
+      }
+      
+      // 地支十神情報の補完（ユーザー）
+      if (user.sajuProfile && (!user.sajuProfile.branchTenGods || Object.keys(user.sajuProfile.branchTenGods).length === 0)) {
+        try {
+          const branchTenGods = this.sajuDataTransformer.extractBranchTenGods(user.sajuProfile);
+          if (branchTenGods) {
+            console.log('[SystemMessageBuilder] ユーザーの地支十神情報を補完しました');
+            // データは参照のみで使用するので、元のオブジェクトを変更しない
+            try {
+              const enhancedSajuProfile = createSajuProfile({
+                ...user.sajuProfile,
+                branchTenGods
+              });
+              
+              user = {
+                ...user,
+                sajuProfile: enhancedSajuProfile
+              };
+            } catch (error) {
+              console.warn('[SystemMessageBuilder] SajuProfile生成エラー:', 
+                error instanceof Error ? error.message : '不明なエラー');
+              // エラー時は元のプロファイルを使用して処理を続行
+            }
+          }
+        } catch (error) {
+          console.warn('[SystemMessageBuilder] ユーザーの地支十神情報生成エラー:', 
+            error instanceof Error ? error.message : '不明なエラー');
+        }
+      }
+      
+      // 地支十神情報の補完（ターゲットメンバー）
+      if (targetMember.sajuProfile && (!targetMember.sajuProfile.branchTenGods || Object.keys(targetMember.sajuProfile.branchTenGods).length === 0)) {
+        try {
+          const branchTenGods = this.sajuDataTransformer.extractBranchTenGods(targetMember.sajuProfile);
+          if (branchTenGods) {
+            console.log('[SystemMessageBuilder] ターゲットメンバーの地支十神情報を補完しました');
+            // データは参照のみで使用するので、元のオブジェクトを変更しない
+            try {
+              const enhancedTargetSajuProfile = createSajuProfile({
+                ...targetMember.sajuProfile,
+                branchTenGods
+              });
+              
+              targetMember = {
+                ...targetMember,
+                sajuProfile: enhancedTargetSajuProfile
+              } as SimpleUser;
+            } catch (error) {
+              console.warn('[SystemMessageBuilder] ターゲットSajuProfile生成エラー:', 
+                error instanceof Error ? error.message : '不明なエラー');
+              // エラー時は元のプロファイルを使用して処理を続行
+            }
+          }
+        } catch (error) {
+          console.warn('[SystemMessageBuilder] ターゲットメンバーの地支十神情報生成エラー:', 
+            error instanceof Error ? error.message : '不明なエラー');
+        }
+      }
+      
+      // コンテキストを構築
+      // SystemMessageContextに適合するようにデータを整形
+      // nullチェックは上部で行っているのでnon-nullアサーションを使用
+      const contextUser = {
+        ...(user!),
+        sajuProfile: user!.sajuProfile,
+        personalGoal: user!.personalGoal || ''
+      };
+      
+      const contextTargetMember = {
+        ...(targetMember!),
+        sajuProfile: targetMember!.sajuProfile,
+        name: targetMember!.name || `ユーザー${targetMember!.id || 'unknown'}`
+      };
+      
+      return {
+        type: 'team',
+        user: contextUser,
+        targetMember: contextTargetMember
+      };
+    } catch (error) {
+      console.error('チームコンテキスト構築エラー:', error instanceof Error ? error.message : '不明なエラー');
+      return null;
+    }
+  }
+  
+  /**
+   * ユーザーIDとチームIDを使用して経営タイプのシステムメッセージコンテキストを構築するユーティリティメソッド
+   * SajuDataTransformerを使用してチームメンバーの地支十神情報を強化
+   */
+  public async buildManagementContextFromUserId(userId: string, teamId: string): Promise<SystemMessageContext | null> {
+    try {
+      // ユーザー情報の取得
+      let user = await this.userRepository.findById(userId);
+      
+      if (!user) {
+        console.log(`ユーザー情報が見つかりません: ID=${userId}`);
+        return null;
+      }
+      
+      // チーム情報の取得
+      let team = await this.teamRepository.findById(teamId);
+      
+      if (!team) {
+        console.log(`チーム情報が見つかりません: ID=${teamId}`);
+        return null;
+      }
+      
+      // 地支十神情報の補完（ユーザー）
+      if (user.sajuProfile && (!user.sajuProfile.branchTenGods || Object.keys(user.sajuProfile.branchTenGods).length === 0)) {
+        try {
+          const branchTenGods = this.sajuDataTransformer.extractBranchTenGods(user.sajuProfile);
+          if (branchTenGods) {
+            console.log('[SystemMessageBuilder] ユーザーの地支十神情報を補完しました');
+            // データは参照のみで使用するので、元のオブジェクトを変更しない
+            try {
+              const enhancedSajuProfile = createSajuProfile({
+                ...user.sajuProfile,
+                branchTenGods
+              });
+              
+              user = {
+                ...user,
+                sajuProfile: enhancedSajuProfile
+              };
+            } catch (error) {
+              console.warn('[SystemMessageBuilder] SajuProfile生成エラー:', 
+                error instanceof Error ? error.message : '不明なエラー');
+              // エラー時は元のプロファイルを使用して処理を続行
+            }
+          }
+        } catch (error) {
+          console.warn('[SystemMessageBuilder] ユーザーの地支十神情報生成エラー:', 
+            error instanceof Error ? error.message : '不明なエラー');
+        }
+      }
+      
+      // チームメンバーの地支十神情報を補完（必要な場合）
+      if (team.members && Array.isArray(team.members)) {
+        const enhancedMembers = team.members.map(member => {
+          // 既に地支十神情報がある場合はそのまま返す
+          if (!member.sajuProfile || 
+              (member.sajuProfile.branchTenGods && Object.keys(member.sajuProfile.branchTenGods).length > 0)) {
+            return member;
+          }
+          
+          try {
+            // 地支十神情報を生成
+            const branchTenGods = this.sajuDataTransformer.extractBranchTenGods(member.sajuProfile);
+            if (branchTenGods) {
+              console.log(`[SystemMessageBuilder] メンバー ${member.name || member._id} の地支十神情報を補完しました`);
+              
+              try {
+                // SajuProfileインスタンスを生成
+                const enhancedSajuProfile = createSajuProfile({
+                  ...member.sajuProfile,
+                  branchTenGods
+                });
+                
+                return {
+                  ...member,
+                  sajuProfile: enhancedSajuProfile
+                };
+              } catch (error) {
+                console.warn(`[SystemMessageBuilder] メンバー ${member.name || member._id} のSajuProfile生成エラー:`, 
+                  error instanceof Error ? error.message : '不明なエラー');
+                // エラー時は元のプロファイルを使用
+                return member;
+              }
+            }
+          } catch (error) {
+            console.warn(`[SystemMessageBuilder] メンバー ${member.name || member._id} の地支十神情報生成エラー:`, 
+              error instanceof Error ? error.message : '不明なエラー');
+          }
+          
+          return member;
+        });
+        
+        // 新しいチームオブジェクトを作成（元のオブジェクトは変更しない）
+        team = {
+          ...team,
+          members: enhancedMembers
+        } as SimpleTeam;
+      }
+      
+      // コンテキストを構築
+      // SystemMessageContextに適合するようにデータを整形
+      // nullチェックは上部で行っているのでnon-nullアサーションを使用
+      const contextUser = {
+        ...(user!),
+        sajuProfile: user!.sajuProfile,
+        personalGoal: user!.personalGoal || ''
+      };
+      
+      const contextTeam = {
+        ...(team!),
+        name: team!.name || `チーム${team!.id || 'unknown'}`,
+        goal: team!.goal || '',
+        members: team!.members || []
+      };
+      
+      return {
+        type: 'management',
+        user: contextUser,
+        team: contextTeam
+      };
+    } catch (error) {
+      console.error('経営コンテキスト構築エラー:', error instanceof Error ? error.message : '不明なエラー');
+      return null;
+    }
+  }
+  
+  /**
+   * 運勢タイプの初期メッセージを生成する
+   * simple-conversation.routes.tsの初期メッセージロジックを移行
+   */
+  public createFortuneInitialMessage(user: any, calendarInfo: any): string {
+    if (!user) {
+      return '今日の運勢について相談したいです。';
+    }
+    
+    // ユーザーの運勢情報
+    const todayFortune = user.todayFortune || {};
+    const sajuProfile = user.sajuProfile || {};
+    const personalGoal = user.personalGoal || '';
+    
+    // チーム情報 (現状は空)
+    const teamGoal = '';
+    
+    // 要素が存在しない場合のフォールバック
+    const mainElement = todayFortune.mainElement || sajuProfile.mainElement || '木';
+    const yinYang = todayFortune.yinYang || sajuProfile.yinYang || '陽';
+    const overallScore = todayFortune.overallScore || 50;
+    const rating = overallScore >= 80 ? '絶好調' : 
+                   overallScore >= 60 ? '好調' : 
+                   overallScore >= 40 ? '普通' : 
+                   overallScore >= 20 ? '要注意' : '厳しい';
+    
+    // アドバイス情報
+    const advice = todayFortune.advice || '';
+    const aiGeneratedAdvice = todayFortune.aiGeneratedAdvice?.advice || '';
+    
+    // 日次カレンダー情報
+    const today = new Date();
+    const dayElement = calendarInfo?.mainElement || '';
+    const dayYinYang = calendarInfo?.dayYinYang || '';
+    const dayPillar = calendarInfo?.dayPillar 
+                     ? `${calendarInfo.dayPillar.stem}${calendarInfo.dayPillar.branch}` 
+                     : '';
+    
+    // メッセージを構築
+    return `
+今日の運勢情報:
+五行属性: ${mainElement}の${yinYang}
+運勢スコア: ${overallScore}/100点 (${rating})
+${dayPillar ? `今日の干支: ${dayPillar}` : ''}
+${dayElement ? `今日の五行: ${dayElement}の${dayYinYang}` : ''}
+
+【運勢アドバイス】
+${advice}
+
+${aiGeneratedAdvice ? `【詳細アドバイス】
+${aiGeneratedAdvice.length > 300 ? aiGeneratedAdvice.substring(0, 300) + '...' : aiGeneratedAdvice}` : ''}
+
+${personalGoal ? `【個人目標】
+${personalGoal}` : ''}
+
+${teamGoal ? `【チーム目標】
+${teamGoal}` : ''}
+
+上記の情報を踏まえて、今日一日をどのように過ごすべきか相談したいです。`;
+  }
+}

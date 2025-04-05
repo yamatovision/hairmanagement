@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-04-05T03:09:39.098Z",
+  "summary": {
+    "total": 1,
+    "success": 1,
+    "failure": 0
+  },
+  "tests": {
+    "auth": {
+      "status": "success",
+      "output": "API URL: http://localhost:5000/api/v1\n\n------- 認証APIテスト開始 -------\n\n🔍 テスト1: ログインAPI\nテスト実行中にエラーが発生しました: Error: connect ECONNREFUSED ::1:5000\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1555:16) {\n  errno: -61,\n  code: 'ECONNREFUSED',\n  syscall: 'connect',\n  address: '::1',\n  port: 5000\n}\n"
+    }
+  }
+}

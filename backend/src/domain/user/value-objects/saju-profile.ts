@@ -3,7 +3,55 @@
  * ユーザーの四柱推命情報を表す値オブジェクト
  */
 
-// FourPillarsの型定義
+// 共有型をインポート
+import { 
+  CelestialStem,
+  TerrestrialBranch,
+  ElementType,
+  YinYangType,
+  TenGodType,
+  PillarType
+} from '../../../shared/types/saju/core';
+
+import {
+  Pillar as SharedPillar,
+  FourPillars as SharedFourPillars,
+  TenGodMap,
+  HiddenStemTenGod,
+  HiddenStemsMap,
+  FortuneMap,
+  SpiritKillerMap
+} from '../../../shared/types/saju/pillars';
+
+import {
+  SajuData,
+  FortuneAdvice,
+  CompatibilityResult,
+  DailyFortune,
+  DailyCalendarInfo
+} from '../../../shared/types/saju/fortune';
+
+// 型再エクスポート
+export {
+  CelestialStem,
+  TerrestrialBranch,
+  ElementType,
+  YinYangType,
+  TenGodType,
+  PillarType,
+  TenGodMap,
+  HiddenStemTenGod,
+  HiddenStemsMap,
+  FortuneMap,
+  SpiritKillerMap,
+  SajuData,
+  FortuneAdvice,
+  CompatibilityResult,
+  DailyFortune,
+  DailyCalendarInfo
+};
+
+// FourPillarsの型定義 (互換性のため維持)
 export interface Pillar {
   stem: string;
   branch: string;
@@ -35,17 +83,18 @@ export class SajuProfile {
    */
   constructor(
     public readonly fourPillars: FourPillars,
-    public readonly mainElement: string,
-    public readonly yinYang: string,
-    public readonly tenGods: Record<string, string>,
-    public readonly secondaryElement?: string,
-    public readonly twelveFortunes?: Record<string, string>,
-    public readonly hiddenStems?: Record<string, string[]>,
-    public readonly twelveSpiritKillers?: Record<string, string>,
-    public readonly dayMaster?: string
+    public readonly mainElement: ElementType,
+    public readonly yinYang: YinYangType,
+    public readonly tenGods: Record<PillarType, TenGodType>,
+    public readonly branchTenGods?: Record<PillarType, TenGodType>,
+    public readonly secondaryElement?: ElementType,
+    public readonly twelveFortunes?: Record<PillarType, string>,
+    public readonly hiddenStems?: Record<PillarType, string[]>,
+    public readonly twelveSpiritKillers?: Record<PillarType, string>,
+    public readonly dayMaster?: CelestialStem
   ) {
     // 日主が指定されていない場合は、自動的に日干から取得
-    this.dayMaster = dayMaster || fourPillars.dayPillar.stem;
+    this.dayMaster = dayMaster || (fourPillars.dayPillar.stem as CelestialStem);
   }
   
   /**
@@ -72,6 +121,7 @@ export class SajuProfile {
       secondaryElement: this.secondaryElement,
       yinYang: this.yinYang,
       tenGods: this.tenGods,
+      branchTenGods: this.branchTenGods,
       twelveFortunes: this.twelveFortunes,
       hiddenStems: this.hiddenStems,
       twelveSpiritKillers: this.twelveSpiritKillers,

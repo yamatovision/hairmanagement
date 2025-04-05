@@ -12,10 +12,30 @@
 ## スコープ状況
 
 ### 進行中スコープ
-- [ ] フェーズ3: システム統合 (80%) - システム全体の連携強化
-- [ ] フェーズ5: データフロー最適化 (15%) - パフォーマンスと効率性の向上
+- [ ] フェーズ3: システム統合 (90%) - システム全体の連携強化
+- [ ] フェーズ5: データフロー最適化 (30%) - パフォーマンスと効率性の向上
 
 ### 完了済みスコープ
+- [x] フェーズ2: データフロー強化 (100%)
+  - 説明: 
+  - ステータス: 完了
+  - スコープID: scope-1743823402128
+
+- [x] フェーズ4: テストと検証 (100%)
+  - 説明: 
+  - ステータス: 完了
+  - スコープID: scope-1743823373344
+
+- [x] フェーズ1: データモデル標準化 (100%)
+  - 説明: 
+  - ステータス: 完了
+  - スコープID: scope-1743823418886
+
+- [x] フェーズ2: データフロー強化 (100%)
+  - 説明: 
+  - ステータス: 完了
+  - スコープID: scope-1743823402128
+
 - [x] フェーズ4: テストと検証 (100%)
   - 説明: 
   - ステータス: 完了
@@ -222,7 +242,7 @@
 
 - [x] backend/src/application/services/system-message-builder.service.ts - 地支十神情報の伝達を改善（フェーズ2で完了）
 - [x] backend/src/interfaces/http/controllers/unified-conversation.controller.ts - 直接会話と通常会話の統合（2025/04/05完了）
-- [ ] backend/src/application/services/ai-prompt-generation.service.ts - 四柱推命データを考慮したプロンプト生成
+- [x] 四柱推命データを考慮したプロンプト生成 - system-message-builder.service.tsに統合（2025/04/05完了）
 - [x] frontend/src/components/team/TeamSajuView.tsx - フロントエンド十神関係表示の最適化（2025/04/05完了）
 - [x] backend/src/interfaces/http/controllers/team.controller.ts - チーム十神関係APIエンドポイント追加（2025/04/05完了）
 - [x] frontend/src/services/unified-conversation.service.ts - フロントエンド統合会話サービス（2025/04/05実装）
@@ -353,6 +373,45 @@
 - 最適化実装: backend/src/application/services/saju-data-transformer.service.optimized.ts
 - 型安全性強化計画: [typescript-error-fix-detailed-plan.md](./typescript-error-fix-detailed-plan.md)
 
+## TypeScript型安全性強化計画
+
+TypeScript型安全性を段階的に向上させるために、以下のフェーズで実装を進めています：
+
+### Phase 1（完了）：基盤整備
+- インデックスアクセスエラー（TS7053）の解消
+- 型定義ファイルの整理と集約
+- 型エラー数の削減（468→217、54%改善）
+
+### Phase 2（完了）：型ガード関数とユーティリティの実装
+- 型ガード関数の実装（isElementType, isCelestialStem等）
+- 安全アクセスユーティリティの実装（safeAccess, safeObjectAccess等）
+- 型変換ヘルパーの実装
+- エラー数をさらに削減（217→4、98%改善）
+
+### Phase 3（実施中）：厳格レベルの段階的向上
+- noImplicitAny: true - 暗黙的なany型を許容しない
+- strictNullChecks: true - null/undefined型チェックの厳格化
+- strictFunctionTypes: true - 関数パラメータの型チェック厳格化
+- noImplicitThis: true - this参照の型チェック厳格化 
+- noImplicitReturns: true - すべての関数パスでのreturn確認
+
+### Phase 4（予定）：コード品質強化
+- noUnusedLocals: true - 未使用のローカル変数を許容しない
+- noUnusedParameters: true - 未使用のパラメータを許容しない
+- 残りのデコレータエラーとモジュールインポートエラーの修正
+
+### Phase 5（予定）：完全厳格モード
+- strictPropertyInitialization: true - クラスプロパティの初期化チェック
+- strictBindCallApply: true - Function.prototype.call/apply/bindの厳格な型チェック
+- alwaysStrict: true - 常に厳格モードを適用
+
+### 主要実装成果
+- shared/types/saju/core.ts - 型ガード関数とユーティリティの追加
+- utils/type-safety.util.ts - 型安全性強化ユーティリティの実装
+- application/services/system-message-builder.service.ts - インデックスアクセスエラーの修正
+- infrastructure/repositories/MongoTeamRepository.ts - null/undefinedエラーの修正
+- tsconfig.json - 段階的な厳格レベル設定の実装
+
 ## 課題・懸念事項 (2025/04/09更新)
 1. ✅ データ検証の強化（型検証、null/undefined検証、整合性検証）- 2025/04/09完了
 2. ✅ テスト網羅性の向上（データ欠損ケース、矛盾データ、例外処理）- 2025/04/09完了
@@ -374,12 +433,15 @@
    - [x] DIコンテナの型参照問題修正（2025/04/05完了）
    - [x] API定義の型安全化（システムメッセージプロパティの追加）（2025/04/05完了）
    - [x] 段階的な型チェック強化計画の実装（2025/04/05完了）
-     - Phase 1: noImplicitAnyをfalseに設定し、型エラー削減（468→217、54%改善）（現在）
-     - Phase 2: モジュールパス問題と型不一致エラーの解消（計画）
-     - Phase 3: 完全な厳格モードの有効化（最終目標）
+     - [x] Phase 1: インデックスアクセスエラーの解消（468→217、54%改善）（完了）
+     - [x] Phase 2: 型ガード関数とユーティリティの実装（完了）
+     - [x] Phase 3: noImplicitAny, noImplicitReturnsの有効化（現在）
+     - ⏩ Phase 4: noUnusedLocals, noUnusedParametersの有効化（予定）
+     - ⏩ Phase 5: 完全な厳格モードの有効化（最終目標）
    - [x] TypeScript型エラー修正の詳細計画書作成（[typescript-error-fix-detailed-plan.md](./typescript-error-fix-detailed-plan.md)）
    - [x] 型チェックスクリプトとCI統合の実装（2025/04/05完了）
-   - [ ] 残りの型エラーの修正とコードベース全体の型安全性確保（10日間計画で実施）
+   - [x] 型安全性ユーティリティの実装（safeAccess, validateBeforeAssertion等）
+   - [ ] 残りの型エラーの修正とコードベース全体の型安全性確保（10日間計画で実施中）
    詳細な実装計画は [typescript-error-fix-detailed-plan.md](./typescript-error-fix-detailed-plan.md) を参照
 7. ⬜ 統合会話システムのE2Eテスト実装 - フェーズ4の継続タスク
 8. ✅ 性能最適化基盤の実装（メモ化、結果型）- 2025/04/05完了

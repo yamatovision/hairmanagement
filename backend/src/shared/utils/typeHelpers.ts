@@ -12,7 +12,7 @@ import { BaseModelType } from '../index';
  * @param doc Mongooseドキュメント
  * @returns インターフェース形式のオブジェクト
  */
-export function documentToInterface<T extends BaseModelType>(doc: any): T {
+export function documentToInterface<T extends BaseModelType>(doc: any): T | null {
   if (!doc) return null;
 
   // Document.toJSON()が呼ばれた後のオブジェクトか、通常のオブジェクトとして処理
@@ -75,7 +75,8 @@ export function interfaceToDocument<T extends BaseModelType>(data: Partial<T>): 
  */
 export function documentsToInterfaces<T extends BaseModelType>(docs: any[]): T[] {
   if (!docs || !Array.isArray(docs)) return [];
-  return docs.map(doc => documentToInterface<T>(doc));
+  // nullの可能性があるアイテムをフィルタリングして確実にT型の配列を返す
+  return docs.map(doc => documentToInterface<T>(doc)).filter((item): item is T => item !== null);
 }
 
 /**
@@ -85,7 +86,7 @@ export function documentsToInterfaces<T extends BaseModelType>(docs: any[]): T[]
  * @param format 出力形式 ('iso'|'date-only'|'time-only')
  * @returns 標準化された日付文字列
  */
-export function formatDate(dateValue: string | Date, format: 'iso' | 'date-only' | 'time-only' = 'iso'): string {
+export function formatDate(dateValue: string | Date, format: 'iso' | 'date-only' | 'time-only' = 'iso'): string | null {
   if (!dateValue) return null;
   
   const date = dateValue instanceof Date ? dateValue : new Date(dateValue);

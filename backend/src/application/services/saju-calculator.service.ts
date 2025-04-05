@@ -2,6 +2,7 @@ import { injectable, inject } from 'tsyringe';
 import { SajuProfile } from '../../domain/user/value-objects/saju-profile';
 import { BirthLocationService } from './birth-location.service';
 import { SajuEngine, SajuResult } from '../../utils/saju/refactored/SajuEngine';
+import { ElementType, YinYangType, TenGodType, PillarType } from '../../shared/types/saju/core';
 
 /**
  * 四柱推命計算サービス
@@ -44,13 +45,14 @@ export class SajuCalculatorService {
     
     try {
       // 地理的情報の処理（birthLocationの処理）
-      let locationInfo = null;
+      let locationInfo: { longitude: number; latitude: number } | null = null;
       if (birthLocation && this.birthLocationService) {
         try {
           locationInfo = await this.birthLocationService.getLocationCoordinates(birthLocation);
           console.log(`- Location coordinates: ${JSON.stringify(locationInfo)}`);
         } catch (error) {
-          console.error(`- Failed to get location info: ${error.message}`);
+          const err = error as Error;
+          console.error(`- Failed to get location info: ${err.message}`);
         }
       }
       
@@ -80,12 +82,15 @@ export class SajuCalculatorService {
       const { fourPillars, tenGods, elementProfile, twelveFortunes, hiddenStems, twelveSpiritKillers } = sajuResult;
       
       // SajuProfile値オブジェクトを作成して返す
+      const branchTenGods = {}; // 地支十神の初期化（使用可能ならここで設定）
+      
       return new SajuProfile(
         fourPillars, 
-        elementProfile.mainElement,
-        elementProfile.yinYang,
-        tenGods,
-        elementProfile.secondaryElement,
+        elementProfile.mainElement as ElementType,
+        elementProfile.yinYang as YinYangType,
+        tenGods as Record<PillarType, TenGodType>,
+        branchTenGods as Record<PillarType, TenGodType>,
+        elementProfile.secondaryElement as ElementType,
         twelveFortunes,
         hiddenStems,
         twelveSpiritKillers
@@ -125,12 +130,25 @@ export class SajuCalculatorService {
         }
       };
       
+      const defaultBranchTenGods = {
+          year: '比肩' as TenGodType,
+          month: '劫財' as TenGodType,
+          day: '比肩' as TenGodType,
+          hour: '食神' as TenGodType
+        };
+    
       return new SajuProfile(
         defaultFourPillars,
-        '木',
-        '陽',
-        { year: '比肩', month: '劫財', day: '日元', hour: '食神' },
-        '火',
+        '木' as ElementType,
+        '陽' as YinYangType,
+        { 
+          year: '比肩' as TenGodType, 
+          month: '劫財' as TenGodType, 
+          day: '比肩' as TenGodType, 
+          hour: '食神' as TenGodType 
+        } as Record<PillarType, TenGodType>,
+        defaultBranchTenGods as Record<PillarType, TenGodType>,
+        '火' as ElementType,
         {
           year: '長生',
           month: '帝旺',

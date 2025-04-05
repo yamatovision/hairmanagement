@@ -1,0 +1,23 @@
+1. data-flow-analysis.md - データフローの流れと問題点
+    2. data-model-analysis.md - データモデルの構造と問題点
+    3. improvement-plan.md - 具体的な改善計画 
+これ読んでください。CURRENT_STATUSも。フェーズ1のデータモデル標準化作業が完了しました。今回の改善点をまとめます：
+
+データの
+
+  1. User.sajuProfile構造の標準化
+    - ElementalTypeとの重複を解消し、一貫した構造に統一
+    - 十神情報と地支十神情報の表現をMapからRecord<PillarType, TenGodType>に変更
+    - 厳格な型定義による安全性向上
+  2. Fortune.modelの拡張
+    - dailyCalendarInfoIdフィールドの追加によるDailyCalendarInfoとの連携強化
+    - sajuDataフィールドの導入で四柱推命情報の一貫した保存が可能に
+    - aiGeneratedAdvice構造の標準化
+  3. DailyCalendarInfo.modelの最適化
+    - 五行情報や陰陽情報の明示的な追加
+    - 干支情報の完全化
+    - findOrCreateByDateメソッドの追加で自動生成をサポート
+  4. マイグレーション対策
+    - migrate-elemental-to-saju.jsスクリプトを作成
+    - 既存データの互換性を確保
+という報告をいただきましたので実装ベースをチェックしてフィードバックをお願いします。

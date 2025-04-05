@@ -71,8 +71,10 @@ export function addDirectChatEndpoint(app: Express): void {
     console.log(`エンドポイントパス: ${endpointPath}`);
     
     // Express appが有効か確認
-    console.log('Express appが有効か確認:', app ? 'OK' : 'エラー - appがnullまたはundefined');
-    console.log('Express appのメソッド:', Object.keys(app).join(', '));
+    console.log('Express appが有効か確認:', app != null ? 'OK' : 'エラー - appがnullまたはundefined');
+    if (app && typeof app === 'object') {
+      console.log('Express appのメソッド:', Object.keys(app).join(', '));
+    }
     
     // シンプルなチャットエンドポイント
     console.log(`エンドポイント登録開始: POST ${endpointPath}`);
@@ -239,7 +241,7 @@ export function addDirectChatEndpoint(app: Express): void {
         console.log('Claude APIにリクエストを送信します...');
         
         // Claude APIに送信するメッセージを準備
-        let apiMessages = [];
+        let apiMessages: Array<{role: string, content: string}> = [];
         
         // 最初にシステムメッセージを追加（必ず最初）
         if (systemMessage) {
@@ -365,7 +367,7 @@ export function addDirectChatEndpoint(app: Express): void {
         const aiMessageId = `ai-${Date.now()}`;
         
         // 会話履歴と新しいメッセージを結合
-        const allMessages = [];
+        const allMessages: Array<{id: string, sender: string, content: any, timestamp: string}> = [];
         
         // 以前のメッセージがあれば追加（既にフォーマットされている想定）
         if (previousMessages && Array.isArray(previousMessages)) {

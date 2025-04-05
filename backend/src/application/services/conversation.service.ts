@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { logger } from '../../utils/logger.util';
 import { ConversationType } from '../../domain/entities/Conversation';
-import { IAIService } from '../../infrastructure/external/ClaudeAIService';
+import { IAIService } from '../../infrastructure/external/IAIService';
 import { ClaudeAIService } from '../../infrastructure/external/ClaudeAIService';
 
 /**

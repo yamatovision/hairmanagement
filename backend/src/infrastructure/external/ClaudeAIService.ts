@@ -140,7 +140,9 @@ export class ClaudeAIService {
                 return parsedJson;
               }
             } catch (parseError) {
-              console.log('ClaudeAIService: JSONパース失敗 - テキストとして処理します', parseError.message);
+              const err = parseError as Error;
+              console.log('ClaudeAIService: JSONパース失敗 - テキストとして処理します', 
+                err.message);
             }
             
             // 通常のテキストとして返す

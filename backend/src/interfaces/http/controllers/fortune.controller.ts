@@ -4,8 +4,31 @@ import { IFortuneRepository } from '../../../domain/repositories/IFortuneReposit
 import { ElementalCalculatorService } from '../../../application/services/elemental-calculator.service';
 import { SajuCalculatorService } from '../../../application/services/saju-calculator.service';
 import { AuthenticatedRequest } from '../../../types/express';
-import { ElementType, YinYangType } from '../../../shared';
+import { ElementType, YinYangType, CompatibilityLevel } from '../../../shared';
 import { SajuFortune } from '../../../shared/utils/saju-types';
+
+// メンバーの相性情報インターフェース
+interface MemberCompatibility {
+  user1: {
+    id: string;
+    name: string;
+    elementalType: {
+      mainElement: ElementType;
+      yinYang: YinYangType;
+    }
+  };
+  user2: {
+    id: string;
+    name: string;
+    elementalType: {
+      mainElement: ElementType;
+      yinYang: YinYangType;
+    }
+  };
+  compatibility: CompatibilityLevel;
+  details: string;
+  score: number;
+}
 
 /**
  * 運勢コントローラー
@@ -318,7 +341,7 @@ export class FortuneController {
         const teamAnalysis = this.elementalCalculatorService.analyzeTeamDynamics(mockTeamMembers);
         
         // ペアごとの相性も計算
-        const memberPairs = [];
+        const memberPairs: MemberCompatibility[] = [];
         for (let i = 0; i < mockTeamMembers.length; i++) {
           for (let j = i + 1; j < mockTeamMembers.length; j++) {
             const compatibility = this.elementalCalculatorService.calculateUserCompatibility(
@@ -344,7 +367,8 @@ export class FortuneController {
                 }
               },
               compatibility: compatibility.level,
-              details: compatibility.analysis
+              details: compatibility.analysis,
+              score: compatibility.score
             });
           }
         }
@@ -368,7 +392,7 @@ export class FortuneController {
         const teamAnalysis = this.elementalCalculatorService.analyzeTeamDynamics(teamMembers);
         
         // ペアごとの相性も計算
-        const memberPairs = [];
+        const memberPairs: MemberCompatibility[] = [];
         for (let i = 0; i < teamMembers.length; i++) {
           for (let j = i + 1; j < teamMembers.length; j++) {
             const compatibility = this.elementalCalculatorService.calculateUserCompatibility(
@@ -394,7 +418,8 @@ export class FortuneController {
                 }
               },
               compatibility: compatibility.level,
-              details: compatibility.analysis
+              details: compatibility.analysis,
+              score: compatibility.score
             });
           }
         }

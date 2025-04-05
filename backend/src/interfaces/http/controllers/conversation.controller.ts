@@ -99,7 +99,8 @@ export class ConversationController {
         
         logger.debug(`コンテキストデータ取得成功: type=${type}, userId=${userId}, contextId=${contextId}`);
       } catch (error) {
-        logger.error(`コンテキストデータ取得エラー: ${error.message}`);
+        const err = error as Error;
+        logger.error(`コンテキストデータ取得エラー: ${err.message}`);
         return res.status(404).json({
           success: false,
           message: 'コンテキストデータが見つかりません'
@@ -140,7 +141,8 @@ export class ConversationController {
         data: formattedConversation
       });
     } catch (error) {
-      logger.error('会話開始/継続エラー:', error);
+      const err = error as Error;
+      logger.error('会話開始/継続エラー:', err);
       next(error);
     }
   }
@@ -197,9 +199,10 @@ export class ConversationController {
         }
       });
     } catch (error) {
-      logger.error('メッセージ送信エラー:', error);
+      const err = error as Error;
+      logger.error('メッセージ送信エラー:', err);
       
-      if (error.message === 'Conversation not found' || error.message === 'Unauthorized access to conversation') {
+      if (err.message === 'Conversation not found' || err.message === 'Unauthorized access to conversation') {
         return res.status(404).json({
           success: false,
           message: '会話が見つかりません'
@@ -241,9 +244,10 @@ export class ConversationController {
         data: formattedConversation
       });
     } catch (error) {
-      logger.error('会話取得エラー:', error);
+      const err = error as Error;
+      logger.error('会話取得エラー:', err);
       
-      if (error.message === 'Conversation not found' || error.message === 'Unauthorized access to conversation') {
+      if (err.message === 'Conversation not found' || err.message === 'Unauthorized access to conversation') {
         return res.status(404).json({
           success: false,
           message: '会話が見つかりません'
@@ -452,9 +456,10 @@ export class ConversationController {
           return { id: contextId, name: '不明' };
       }
     } catch (error) {
-      console.error(`コンテキストデータ取得エラー: ${error.message}`);
+      const err = error as Error;
+      console.error(`コンテキストデータ取得エラー: ${err.message}`);
       // デフォルト値を返す
-      return { id: contextId, error: error.message };
+      return { id: contextId, error: err.message };
     }
   }
 }

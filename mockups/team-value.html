@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>チームバリュー画面 - 陰陽五行AIケアコンパニオン</title>
+  <title>チームメンバー - 四柱推命AIケアコンパニオン</title>
   <!-- Material UI CDN -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.5/dist/css/material.min.css" />
-  <!-- アニメーション用 -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
   
   <style>
     :root {
@@ -28,6 +26,10 @@
       --earth-text: #4e342e;
       --metal-text: #424242;
       --water-text: #01579b;
+      --text-dark: #333333;
+      --text-medium: #666666;
+      --text-light: #999999;
+      --border-color: #e0e0e0;
     }
     
     body {
@@ -137,11 +139,12 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background-color: #e0e0e0;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-right: 12px;
+      color: white;
+      font-weight: 500;
     }
     
     .team-member-info {
@@ -187,47 +190,36 @@
       top: 2px;
     }
     
-    .contribution-record {
-      margin-bottom: 16px;
-    }
-    
-    .contribution-header {
-      display: flex;
-      justify-content: space-between;
+    .element-tag {
+      display: inline-flex;
       align-items: center;
-      margin-bottom: 8px;
-    }
-    
-    .contribution-title {
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.7rem;
       font-weight: 500;
-      margin: 0;
+      margin-right: 4px;
     }
     
-    .contribution-date {
-      font-size: 0.8rem;
-      color: #757575;
+    .element-wood { background-color: var(--wood-color); color: var(--wood-text); }
+    .element-fire { background-color: var(--fire-color); color: var(--fire-text); }
+    .element-earth { background-color: var(--earth-color); color: var(--earth-text); }
+    .element-metal { background-color: var(--metal-color); color: var(--metal-text); }
+    .element-water { background-color: var(--water-color); color: var(--water-text); }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      background-color: #f0f0f0;
+      color: #424242;
+      margin-right: 4px;
     }
     
-    .contribution-content {
-      padding: 12px;
-      background-color: #f5f5f5;
-      border-radius: 8px;
+    .badge-icon {
       font-size: 0.9rem;
-    }
-    
-    .mentorship-card {
-      background-color: #fff8e1;
-      border-left: 3px solid var(--yang-color);
-    }
-    
-    .mission-card {
-      background-color: #e8f5e9;
-      border-left: 3px solid #4caf50;
-    }
-    
-    .event-card {
-      background-color: #e3f2fd;
-      border-left: 3px solid #2196f3;
+      margin-right: 2px;
     }
     
     .floating-button {
@@ -269,61 +261,87 @@
     .bottom-nav-item.active {
       color: var(--primary-color);
     }
-    
-    .five-elements-tag {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 0.7rem;
-      margin-right: 4px;
-      font-weight: 500;
-      text-transform: uppercase;
-    }
-    
-    .element-wood { background-color: var(--wood-color); color: var(--wood-text); }
-    .element-fire { background-color: var(--fire-color); color: var(--fire-text); }
-    .element-earth { background-color: var(--earth-color); color: var(--earth-text); }
-    .element-metal { background-color: var(--metal-color); color: var(--metal-text); }
-    .element-water { background-color: var(--water-color); color: var(--water-text); }
-    
-    .badge {
+
+    .tenGod-chip {
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.7rem;
-      background-color: #f0f0f0;
-      color: #424242;
+      padding: 4px 8px;
+      border-radius: 16px;
+      font-size: 0.75rem;
+      margin: 2px;
+      border: 1px solid;
+    }
+
+    .tenGod-比肩 { border-color: #4CAF50; background-color: rgba(76, 175, 80, 0.1); color: #2E7D32; }
+    .tenGod-劫財 { border-color: #8BC34A; background-color: rgba(139, 195, 74, 0.1); color: #558B2F; }
+    .tenGod-食神 { border-color: #FFC107; background-color: rgba(255, 193, 7, 0.1); color: #F57F17; }
+    .tenGod-傷官 { border-color: #FFD54F; background-color: rgba(255, 213, 79, 0.1); color: #FF8F00; }
+    .tenGod-偏財 { border-color: #2196F3; background-color: rgba(33, 150, 243, 0.1); color: #1565C0; }
+    .tenGod-正財 { border-color: #90CAF9; background-color: rgba(144, 202, 249, 0.1); color: #0D47A1; }
+    .tenGod-偏官 { border-color: #F44336; background-color: rgba(244, 67, 54, 0.1); color: #C62828; }
+    .tenGod-正官 { border-color: #EF9A9A; background-color: rgba(239, 154, 154, 0.1); color: #B71C1C; }
+    .tenGod-偏印 { border-color: #9C27B0; background-color: rgba(156, 39, 176, 0.1); color: #7B1FA2; }
+    .tenGod-印綬 { border-color: #CE93D8; background-color: rgba(206, 147, 216, 0.1); color: #6A1B9A; }
+
+    .pillar-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+
+    .pillar-table th {
+      text-align: left;
+      padding: 6px;
+      color: var(--text-medium);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .pillar-table td {
+      padding: 6px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .stem-branch-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
       margin-right: 4px;
-    }
-    
-    .badge-icon {
-      font-size: 0.9rem;
-      margin-right: 2px;
-    }
-    
-    .progress-container {
-      margin-top: 8px;
-    }
-    
-    .progress-bar {
-      height: 6px;
-      border-radius: 3px;
-      background-color: #e0e0e0;
-      overflow: hidden;
-    }
-    
-    .progress-fill {
-      height: 100%;
-      background-color: var(--primary-color);
-    }
-    
-    .progress-info {
-      display: flex;
-      justify-content: space-between;
+      color: white;
       font-size: 0.7rem;
-      color: #757575;
-      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    .team-relation-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+
+    .team-relation-matrix th, .team-relation-matrix td {
+      text-align: center;
+      padding: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .team-relation-matrix th {
+      background-color: #f5f5f5;
+    }
+
+    .relation-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-weight: 500;
+      margin: 0 auto;
     }
   </style>
 </head>
@@ -331,175 +349,517 @@
   <div class="app-container">
     <header>
       <div style="display: flex; align-items: center;">
-        <span class="material-icons" style="margin-right: 12px;">groups</span>
+        <span class="material-icons" style="margin-right: 12px;">group</span>
         <div>
-          <h2 style="margin: 0; font-size: 1.2rem;">チームバリュー</h2>
-          <span style="font-size: 0.7rem;">陰陽五行AIケアコンパニオン</span>
+          <h2 style="margin: 0; font-size: 1.2rem;">チームメンバー</h2>
+          <span style="font-size: 0.7rem;">四柱推命AIケアコンパニオン</span>
         </div>
       </div>
       <span class="material-icons">more_vert</span>
     </header>
     
     <div class="tab-container">
-      <div class="tab active" onclick="changeTab('contribution')">チーム貢献</div>
-      <div class="tab" onclick="changeTab('mentorship')">メンター関係</div>
-      <div class="tab" onclick="changeTab('mission')">共有ミッション</div>
+      <div class="tab active" onclick="changeTab('members')">メンバー一覧</div>
+      <div class="tab" onclick="changeTab('relations')">相性情報</div>
+      <div class="tab" onclick="changeTab('analytics')">チーム分析</div>
     </div>
     
-    <!-- チーム貢献タブ -->
-    <div class="content-container" id="contribution-content">
+    <!-- メンバー一覧タブ -->
+    <div class="content-container" id="members-content">
       <div class="card">
         <div class="card-header">
-          <h3>あなたの貢献記録</h3>
-          <span class="material-icons">insights</span>
-        </div>
-        <div class="card-content">
-          <div class="contribution-record">
-            <div class="contribution-header">
-              <h4 class="contribution-title">新人スタイリストの技術指導</h4>
-              <span class="contribution-date">2025/3/20</span>
-            </div>
-            <div class="contribution-content">
-              <span class="five-elements-tag element-wood">木</span>
-              山田さんにグラデーションカラーの基本技術を教えました。初めての試みでしたが、とても喜んでくれました。
-            </div>
-          </div>
-          
-          <div class="contribution-record">
-            <div class="contribution-header">
-              <h4 class="contribution-title">新規集客アイデアの提案</h4>
-              <span class="contribution-date">2025/3/15</span>
-            </div>
-            <div class="contribution-content">
-              <span class="five-elements-tag element-fire">火</span>
-              インスタグラムを活用した新しい集客方法を会議で提案し、採用されました。来月から試験的に実施予定です。
-            </div>
-          </div>
-          
-          <div class="contribution-record">
-            <div class="contribution-header">
-              <h4 class="contribution-title">サロン環境整備</h4>
-              <span class="contribution-date">2025/3/10</span>
-            </div>
-            <div class="contribution-content">
-              <span class="five-elements-tag element-earth">土</span>
-              待合スペースの雑誌コーナーを整理し、最新の美容雑誌を追加しました。お客様からも好評です。
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="card-header">
-          <h3>組織理念との共鳴ポイント</h3>
-          <span class="material-icons">stars</span>
-        </div>
-        <div class="card-content">
-          <div style="margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h4 style="margin: 0;">お客様中心の価値提供</h4>
-              <span class="badge">
-                <span class="material-icons badge-icon">favorite</span>共鳴度高
-              </span>
-            </div>
-            <p style="margin: 0; font-size: 0.9rem; color: #424242;">お客様一人ひとりに寄り添い、最高の美容体験を提供するという理念に深く共感しています。</p>
-            <div class="progress-container">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 85%"></div>
-              </div>
-              <div class="progress-info">
-                <span>共鳴度</span>
-                <span>85%</span>
-              </div>
-            </div>
-          </div>
-          
-          <div style="margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h4 style="margin: 0;">チーム全体の成長</h4>
-              <span class="badge">
-                <span class="material-icons badge-icon">trending_up</span>上昇中
-              </span>
-            </div>
-            <p style="margin: 0; font-size: 0.9rem; color: #424242;">個人の成長だけでなく、サロン全体の技術力とサービス向上に貢献することの重要性を理解しています。</p>
-            <div class="progress-container">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 70%"></div>
-              </div>
-              <div class="progress-info">
-                <span>共鳴度</span>
-                <span>70%</span>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h4 style="margin: 0;">持続可能な美容文化</h4>
-              <span class="badge">
-                <span class="material-icons badge-icon">eco</span>可能性あり
-              </span>
-            </div>
-            <p style="margin: 0; font-size: 0.9rem; color: #424242;">環境に配慮した製品選びやサステナブルな美容実践の理念について、もっと学びたいと考えています。</p>
-            <div class="progress-container">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 45%"></div>
-              </div>
-              <div class="progress-info">
-                <span>共鳴度</span>
-                <span>45%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- メンター関係タブ -->
-    <div class="content-container" id="mentorship-content" style="display: none;">
-      <div class="card">
-        <div class="card-header">
-          <h3>あなたのメンター</h3>
-          <span class="material-icons">school</span>
+          <h3>メンバー一覧</h3>
+          <span class="material-icons">person_add</span>
         </div>
         <div class="card-content">
           <div class="team-member">
-            <div class="team-member-avatar">
-              <span class="material-icons">person</span>
-            </div>
+            <div class="team-member-avatar" style="background-color: var(--fire-color);">TK</div>
             <div class="team-member-info">
-              <h4 class="team-member-name">高橋 雅人</h4>
-              <p class="team-member-role">シニアスタイリスト</p>
-              <div class="compatibility-meter">
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level"></div>
-                <span style="font-size: 0.7rem; margin-left: 4px;">相性: 良好</span>
-                <div class="element-indicator" style="background-color: var(--fire-color);"></div>
+              <h4 class="team-member-name">田中 健太</h4>
+              <p class="team-member-role">チーム管理者</p>
+              <div style="display: flex; margin-top: 4px;">
+                <span class="element-tag element-fire">火 陽</span>
+                <span class="badge">
+                  <span class="material-icons badge-icon">admin_panel_settings</span>管理者
+                </span>
               </div>
             </div>
             <span class="material-icons" style="color: #757575;">chevron_right</span>
           </div>
           
-          <div class="mentorship-card" style="padding: 12px; margin-top: 8px; border-radius: 8px;">
-            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-              <span class="material-icons" style="margin-right: 8px; color: var(--yang-color);">lightbulb</span>
-              <h4 style="margin: 0; font-size: 0.9rem;">最近の学び</h4>
+          <div class="team-member">
+            <div class="team-member-avatar" style="background-color: var(--water-color);">SM</div>
+            <div class="team-member-info">
+              <h4 class="team-member-name">佐藤 美咲</h4>
+              <p class="team-member-role">マネージャー</p>
+              <div style="display: flex; margin-top: 4px;">
+                <span class="element-tag element-water">水 陰</span>
+                <span class="badge">
+                  <span class="material-icons badge-icon">supervisor_account</span>マネージャー
+                </span>
+              </div>
             </div>
-            <p style="margin: 0; font-size: 0.8rem;">先週のカット技術セッションでは、高橋さんからレイヤーカットの新しいアプローチを学びました。手首の角度が重要なポイントでした。</p>
+            <span class="material-icons" style="color: #757575;">chevron_right</span>
+          </div>
+          
+          <div class="team-member">
+            <div class="team-member-avatar" style="background-color: var(--wood-color);">KY</div>
+            <div class="team-member-info">
+              <h4 class="team-member-name">木村 悠太</h4>
+              <p class="team-member-role">スタッフ</p>
+              <div style="display: flex; margin-top: 4px;">
+                <span class="element-tag element-wood">木 陽</span>
+                <span class="badge">
+                  <span class="material-icons badge-icon">person</span>メンバー
+                </span>
+              </div>
+            </div>
+            <span class="material-icons" style="color: #757575;">chevron_right</span>
+          </div>
+          
+          <div class="team-member">
+            <div class="team-member-avatar" style="background-color: var(--metal-color);">MY</div>
+            <div class="team-member-info">
+              <h4 class="team-member-name">松本 優子</h4>
+              <p class="team-member-role">スタッフ</p>
+              <div style="display: flex; margin-top: 4px;">
+                <span class="element-tag element-metal">金 陰</span>
+                <span class="badge">
+                  <span class="material-icons badge-icon">person</span>メンバー
+                </span>
+              </div>
+            </div>
+            <span class="material-icons" style="color: #757575;">chevron_right</span>
+          </div>
+          
+          <div class="team-member">
+            <div class="team-member-avatar" style="background-color: var(--earth-color);">IS</div>
+            <div class="team-member-info">
+              <h4 class="team-member-name">伊藤 聖子</h4>
+              <p class="team-member-role">スタッフ</p>
+              <div style="display: flex; margin-top: 4px;">
+                <span class="element-tag element-earth">土 陰</span>
+                <span class="badge">
+                  <span class="material-icons badge-icon">person</span>メンバー
+                </span>
+              </div>
+            </div>
+            <span class="material-icons" style="color: #757575;">chevron_right</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>チーム目標</h3>
+          <span class="material-icons">edit</span>
+        </div>
+        <div class="card-content">
+          <p style="margin-top: 0; color: var(--text-dark);">
+            パトロール業務の効率化と安全性向上のために、チームメンバーの個性と強みを活かした協力体制を構築する。各メンバーの特性に応じた役割分担と相互サポートにより、チーム全体のパフォーマンスを最大化する。
+          </p>
+          <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+            <button style="background-color: #9c27b0; color: white; border: none; padding: 8px 12px; border-radius: 4px; display: flex; align-items: center; cursor: pointer;">
+              <span class="material-icons" style="font-size: 18px; margin-right: 4px;">forum</span>
+              チーム目標について相談
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 相性情報タブ -->
+    <div class="content-container" id="relations-content" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <h3>メンバー四柱推命情報</h3>
+          <span class="material-icons">info</span>
+        </div>
+        <div class="card-content">
+          <!-- 田中健太の四柱情報 -->
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <div class="team-member-avatar" style="background-color: var(--fire-color);">TK</div>
+              <h4 style="margin: 0 0 0 12px;">田中 健太</h4>
+              <span class="element-tag element-fire" style="margin-left: 12px;">火 陽</span>
+            </div>
+            
+            <table class="pillar-table">
+              <thead>
+                <tr>
+                  <th>柱</th>
+                  <th>干支</th>
+                  <th>五行</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>年柱</td>
+                  <td>
+                    <span class="stem-branch-circle" style="background-color: #4CAF50;">甲</span>
+                    <span class="stem-branch-circle" style="background-color: #2E7D32;">寅</span>
+                  </td>
+                  <td>
+                    <span class="element-tag element-wood">木</span>
+                    <span class="element-tag element-wood">木</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>月柱</td>
+                  <td>
+                    <span class="stem-branch-circle" style="background-color: #FF5722;">丙</span>
+                    <span class="stem-branch-circle" style="background-color: #D84315;">巳</span>
+                  </td>
+                  <td>
+                    <span class="element-tag element-fire">火</span>
+                    <span class="element-tag element-fire">火</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>日柱</td>
+                  <td>
+                    <span class="stem-branch-circle" style="background-color: #FF5722;">丙</span>
+                    <span class="stem-branch-circle" style="background-color: #C62828;">午</span>
+                  </td>
+                  <td>
+                    <span class="element-tag element-fire">火</span>
+                    <span class="element-tag element-fire">火</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>時柱</td>
+                  <td>
+                    <span class="stem-branch-circle" style="background-color: #FFC107;">戊</span>
+                    <span class="stem-branch-circle" style="background-color: #8D6E63;">未</span>
+                  </td>
+                  <td>
+                    <span class="element-tag element-earth">土</span>
+                    <span class="element-tag element-earth">土</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <div style="margin-top: 8px; font-size: 0.85rem; color: var(--text-medium);">
+              <div style="margin-bottom: 4px; display: flex; align-items: center;">
+                <span class="material-icons" style="font-size: 16px; margin-right: 4px; color: var(--fire-color);">local_fire_department</span>
+                <span>特徴: 情熱的、エネルギッシュ、リーダーシップがある</span>
+              </div>
+              <div style="display: flex; align-items: center;">
+                <span class="material-icons" style="font-size: 16px; margin-right: 4px; color: var(--primary-color);">psychology</span>
+                <span>適性: 意思決定、チームの方向性決定、モチベーション向上</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 他のメンバー（一部省略表示） -->
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <div class="team-member-avatar" style="background-color: var(--water-color);">SM</div>
+              <h4 style="margin: 0 0 0 12px;">佐藤 美咲</h4>
+              <span class="element-tag element-water" style="margin-left: 12px;">水 陰</span>
+            </div>
+            
+            <table class="pillar-table">
+              <thead>
+                <tr>
+                  <th>柱</th>
+                  <th>干支</th>
+                  <th>五行</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>日柱</td>
+                  <td>
+                    <span class="stem-branch-circle" style="background-color: #03A9F4;">壬</span>
+                    <span class="stem-branch-circle" style="background-color: #0D47A1;">子</span>
+                  </td>
+                  <td>
+                    <span class="element-tag element-water">水</span>
+                    <span class="element-tag element-water">水</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <div style="text-align: center; margin: 8px 0;">
+              <button style="background: none; border: none; color: var(--primary-color); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; margin: 0 auto;">
+                <span class="material-icons" style="font-size: 16px; margin-right: 4px;">expand_more</span>
+                詳細を表示
+              </button>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <div class="team-member-avatar" style="background-color: var(--wood-color);">KY</div>
+              <h4 style="margin: 0 0 0 12px;">木村 悠太</h4>
+              <span class="element-tag element-wood" style="margin-left: 12px;">木 陽</span>
+            </div>
+            
+            <table class="pillar-table">
+              <thead>
+                <tr>
+                  <th>柱</th>
+                  <th>干支</th>
+                  <th>五行</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>日柱</td>
+                  <td>
+                    <span class="stem-branch-circle" style="background-color: #4CAF50;">甲</span>
+                    <span class="stem-branch-circle" style="background-color: #388E3C;">卯</span>
+                  </td>
+                  <td>
+                    <span class="element-tag element-wood">木</span>
+                    <span class="element-tag element-wood">木</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <div style="text-align: center; margin: 8px 0;">
+              <button style="background: none; border: none; color: var(--primary-color); font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; margin: 0 auto;">
+                <span class="material-icons" style="font-size: 16px; margin-right: 4px;">expand_more</span>
+                詳細を表示
+              </button>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin: 12px 0;">
+            <button style="background: none; border: 1px solid var(--primary-color); color: var(--primary-color); font-size: 0.9rem; padding: 6px 12px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; margin: 0 auto;">
+              <span class="material-icons" style="font-size: 18px; margin-right: 4px;">visibility</span>
+              全メンバーの詳細を表示
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>チームメンバー相互関係</h3>
+          <span class="material-icons">help</span>
+        </div>
+        <div class="card-content">
+          <div style="overflow-x: auto;">
+            <table class="team-relation-matrix">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>田中</th>
+                  <th>佐藤</th>
+                  <th>木村</th>
+                  <th>松本</th>
+                  <th>伊藤</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>田中</th>
+                  <td>-</td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(244, 67, 54, 0.1); border: 2px solid #F44336;">偏官</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50;">比肩</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3;">偏財</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(255, 193, 7, 0.1); border: 2px solid #FFC107;">食神</div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>佐藤</th>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(156, 39, 176, 0.1); border: 2px solid #9C27B0;">偏印</div>
+                  </td>
+                  <td>-</td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(244, 67, 54, 0.1); border: 2px solid #F44336;">偏官</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50;">比肩</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3;">偏財</div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>木村</th>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50;">比肩</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(206, 147, 216, 0.1); border: 2px solid #CE93D8;">印綬</div>
+                  </td>
+                  <td>-</td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(244, 67, 54, 0.1); border: 2px solid #F44336;">偏官</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3;">偏財</div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>松本</th>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(156, 39, 176, 0.1); border: 2px solid #9C27B0;">偏印</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50;">比肩</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(206, 147, 216, 0.1); border: 2px solid #CE93D8;">印綬</div>
+                  </td>
+                  <td>-</td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(255, 193, 7, 0.1); border: 2px solid #FFC107;">食神</div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>伊藤</th>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(239, 154, 154, 0.1); border: 2px solid #EF9A9A;">正官</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(144, 202, 249, 0.1); border: 2px solid #90CAF9;">正財</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(255, 213, 79, 0.1); border: 2px solid #FFD54F;">傷官</div>
+                  </td>
+                  <td>
+                    <div class="relation-circle" style="background-color: rgba(139, 195, 74, 0.1); border: 2px solid #8BC34A;">劫財</div>
+                  </td>
+                  <td>-</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           
           <div style="margin-top: 16px;">
-            <h4 style="margin: 0 0 8px 0; font-size: 0.9rem;">次回のセッション予定</h4>
-            <div style="display: flex; align-items: center; font-size: 0.8rem;">
-              <span class="material-icons" style="font-size: 1rem; margin-right: 4px; color: #757575;">event</span>
-              <span>2025年3月30日 (木) 10:30 - 12:00</span>
+            <p style="font-size: 0.9rem; margin: 0 0 8px 0; color: var(--text-dark);">十神関係の凡例:</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <span class="tenGod-chip tenGod-比肩">比肩: 協力関係</span>
+              <span class="tenGod-chip tenGod-劫財">劫財: 競合関係</span>
+              <span class="tenGod-chip tenGod-食神">食神: 創造関係</span>
+              <span class="tenGod-chip tenGod-傷官">傷官: 変革関係</span>
+              <span class="tenGod-chip tenGod-偏財">偏財: 利益関係</span>
+              <span class="tenGod-chip tenGod-正財">正財: 安定関係</span>
+              <span class="tenGod-chip tenGod-偏官">偏官: 権力関係</span>
+              <span class="tenGod-chip tenGod-正官">正官: 規律関係</span>
+              <span class="tenGod-chip tenGod-偏印">偏印: 知恵関係</span>
+              <span class="tenGod-chip tenGod-印綬">印綬: 支援関係</span>
             </div>
-            <div style="display: flex; align-items: center; font-size: 0.8rem; margin-top: 4px;">
-              <span class="material-icons" style="font-size: 1rem; margin-right: 4px; color: #757575;">subject</span>
-              <span>テーマ: グラデーションカラーテクニック</span>
+          </div>
+          
+          <div style="margin-top: 16px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <span class="material-icons" style="color: var(--primary-color); margin-right: 8px;">insights</span>
+              <h4 style="margin: 0; font-size: 1rem;">相性分析</h4>
+            </div>
+            
+            <div style="margin-bottom: 12px; padding: 10px; background-color: #f5f5f5; border-radius: 8px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.9rem; font-weight: 500; color: var(--text-dark);">
+                メンバー間の主要な相性関係:
+              </p>
+              <ul style="margin: 0; padding-left: 24px; font-size: 0.85rem; color: var(--text-dark);">
+                <li>田中と木村は<strong>比肩関係</strong>で良好な協力関係を築けます</li>
+                <li>佐藤と田中は<strong>偏印・偏官</strong>の相互補完的な関係です</li>
+                <li>松本と伊藤は<strong>食神・劫財</strong>の創造的な関係が期待できます</li>
+              </ul>
+            </div>
+            
+            <button style="display: flex; align-items: center; margin: 0 auto; background-color: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">
+              <span class="material-icons" style="font-size: 18px; margin-right: 6px;">forum</span>
+              メンバー相性について相談
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- チーム分析タブ -->
+    <div class="content-container" id="analytics-content" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <h3>チーム五行バランス</h3>
+          <span class="material-icons">donut_large</span>
+        </div>
+        <div class="card-content">
+          <!-- 円グラフの表現（CSSのみで簡易表現） -->
+          <div style="display: flex; justify-content: center; margin: 20px 0;">
+            <div style="width: 200px; height: 200px; position: relative; border-radius: 50%; background: conic-gradient(
+              var(--wood-color) 0% 20%, 
+              var(--fire-color) 20% 40%, 
+              var(--earth-color) 40% 60%, 
+              var(--metal-color) 60% 80%, 
+              var(--water-color) 80% 100%
+            );">
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 0.9rem; color: var(--text-dark); font-weight: 500;">チーム五行<br>バランス</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center;">
+              <div style="width: 12px; height: 12px; background-color: var(--wood-color); margin-right: 4px;"></div>
+              <span style="font-size: 0.85rem; color: var(--text-dark);">木: 20%</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div style="width: 12px; height: 12px; background-color: var(--fire-color); margin-right: 4px;"></div>
+              <span style="font-size: 0.85rem; color: var(--text-dark);">火: 20%</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div style="width: 12px; height: 12px; background-color: var(--earth-color); margin-right: 4px;"></div>
+              <span style="font-size: 0.85rem; color: var(--text-dark);">土: 20%</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div style="width: 12px; height: 12px; background-color: var(--metal-color); margin-right: 4px;"></div>
+              <span style="font-size: 0.85rem; color: var(--text-dark);">金: 20%</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div style="width: 12px; height: 12px; background-color: var(--water-color); margin-right: 4px;"></div>
+              <span style="font-size: 0.85rem; color: var(--text-dark);">水: 20%</span>
+            </div>
+          </div>
+          
+          <div style="margin-top: 16px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <span class="material-icons" style="color: var(--primary-color); margin-right: 8px;">auto_graph</span>
+              <h4 style="margin: 0; font-size: 1rem;">五行バランス分析</h4>
+            </div>
+            
+            <div style="padding: 12px; background-color: #f5f5f5; border-radius: 8px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.9rem; color: var(--text-dark);">
+                チームの五行バランスは理想的な状態です。各五行要素がバランスよく配置されており、相互補完的な関係が形成されています。
+              </p>
+              
+              <div style="margin-top: 12px;">
+                <p style="margin: 0 0 4px 0; font-size: 0.85rem; font-weight: 500; color: var(--text-dark);">
+                  チームの強み:
+                </p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.8rem; color: var(--text-dark);">
+                  <li>多様な視点からの問題解決能力</li>
+                  <li>五行の相生循環による効率的なエネルギーフロー</li>
+                  <li>様々な状況に対応できる柔軟性</li>
+                </ul>
+              </div>
+              
+              <div style="margin-top: 12px;">
+                <p style="margin: 0 0 4px 0; font-size: 0.85rem; font-weight: 500; color: var(--text-dark);">
+                  改善ポイント:
+                </p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 0.8rem; color: var(--text-dark);">
+                  <li>「水」と「木」の連携をさらに強化すると創造性が向上します</li>
+                  <li>「火」と「土」の関係を活用して、アイデアの実現力を高めましょう</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -507,191 +867,45 @@
       
       <div class="card">
         <div class="card-header">
-          <h3>あなたがメンターする相手</h3>
+          <h3>チーム最適化提案</h3>
           <span class="material-icons">psychology</span>
         </div>
         <div class="card-content">
-          <div class="team-member">
-            <div class="team-member-avatar">
-              <span class="material-icons">person</span>
-            </div>
-            <div class="team-member-info">
-              <h4 class="team-member-name">山田 花子</h4>
-              <p class="team-member-role">ジュニアスタイリスト</p>
-              <div class="compatibility-meter">
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <span style="font-size: 0.7rem; margin-left: 4px;">相性: 最高</span>
-                <div class="element-indicator" style="background-color: var(--wood-color);"></div>
-              </div>
-            </div>
-            <span class="material-icons" style="color: #757575;">chevron_right</span>
-          </div>
-          
-          <div class="mentorship-card" style="padding: 12px; margin-top: 8px; border-radius: 8px;">
+          <div style="margin-bottom: 16px; padding: 12px; border-left: 4px solid var(--primary-color); background-color: #f5f5f5;">
             <div style="display: flex; align-items: center; margin-bottom: 8px;">
-              <span class="material-icons" style="margin-right: 8px; color: var(--yang-color);">assignment</span>
-              <h4 style="margin: 0; font-size: 0.9rem;">成長の記録</h4>
+              <span class="material-icons" style="color: var(--primary-color); margin-right: 8px;">tips_and_updates</span>
+              <h4 style="margin: 0; font-size: 0.95rem;">役割最適化</h4>
             </div>
-            <p style="margin: 0; font-size: 0.8rem;">山田さんはグラデーションカラーの基本技術を速く習得しました。顧客に合わせたカラー選びについて、次回指導する予定です。</p>
+            <p style="margin: 0; font-size: 0.85rem; color: var(--text-dark);">
+              「火」属性が強い田中さんはビジョン設定とチーム方向性の決定に適しています。「水」属性の佐藤さんには戦略立案と分析業務を担当させるとチーム全体の効率が向上するでしょう。
+            </p>
           </div>
           
-          <div style="margin-top: 16px;">
-            <h4 style="margin: 0 0 8px 0; font-size: 0.9rem;">次回のセッション予定</h4>
-            <div style="display: flex; align-items: center; font-size: 0.8rem;">
-              <span class="material-icons" style="font-size: 1rem; margin-right: 4px; color: #757575;">event</span>
-              <span>2025年3月28日 (火) 14:00 - 15:30</span>
+          <div style="margin-bottom: 16px; padding: 12px; border-left: 4px solid #4CAF50; background-color: #f5f5f5;">
+            <div style="display: flex; alignItems: center; margin-bottom: 8px;">
+              <span class="material-icons" style="color: #4CAF50; margin-right: 8px;">groups</span>
+              <h4 style="margin: 0; font-size: 0.95rem;">サブチーム構成</h4>
             </div>
-            <div style="display: flex; align-items: center; font-size: 0.8rem; margin-top: 4px;">
-              <span class="material-icons" style="font-size: 1rem; margin-right: 4px; color: #757575;">subject</span>
-              <span>テーマ: カスタマイズカラーコンサルティング</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="card-header">
-          <h3>メンター候補</h3>
-          <span class="material-icons">person_search</span>
-        </div>
-        <div class="card-content">
-          <div class="team-member">
-            <div class="team-member-avatar">
-              <span class="material-icons">person</span>
-            </div>
-            <div class="team-member-info">
-              <h4 class="team-member-name">田中 誠</h4>
-              <p class="team-member-role">カラースペシャリスト</p>
-              <div class="compatibility-meter">
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level"></div>
-                <div class="meter-level"></div>
-                <span style="font-size: 0.7rem; margin-left: 4px;">相性: 良い</span>
-                <div class="element-indicator" style="background-color: var(--fire-color);"></div>
-              </div>
-            </div>
-            <button style="border: none; background-color: var(--primary-color); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">申請する</button>
+            <p style="margin: 0; font-size: 0.85rem; color: var(--text-dark);">
+              相生関係にある「木」と「火」属性メンバー（木村と田中）のペアと、「金」と「水」属性メンバー（松本と佐藤）のペアでサブチームを構成すると、相互補完的な関係が促進されます。
+            </p>
           </div>
           
-          <div class="team-member">
-            <div class="team-member-avatar">
-              <span class="material-icons">person</span>
+          <div style="padding: 12px; border-left: 4px solid #2196F3; background-color: #f5f5f5;">
+            <div style="display: flex; alignItems: center; margin-bottom: 8px;">
+              <span class="material-icons" style="color: #2196F3; margin-right: 8px;">trending_up</span>
+              <h4 style="margin: 0; font-size: 0.95rem;">能力開発提案</h4>
             </div>
-            <div class="team-member-info">
-              <h4 class="team-member-name">佐藤 千尋</h4>
-              <p class="team-member-role">アートディレクター</p>
-              <div class="compatibility-meter">
-                <div class="meter-level active"></div>
-                <div class="meter-level active"></div>
-                <div class="meter-level"></div>
-                <div class="meter-level"></div>
-                <div class="meter-level"></div>
-                <span style="font-size: 0.7rem; margin-left: 4px;">相性: 普通</span>
-                <div class="element-indicator" style="background-color: var(--metal-color);"></div>
-              </div>
-            </div>
-            <button style="border: none; background-color: var(--primary-color); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">申請する</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 共有ミッションタブ -->
-    <div class="content-container" id="mission-content" style="display: none;">
-      <div class="card">
-        <div class="card-header">
-          <h3>現在のチームミッション</h3>
-          <span class="material-icons">flag</span>
-        </div>
-        <div class="card-content">
-          <div class="mission-card" style="padding: 12px; margin-bottom: 16px; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h4 style="margin: 0; font-size: 0.9rem;">春の新メニュー開発</h4>
-              <span style="font-size: 0.7rem; color: #757575;">期限: 2025/4/15</span>
-            </div>
-            <p style="margin: 0 0 8px 0; font-size: 0.8rem;">サロン全体で取り組む春の新メニュー開発プロジェクト。あなたはカラーリングチームの一員です。</p>
-            <div class="progress-container">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 60%"></div>
-              </div>
-              <div class="progress-info">
-                <span>進捗状況</span>
-                <span>60%</span>
-              </div>
-            </div>
-            <div style="margin-top: 8px; font-size: 0.8rem;">
-              <span class="material-icons" style="font-size: 0.9rem; vertical-align: middle; color: #4caf50;">people</span>
-              <span>参加者: 8名</span>
-            </div>
+            <p style="margin: 0; font-size: 0.85rem; color: var(--text-dark);">
+              「土」属性の伊藤さんは安定性とサポート役割に適していますが、チーム内で存在感を発揮するには「火」属性と連携したプロジェクトへの参加が効果的です。田中さんとのコラボレーションが推奨されます。
+            </p>
           </div>
           
-          <div class="mission-card" style="padding: 12px; margin-bottom: 16px; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h4 style="margin: 0; font-size: 0.9rem;">SNSプロモーション強化</h4>
-              <span style="font-size: 0.7rem; color: #757575;">期限: 2025/5/30</span>
-            </div>
-            <p style="margin: 0 0 8px 0; font-size: 0.8rem;">Instagram、TikTokを活用した新規顧客獲得プロジェクト。各スタイリストの個性を活かした投稿戦略を構築中。</p>
-            <div class="progress-container">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 25%"></div>
-              </div>
-              <div class="progress-info">
-                <span>進捗状況</span>
-                <span>25%</span>
-              </div>
-            </div>
-            <div style="margin-top: 8px; font-size: 0.8rem;">
-              <span class="material-icons" style="font-size: 0.9rem; vertical-align: middle; color: #4caf50;">people</span>
-              <span>参加者: 5名</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <div class="card-header">
-          <h3>今後のチームイベント</h3>
-          <span class="material-icons">event</span>
-        </div>
-        <div class="card-content">
-          <div class="event-card" style="padding: 12px; margin-bottom: 16px; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h4 style="margin: 0; font-size: 0.9rem;">カラーリングワークショップ</h4>
-              <span style="font-size: 0.7rem; color: #757575;">2025/4/5 (土)</span>
-            </div>
-            <p style="margin: 0; font-size: 0.8rem;">外部講師を招いた特別ワークショップ。最新のカラーリング技術とトレンドについて学びます。</p>
-            <div style="margin-top: 8px; display: flex; align-items: center;">
-              <span class="material-icons" style="font-size: 0.9rem; margin-right: 4px; color: #2196f3;">location_on</span>
-              <span style="font-size: 0.8rem;">サロン2階 研修室</span>
-            </div>
-            <div style="margin-top: 4px; display: flex; align-items: center;">
-              <span class="material-icons" style="font-size: 0.9rem; margin-right: 4px; color: #2196f3;">schedule</span>
-              <span style="font-size: 0.8rem;">10:00 - 16:00</span>
-            </div>
-            <button style="margin-top: 8px; border: none; background-color: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; width: 100%;">参加登録する</button>
-          </div>
-          
-          <div class="event-card" style="padding: 12px; margin-bottom: 16px; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <h4 style="margin: 0; font-size: 0.9rem;">チームビルディング研修</h4>
-              <span style="font-size: 0.7rem; color: #757575;">2025/4/20 (日)</span>
-            </div>
-            <p style="margin: 0; font-size: 0.8rem;">チーム全体の結束力を高めるためのアクティビティ。ゲーム形式のワークショップと交流会があります。</p>
-            <div style="margin-top: 8px; display: flex; align-items: center;">
-              <span class="material-icons" style="font-size: 0.9rem; margin-right: 4px; color: #2196f3;">location_on</span>
-              <span style="font-size: 0.8rem;">市内レンタルスペース</span>
-            </div>
-            <div style="margin-top: 4px; display: flex; align-items: center;">
-              <span class="material-icons" style="font-size: 0.9rem; margin-right: 4px; color: #2196f3;">schedule</span>
-              <span style="font-size: 0.8rem;">13:00 - 17:00</span>
-            </div>
-            <button style="margin-top: 8px; border: none; background-color: #2196f3; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; width: 100%;">参加登録する</button>
+          <div style="margin-top: 16px; text-align: center;">
+            <button style="background-color: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; margin: 0 auto;">
+              <span class="material-icons" style="font-size: 18px; margin-right: 6px;">forum</span>
+              最適化提案について相談
+            </button>
           </div>
         </div>
       </div>
@@ -710,13 +924,13 @@
         <span class="material-icons">chat</span>
         <span>対話</span>
       </div>
-      <div class="bottom-nav-item">
-        <span class="material-icons">explore</span>
-        <span>コンパス</span>
-      </div>
       <div class="bottom-nav-item active">
         <span class="material-icons">groups</span>
         <span>チーム</span>
+      </div>
+      <div class="bottom-nav-item">
+        <span class="material-icons">analytics</span>
+        <span>分析</span>
       </div>
       <div class="bottom-nav-item">
         <span class="material-icons">person</span>
@@ -729,9 +943,9 @@
     // タブの切り替え
     function changeTab(tabName) {
       // すべてのタブコンテンツを非表示
-      document.getElementById('contribution-content').style.display = 'none';
-      document.getElementById('mentorship-content').style.display = 'none';
-      document.getElementById('mission-content').style.display = 'none';
+      document.getElementById('members-content').style.display = 'none';
+      document.getElementById('relations-content').style.display = 'none';
+      document.getElementById('analytics-content').style.display = 'none';
       
       // すべてのタブの選択状態を解除
       const tabs = document.querySelectorAll('.tab');
@@ -743,7 +957,7 @@
       document.getElementById(tabName + '-content').style.display = 'block';
       
       // 選択されたタブをアクティブに
-      const activeTab = Array.from(tabs).find(tab => tab.innerText.toLowerCase().includes(tabName.toLowerCase()));
+      const activeTab = Array.from(tabs).find(tab => tab.textContent.toLowerCase().includes(tabName.toLowerCase()));
       if (activeTab) {
         activeTab.classList.add('active');
       }
@@ -751,7 +965,7 @@
     
     // フローティングボタンクリック時のモーダル表示（実際の実装では別途モーダルが必要）
     document.querySelector('.floating-button').addEventListener('click', function() {
-      alert('新しい記録を追加するモーダルがここに表示されます。');
+      alert('新しいメンバーを追加するモーダルがここに表示されます。');
     });
   </script>
 </body>

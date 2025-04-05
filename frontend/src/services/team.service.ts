@@ -10,7 +10,8 @@ const ENDPOINTS = {
   DELETE_TEAM: (id: string) => `/teams/${id}`,
   INVITE_MEMBER: (id: string) => `/teams/${id}/invite`,
   GET_TEAM_ANALYTICS: (id: string) => `/teams/${id}/analytics`,
-  GET_TEAM_COMPATIBILITY: (id: string) => `/teams/${id}/compatibility`
+  GET_TEAM_COMPATIBILITY: (id: string) => `/teams/${id}/compatibility`,
+  GET_TEAM_RELATIONSHIPS: (id: string) => `/teams/${id}/relationships`
 };
 
 // Team型定義
@@ -33,6 +34,38 @@ export interface ITeam {
     elementalType?: {
       mainElement: string;
       yinYang: string;
+    };
+    sajuProfile?: {
+      fourPillars?: {
+        yearPillar?: {
+          stem: string;
+          branch: string;
+          fullStemBranch?: string;
+          hiddenStems?: string[];
+        };
+        monthPillar?: {
+          stem: string;
+          branch: string;
+          fullStemBranch?: string;
+          hiddenStems?: string[];
+        };
+        dayPillar?: {
+          stem: string;
+          branch: string;
+          fullStemBranch?: string;
+          hiddenStems?: string[];
+        };
+        hourPillar?: {
+          stem: string;
+          branch: string;
+          fullStemBranch?: string;
+          hiddenStems?: string[];
+        };
+      };
+      mainElement?: string;
+      secondaryElement?: string;
+      yinYang?: string;
+      dayMaster?: string;
     };
   }>;
 }
@@ -64,6 +97,30 @@ export interface ITeamElementalAnalysis {
     type: 'recruitment' | 'reassignment' | 'development';
     description: string;
     priority: 'low' | 'medium' | 'high';
+  }>;
+}
+
+// チームメンバー間の十神関係情報型
+export interface ITeamTenGodRelationships {
+  teamId: string;
+  teamName: string;
+  members: Array<{
+    userId: string;
+    name: string;
+    role: string;
+    mainElement: string;
+    yinYang: string;
+    dayPillar: string;
+  }>;
+  relationships: Array<{
+    fromUserId: string;
+    fromUserName: string;
+    toUserId: string;
+    toUserName: string;
+    tenGod: string | null; // 十神関係
+    branchTenGod: string | null; // 地支十神関係
+    compatibilityScore: number;
+    compatibilityRating: string;
   }>;
 }
 
@@ -186,6 +243,21 @@ class TeamService {
     } catch (error) {
       console.error(`チーム相性分析エラー (ID: ${teamId}):`, error);
       throw error;
+    }
+  }
+
+  /**
+   * チームメンバー間の十神関係情報を取得
+   */
+  async getTeamTenGodRelationships(teamId: string): Promise<ITeamTenGodRelationships> {
+    try {
+      const response = await axios.get(getApiUrl(ENDPOINTS.GET_TEAM_RELATIONSHIPS(teamId)));
+      return response.data;
+    } catch (error) {
+      console.error(`チーム十神関係取得エラー (ID: ${teamId}):`, error);
+      
+      // モックデータを返す（バックエンドAPIが完成するまで）
+      return this.getMockTeamTenGodRelationships(teamId);
     }
   }
 
@@ -359,6 +431,88 @@ class TeamService {
           priority: 'low'
         }
       ]
+    };
+  }
+
+  /**
+   * モック十神関係データを生成（開発用）
+   */
+  private getMockTeamTenGodRelationships(teamId: string): ITeamTenGodRelationships {
+    // モックチームデータから対象のチームを取得
+    const mockTeams = this.getMockTeams();
+    const team = mockTeams.find(t => t.id === teamId);
+    
+    if (!team) {
+      // チームが見つからない場合は空のデータを返す
+      return {
+        teamId,
+        teamName: '不明なチーム',
+        members: [],
+        relationships: []
+      };
+    }
+
+    // チームメンバー情報を取得
+    const members = team.members || [];
+    
+    // 十神関係タイプの配列
+    const tenGodTypes = [
+      '比肩', '劫財', '食神', '傷官', '偏財',
+      '正財', '偏官', '正官', '偏印', '印綬'
+    ];
+    
+    // 関係性データの生成（全メンバーの組み合わせ）
+    const relationships = [];
+    
+    for (let i = 0; i < members.length; i++) {
+      for (let j = 0; j < members.length; j++) {
+        // 自分自身との関係はスキップ
+        if (i === j) continue;
+        
+        const fromMember = members[i];
+        const toMember = members[j];
+        
+        // ランダムな十神関係を選択
+        const randomTenGod = tenGodTypes[Math.floor(Math.random() * tenGodTypes.length)];
+        const randomBranchTenGod = tenGodTypes[Math.floor(Math.random() * tenGodTypes.length)];
+        
+        // ランダムな相性スコア（20-95の範囲）
+        const randomScore = Math.floor(Math.random() * 75) + 20;
+        
+        // 相性評価を決定
+        let compatibilityRating = '';
+        if (randomScore >= 80) compatibilityRating = '非常に良好';
+        else if (randomScore >= 60) compatibilityRating = '良好';
+        else if (randomScore >= 40) compatibilityRating = '中立';
+        else if (randomScore >= 20) compatibilityRating = '要注意';
+        else compatibilityRating = '困難';
+        
+        // 関係情報の追加
+        relationships.push({
+          fromUserId: fromMember.userId,
+          fromUserName: fromMember.name || `メンバー${i + 1}`,
+          toUserId: toMember.userId,
+          toUserName: toMember.name || `メンバー${j + 1}`,
+          tenGod: randomTenGod,
+          branchTenGod: randomBranchTenGod,
+          compatibilityScore: randomScore,
+          compatibilityRating
+        });
+      }
+    }
+    
+    return {
+      teamId,
+      teamName: team.name,
+      members: members.map(member => ({
+        userId: member.userId,
+        name: member.name || 'ユーザー名なし',
+        role: member.role || 'メンバー',
+        mainElement: member.elementalType?.mainElement || '木',
+        yinYang: member.elementalType?.yinYang || '陽',
+        dayPillar: '甲子' // デフォルト値
+      })),
+      relationships
     };
   }
 }

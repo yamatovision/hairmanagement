@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/auth.controller';
 import jwt from 'jsonwebtoken';
+import { AuthMiddleware } from '../middlewares/auth.middleware';
 
 /**
  * 認証関連のルーティング
@@ -9,6 +10,8 @@ import jwt from 'jsonwebtoken';
  */
 export const registerAuthRoutes = (router: Router): void => {
   const authController = container.resolve(AuthController);
+  const authMiddleware = container.resolve(AuthMiddleware);
+  const auth = authMiddleware.handle();
   
   // ログイン
   router.post('/auth/login', (req, res) => 
@@ -30,6 +33,11 @@ export const registerAuthRoutes = (router: Router): void => {
     authController.logout(req, res)
   );
   
+  // 現在のユーザー情報取得
+  router.get('/auth/me', auth, (req, res) => 
+    authController.getCurrentUser(req, res)
+  );
+  
   // フロントエンドからのリクエスト形式に合わせたエイリアスエンドポイント - /api/v1 プレフィックス
   // 同じコントローラメソッドを指す別のルートパス
   router.post('/api/v1/auth/login', (req, res) => 
@@ -46,6 +54,11 @@ export const registerAuthRoutes = (router: Router): void => {
   
   router.post('/api/v1/auth/logout', (req, res) => 
     authController.logout(req, res)
+  );
+  
+  // /api/v1プレフィックス付きの現在のユーザー情報取得
+  router.get('/api/v1/auth/me', auth, (req, res) => 
+    authController.getCurrentUser(req, res)
   );
   
   // デバッグ用のトークン検証エンドポイント

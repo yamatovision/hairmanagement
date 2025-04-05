@@ -43,18 +43,21 @@ export class MongoTeamRepository implements ITeamRepository {
    * @returns ドメインエンティティのTeam
    */
   protected toDomainEntity(doc: ITeamDocument): Team {
+    // ownerIdが必須なので、不足している場合はエラーのリスクを避けるための対応
+    const ownerId = doc.ownerId ? doc.ownerId.toString() : '';
+    
     return new Team(
       doc._id.toString(),
-      doc.name,
-      doc.description,
-      doc.ownerId.toString(),
+      doc.name || '',  // nameが未定義の場合は空文字を使用
+      doc.description || '',  // descriptionも同様に処理
+      ownerId,
       doc.isActive,
-      doc.admins.map(adminId => adminId.toString()),
-      doc.members.map(member => ({
+      doc.admins ? doc.admins.map(adminId => adminId.toString()) : [],
+      doc.members ? doc.members.map(member => ({
         userId: member.userId.toString(),
-        role: member.role,
+        role: member.position || 'member', // positionをroleとして使用、ない場合はデフォルト値
         joinedAt: member.joinedAt
-      })),
+      })) : [],
       doc.goal,
       doc.createdAt
     );

@@ -250,7 +250,7 @@ export function getLunarDate(date: Date): LunarDate | null {
         lunarMonth: lunar.getMonth(),
         lunarDay: lunar.getDay(),
         isLeapMonth: lunar.isLeap(),
-        stemBranch: null // 干支はnull
+        stemBranch: undefined // 干支は提供なし
       };
     } catch (libError) {
       // ライブラリが使えない場合はnull
@@ -303,11 +303,11 @@ export function isLeapMonth(date: Date): boolean {
 /**
  * 日付の節気情報を取得
  * @param date 新暦日付
- * @returns 節気情報（ない場合はnull）
+ * @returns 節気情報（ない場合はundefined）
  */
-export function getSolarTerm(date: Date): string | null {
+export function getSolarTerm(date: Date): string | undefined {
   const dateKey = formatDateKey(date);
   const calendarDay = CALENDAR_DATA[dateKey];
   
-  return calendarDay?.solarTerm || null;
+  return calendarDay?.solarTerm;
 }

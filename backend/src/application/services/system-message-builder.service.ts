@@ -13,6 +13,8 @@ import { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { IFortuneRepository } from '../../domain/repositories/IFortuneRepository';
 import { ITeamRepository } from '../../domain/repositories/ITeamRepository';
 import mongoose from 'mongoose';
+import { ElementType, PillarType } from '../../shared/types/saju/core';
+import { safeObjectAccess } from '../../utils/type-safety.util';
 
 /**
  * システムメッセージコンテキストインターフェース
@@ -102,16 +104,26 @@ export class SystemMessageBuilderService {
       // 十神関係（存在する場合）- 天干の十神関係
       if (tenGodsExists) {
         systemMessage += `\n【十神関係】\n`;
+        // 型安全なイテレーション - Object.entriesは型情報を保持しないため、
+        // キーが適切なPillarTypeであることを確認
         Object.entries(tenGods).forEach(([key, value]) => {
-          systemMessage += `- ${key}柱: ${value}\n`;
+          // import { PillarType } from '../../shared/types/saju/core';
+          // import { safeObjectAccess } from '../../utils/type-safety.util';
+          // キーがPillarTypeであることを確認する（完全な型安全性のため）
+          const pillarKey = key; // as PillarType;
+          const tenGodValue = value; // safeObjectAccess(tenGods, pillarKey, '比肩');
+          systemMessage += `- ${pillarKey}柱: ${tenGodValue}\n`;
         });
       }
       
       // 地支十神関係（存在する場合）- 地支の十神関係
       if (branchTenGodsExists) {
         systemMessage += `\n【地支十神関係】\n`;
+        // 型安全なイテレーション
         Object.entries(branchTenGods).forEach(([key, value]) => {
-          systemMessage += `- ${key}柱地支: ${value}\n`;
+          const pillarKey = key; // as PillarType;
+          const branchTenGodValue = value; // safeObjectAccess(branchTenGods, pillarKey, '比肩');
+          systemMessage += `- ${pillarKey}柱地支: ${branchTenGodValue}\n`;
         });
       }
       
@@ -124,17 +136,38 @@ export class SystemMessageBuilderService {
       if (todayCalendarInfo) {
         systemMessage += `\n【今日の干支情報】\n`;
         if (todayCalendarInfo.dayPillar) {
-          systemMessage += `- 日柱: ${todayCalendarInfo.dayPillar.stem}${todayCalendarInfo.dayPillar.branch}\n`;
+          // 日柱情報の安全な取得
+          const dayPillar = todayCalendarInfo.dayPillar;
+          const stem = dayPillar.stem || '';
+          const branch = dayPillar.branch || '';
+          systemMessage += `- 日柱: ${stem}${branch}\n`;
         }
         if (todayCalendarInfo.mainElement) {
-          systemMessage += `- 五行: ${todayCalendarInfo.mainElement}の${todayCalendarInfo.yinYang || '陽'}\n`;
+          // 五行情報の安全な取得
+          const mainElement = todayCalendarInfo.mainElement;
+          const yinYang = todayCalendarInfo.yinYang || '陽';
+          systemMessage += `- 五行: ${mainElement}の${yinYang}\n`;
         }
       }
       
       systemMessage += `\nこの情報をもとに、ユーザーの質問に回答してください。四柱推命の原理に基づいた深い洞察と実用的なアドバイスを提供してください。特に、ユーザーの「日主」と十神関係を重視し、今日の運勢に合わせたアドバイスを心がけてください。`;
     } else {
       // 四柱推命情報がない場合は基本的なプロンプトを返す
-      systemMessage = `デイリー運勢に基づく相談を受け付けます。本日の運勢は「${fortune?.rating || '良好'}」で、「${user.sajuProfile?.mainElement || '木'}」の「${user.sajuProfile?.yinYang || '陽'}」が特徴です。${user.personalGoal ? `あなたの目標「${user.personalGoal}」も考慮します。` : ''}どのようなことでも相談してください。`;
+      // 型安全にデータにアクセス
+      const rating = fortune?.rating || '良好';
+      const sajuProfile = user.sajuProfile || {};
+      const mainElement = sajuProfile.mainElement || '木';
+      const yinYang = sajuProfile.yinYang || '陽';
+      const personalGoal = user.personalGoal;
+      
+      systemMessage = `デイリー運勢に基づく相談を受け付けます。本日の運勢は「${rating}」で、「${mainElement}」の「${yinYang}」が特徴です。`;
+      
+      // 条件付きで個人目標情報を追加
+      if (personalGoal) {
+        systemMessage += ` あなたの目標「${personalGoal}」も考慮します。`;
+      }
+      
+      systemMessage += ` どのようなことでも相談してください。`;
     }
 
     return systemMessage;
@@ -155,21 +188,42 @@ export class SystemMessageBuilderService {
     // ユーザー情報
     systemMessage += `【あなたの情報】\n`;
     if (user.sajuProfile) {
-      systemMessage += `- 主要五行: ${user.sajuProfile.mainElement || '木'}\n`;
-      systemMessage += `- 陰陽: ${user.sajuProfile.yinYang || '陽'}\n`;
-      if (user.sajuProfile.fourPillars && user.sajuProfile.fourPillars.dayPillar) {
-        systemMessage += `- 日主: ${user.sajuProfile.fourPillars.dayPillar.stem || ''}${user.sajuProfile.fourPillars.dayPillar.branch || ''}\n`;
+      // 型安全なアクセスのために変数を抽出
+      const sajuProfile = user.sajuProfile;
+      const mainElement = sajuProfile.mainElement || '木';
+      const yinYang = sajuProfile.yinYang || '陽';
+      
+      systemMessage += `- 主要五行: ${mainElement}\n`;
+      systemMessage += `- 陰陽: ${yinYang}\n`;
+      
+      // 四柱情報の安全なアクセス
+      if (sajuProfile.fourPillars && sajuProfile.fourPillars.dayPillar) {
+        const dayPillar = sajuProfile.fourPillars.dayPillar;
+        const stem = dayPillar.stem || '';
+        const branch = dayPillar.branch || '';
+        systemMessage += `- 日主: ${stem}${branch}\n`;
       }
     }
 
     // ターゲットメンバー情報
     systemMessage += `\n【メンバーの情報】\n`;
     if (targetMember.sajuProfile) {
-      systemMessage += `- 名前: ${targetMember.name || '名前未設定'}\n`;
-      systemMessage += `- 主要五行: ${targetMember.sajuProfile.mainElement || '木'}\n`;
-      systemMessage += `- 陰陽: ${targetMember.sajuProfile.yinYang || '陽'}\n`;
-      if (targetMember.sajuProfile.fourPillars && targetMember.sajuProfile.fourPillars.dayPillar) {
-        systemMessage += `- 日主: ${targetMember.sajuProfile.fourPillars.dayPillar.stem || ''}${targetMember.sajuProfile.fourPillars.dayPillar.branch || ''}\n`;
+      // 型安全なアクセスのために変数を抽出
+      const memberName = targetMember.name || '名前未設定';
+      const sajuProfile = targetMember.sajuProfile;
+      const mainElement = sajuProfile.mainElement || '木';
+      const yinYang = sajuProfile.yinYang || '陽';
+      
+      systemMessage += `- 名前: ${memberName}\n`;
+      systemMessage += `- 主要五行: ${mainElement}\n`;
+      systemMessage += `- 陰陽: ${yinYang}\n`;
+      
+      // 四柱情報の安全なアクセス
+      if (sajuProfile.fourPillars && sajuProfile.fourPillars.dayPillar) {
+        const dayPillar = sajuProfile.fourPillars.dayPillar;
+        const stem = dayPillar.stem || '';
+        const branch = dayPillar.branch || '';
+        systemMessage += `- 日主: ${stem}${branch}\n`;
       }
     }
 
@@ -193,10 +247,20 @@ export class SystemMessageBuilderService {
     // マネージャー情報
     systemMessage += `【マネージャー情報】\n`;
     if (user.sajuProfile) {
-      systemMessage += `- 主要五行: ${user.sajuProfile.mainElement || '木'}\n`;
-      systemMessage += `- 陰陽: ${user.sajuProfile.yinYang || '陽'}\n`;
-      if (user.sajuProfile.fourPillars && user.sajuProfile.fourPillars.dayPillar) {
-        systemMessage += `- 日主: ${user.sajuProfile.fourPillars.dayPillar.stem || ''}${user.sajuProfile.fourPillars.dayPillar.branch || ''}\n`;
+      // 型安全なアクセスのために変数を抽出
+      const sajuProfile = user.sajuProfile;
+      const mainElement = sajuProfile.mainElement || '木';
+      const yinYang = sajuProfile.yinYang || '陽';
+      
+      systemMessage += `- 主要五行: ${mainElement}\n`;
+      systemMessage += `- 陰陽: ${yinYang}\n`;
+      
+      // 四柱情報の安全なアクセス
+      if (sajuProfile.fourPillars && sajuProfile.fourPillars.dayPillar) {
+        const dayPillar = sajuProfile.fourPillars.dayPillar;
+        const stem = dayPillar.stem || '';
+        const branch = dayPillar.branch || '';
+        systemMessage += `- 日主: ${stem}${branch}\n`;
       }
     }
 
@@ -209,13 +273,19 @@ export class SystemMessageBuilderService {
       systemMessage += `- メンバー数: ${team.members.length}人\n`;
       
       // 五行分布の集計
-      const elementalDistribution = {
+      // Record<ElementType, number>として定義し、型安全性を確保
+      const elementalDistribution: Record<string, number> = {
         '木': 0, '火': 0, '土': 0, '金': 0, '水': 0
       };
       
+      // 型安全なアクセスを使用
       team.members.forEach((member: any) => {
         if (member.sajuProfile && member.sajuProfile.mainElement) {
-          elementalDistribution[member.sajuProfile.mainElement]++;
+          const element = member.sajuProfile.mainElement;
+          // 有効な五行かチェックしてからアクセス
+          if (element in elementalDistribution) {
+            elementalDistribution[element as keyof typeof elementalDistribution]++;
+          }
         }
       });
       

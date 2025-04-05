@@ -95,13 +95,14 @@ function determineSolarTerm(date: Date): string | null {
   });
   
   // 指定された日付より前の最新の節気を見つける
-  let currentTerm = null;
+  let currentTerm: string | null = null;
   for (const [term, termData] of sortedTerms) {
+    const termName = term as string;
     const data = termData as any;
     const termDate = new Date(data.year, data.month - 1, data.day, 
                              data.hour, data.minute);
     if (termDate <= date) {
-      currentTerm = term;
+      currentTerm = termName;
     } else {
       break;
     }

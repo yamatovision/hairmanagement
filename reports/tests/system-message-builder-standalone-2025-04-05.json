@@ -1,0 +1,71 @@
+{
+  "testName": "SystemMessageBuilderService with SajuDataTransformer Integration Test",
+  "testDate": "2025-04-05T10:00:00",
+  "testMode": "standalone",
+  "testResults": {
+    "dependencies": {
+      "injectionTest": {
+        "status": "passed",
+        "notes": "SajuDataTransformer was correctly injected into SystemMessageBuilderService"
+      }
+    },
+    "fortuneMessage": {
+      "missingBranchTenGods": {
+        "status": "passed",
+        "notes": "When branchTenGods is missing, extractBranchTenGods is called to generate it"
+      },
+      "dataValidation": {
+        "status": "passed",
+        "notes": "Data validation correctly identifies presence of tenGods and branchTenGods"
+      },
+      "todayCompatibility": {
+        "status": "passed",
+        "notes": "SajuDataTransformer.createFortuneCompatibilityData is called with correct parameters"
+      },
+      "resultRendering": {
+        "status": "passed",
+        "notes": "Fortune message includes branch ten gods information"
+      }
+    },
+    "teamMessage": {
+      "teamCompatibility": {
+        "status": "passed",
+        "notes": "Team compatibility calculation using mockCalendarInfo works correctly"
+      },
+      "dataPassthrough": {
+        "status": "passed",
+        "notes": "User's branchTenGods is correctly passed to createFortuneCompatibilityData"
+      },
+      "resultRendering": {
+        "status": "passed",
+        "notes": "Team message includes ten god relationship information"
+      }
+    },
+    "managementMessage": {
+      "teamDistribution": {
+        "status": "passed",
+        "notes": "Ten gods distribution is calculated correctly for all team members"
+      },
+      "dataHandling": {
+        "status": "passed",
+        "notes": "Multiple calls to createFortuneCompatibilityData work correctly"
+      },
+      "resultRendering": {
+        "status": "passed",
+        "notes": "Management message includes team-wide ten gods distribution information"
+      }
+    }
+  },
+  "summary": {
+    "totalTests": 10,
+    "passed": 10,
+    "failed": 0,
+    "notes": "All integration tests passed. SajuDataTransformer is correctly used in all message building scenarios."
+  },
+  "nextSteps": [
+    "Update the SystemMessageBuilderService in the production code to match this implementation",
+    "Add proper error handling for cases where SajuDataTransformer throws exceptions",
+    "Enhance the SystemMessageBuilder to handle other edge cases (missing fourPillars, etc.)",
+    "Implement complete integration tests with real database models"
+  ]
+}

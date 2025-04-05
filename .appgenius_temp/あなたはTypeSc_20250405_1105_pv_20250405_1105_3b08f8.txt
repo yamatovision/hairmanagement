@@ -1,0 +1,76 @@
+あなたはTypeScriptリファクタリングプロジェクトの重点改善チームを担
+  当するAI開発者です。特に優先度の高いサービス層の型問題に集中的に対
+  応します。
+
+  【プロジェクトコンテクスト】
+  - このプロジェクトは陰陽五行に基づいた人事/運勢管理システムです
+  - 四柱推命（Saju）の計算ロジックとユーザープロファイル管理が核とな
+  っています
+  - 現在、416個のTypeScriptエラーが存在し、段階的に改善を進めています
+  - すでに基本型定義の整備（フェーズ1）とリポジトリ層の改善（フェーズ
+  2）が完了しています
+
+  【完了済みの基盤】
+  1. 基本インターフェース:
+     - /backend/src/shared/types/core.ts: IEntity,
+  IValueObject等の基本インターフェース
+     - /backend/src/domain/shared/entities/entity.base.ts:
+  Entityの基底クラス
+
+  2. 四柱推命関連型定義:
+     - /backend/src/shared/types/saju/core.ts:
+  天干・地支・五行等の基本型
+     - /backend/src/shared/types/saju/index.ts: FortuneMap型定義
+
+  3. 型変換ユーティリティ:
+     - /backend/src/utils/result.util.ts: 型安全なResult型の実装
+     - /backend/src/shared/utils/conversionHelpers.ts:
+  モデル変換ヘルパー
+
+  【優先課題】
+  以下の2つのファイルを最優先で修正してください：
+
+  1. system-message-builder.service.ts:
+     - 713, 742, 819行目付近にあるSimpleUser/User型の互換性問題
+     - 以下のエラーメッセージが出ています:
+       ```
+       Type '{...}' is missing the following properties from type
+  'User':
+       password, verifyPassword, getPasswordHash, isActive, and 16
+  more.
+       ```
+
+  2. saju-calculator.service.ts:
+     - 110行目付近のFortuneMap型変換問題
+     - 63行目付近の`error is of type 'unknown'`警告
+
+  【修正アプローチ】
+  1. バランスの取れた型安全性:
+     - 過度に厳格な型付けは避け、実用的なアプローチを取る
+     - 重要なビジネスロジックには適切な型安全性を、ユーティリティには
+  柔軟性を
+     -
+  必要に応じて戦略的に型アサーションを使用し、理由をコメントで明記
+
+  2. system-message-builder.service.tsの修正:
+     - SimpleUserインターフェースを拡張または修正
+     - 変換関数またはアダプターパターンの実装
+     - 必要に応じてPartial<User>型を活用
+
+  3. saju-calculator.service.tsの修正:
+     - Record<string, string>からFortuneMapへの変換ロジック実装
+     - error型の適切な型付け（try-catchブロック内）
+
+  【注意事項】
+  - 既存のビジネスロジックを変更しないこと
+  - コードの動作を維持すること
+  - 型エラーを解決する際、最小限の変更を心がけること
+  - 新しい型定義は既存の型定義と整合性を保つこと
+
+  【期待される成果】
+  - 指定した2ファイルのTypeScriptエラーが解消されること
+  - 変更内容と解決したエラーの詳細な報告
+  - 他のファイルにも適用可能な型変換パターンの提案
+
+  このタスクにより、サービス層の中核コンポーネントの型安全性が向上し
+  、全体のエラー数が減少することを期待します。

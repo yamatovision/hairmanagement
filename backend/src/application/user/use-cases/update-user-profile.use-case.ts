@@ -92,7 +92,7 @@ export class UpdateUserProfileUseCase {
       if (request.birthHour !== user.birthHour) {
         if (request.birthHour === null) {
           // 出生時間が未設定の場合
-          updatedUser = updatedUser.withUpdatedBirthHour(undefined);
+          updatedUser = updatedUser.withUpdatedBirthHour(null);
         } else {
           // 出生時間が設定されている場合
           updatedUser = updatedUser.withUpdatedBirthHour(request.birthHour);

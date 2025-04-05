@@ -1,0 +1,151 @@
+AI担当者Bの改訂指示（リポジトリ層の型改善）
+
+  あなたはTypeScriptリファクタリングプロジェクトのフェーズ2を担当する
+  AI開発者です。リポジトリ層の型改善を専門とし、特にMongooseとドメイ
+  ンモデル間の型変換問題に対応します。
+
+  【前提コンテクスト】
+  フェーズ1で以下の基盤が整備されました：
+  1.
+  /backend/src/shared/types/core.tsに基本インターフェース（IEntity,
+  IValueObject）が定義
+  2. /backend/src/domain/shared/entities/entity.base.tsにEntity抽象ク
+  ラスが実装
+  3.
+  /shared/utils/conversionHelpers.tsにドキュメント変換ヘルパーが用意
+
+  これらの基盤を最大限に活用してください。
+
+  【課題】
+  現在、MongoFortuneRepositoryを中心に複数の型エラーが発生しています
+  ：
+  - IRepositoryジェネリック型の不適切な使用
+  - aiGeneratedAdviceプロパティアクセスエラー
+  - nullとエンティティ型の互換性問題
+  - インデックスシグネチャの欠如
+
+  【重要ファイル】
+  - /backend/src/domain/repositories/IRepository.ts（基本リポジトリイ
+  ンターフェース）
+  - /backend/src/domain/repositories/IFortuneRepository.ts（運勢リポ
+  ジトリインターフェース）
+  - /backend/src/infrastructure/repositories/MongoFortuneRepository.t
+  s（実装クラス）
+  - /backend/src/domain/repositories/IDailyCalendarInfoRepository.ts
+  （日次カレンダー情報リポジトリ）
+  - /backend/src/infrastructure/repositories/base/BaseRepository.ts（
+  基本リポジトリ実装）
+
+  【主要タスク】
+  1. MongoFortuneRepository.tsの修正
+     - aiGeneratedAdvice型定義の修正
+     - nullable戻り値型の適切な処理
+     - インデックスシグネチャの追加
+
+  2. IFortuneRepository.tsの修正
+     - ジェネリック型パラメータの正確な指定
+     - メソッド戻り値型の明確化
+
+  3. IDailyCalendarInfoRepositoryの修正
+     - IRepository<T, ID>の型パラメータ指定
+
+  4. BaseRepositoryクラスの見直し
+     - 型パラメータの統一
+     - 継承関係の整理
+
+  【完了条件】
+  - これらのファイルに関連するTypeScriptエラーがゼロになること
+  - 全てのリポジトリクラスがIRepository<T,
+  ID>を正しく実装していること
+  - 実行時の動作が維持されていること
+
+  【参考コード例】
+  フェーズ1で整備された型変換パターン:
+  ```typescript
+  // 変換ヘルパーの使用例
+  import { documentToInterface } from
+  '../../../shared/utils/conversionHelpers';
+
+  // nullableな結果の型安全な処理
+  const result = await this.model.findById(id);
+  return result ? documentToInterface<T>(result) : null;
+
+  作業完了後は、修正したファイル一覧と残存する課題を報告してください
+  。
+
+  ### AI担当者Cの改訂指示（サービス層の型適合）
+
+  あなたはTypeScriptリファクタリングプロジェクトのフェーズ3を担当する
+  AI開発者です。サービス層の型適合問題を専門とし、特にシステムメッセ
+  ージビルダーやユースケースの型の不一致に対応します。
+
+  【前提コンテクスト】
+  フェーズ1で以下の基盤が整備されました：
+  1. /backend/src/shared/types/core.tsに基本インターフェースと型定義
+  が整備
+  2. /backend/src/shared/types/saju/core.ts等に四柱推命関連の型定義が
+  整備
+  3. /shared/utils/conversionHelpers.tsに型変換ヘルパーが用意
+
+  これらの基盤を最大限に活用してください。
+
+  【課題】
+  現在、以下のサービス層で型エラーが多発しています：
+  - system-message-builder.service.tsでのSimpleUser/User型の不一致（T
+  S2740）
+  - unified-conversation.service.tsでの暗黙的any型（TS7006）
+  - saju-calculator.serviceでの型変換問題（TS2345）
+  - update-user-profile.use-caseでの型エラー（TS2345）
+
+  【重要ファイル】
+  -
+  /backend/src/application/services/system-message-builder.service.ts
+  - /backend/src/application/services/unified-conversation.service.ts
+  - /backend/src/application/services/saju-calculator.service.ts
+  - /backend/src/application/user/use-cases/update-user-profile.use-c
+  ase.ts
+  - /backend/src/domain/models/fortune.model.ts（関連モデル定義）
+  - /backend/src/domain/models/user.model.ts（関連モデル定義）
+
+  【主要タスク】
+  1. system-message-builder.service.tsの修正
+    - SimpleUserとUser型の互換性を確保する型アダプターの作成
+    - 型変換ヘルパーの使用による一貫した変換
+  2. 暗黙的any型の解消
+    - unified-conversation.service.tsの明示的な型付け
+    - パラメータと戻り値型の適切な定義
+  3. saju-calculator.service.tsの修正
+    - FortuneMap型との互換性確保
+    - Record<string, string>からFortuneMapへの変換ロジック
+  4. ユースケースの型安全性向上
+    - update-user-profile.use-caseのundefined引数問題の修正
+    - オプショナルパラメータの適切な処理
+
+  【完了条件】
+  - これらのファイルに関連するTypeScriptエラーがゼロになること
+  - ドメインモデルとDTOの間で一貫した型変換が行われること
+  - 既存の機能が維持されること
+
+  【参考コード例】
+  フェーズ1で整備された型変換パターン:
+  // 型アダプターパターン例
+  function adaptSimpleUserToUser(simpleUser: SimpleUser): 
+  Partial<User> {
+    return {
+      id: simpleUser.id,
+      name: simpleUser.name,
+      // 必要な属性のみマッピング
+    };
+  }
+
+  // オプショナルパラメータの安全な処理
+  function processValue(value?: number): number {
+    return value ?? 0; // デフォルト値の提供
+  }
+
+  作業完了後は、修正したファイルの一覧と実装したパターンの概要を報告
+  してください。
+
+  これらの改訂された指示では、フェーズ1で整備された基盤の活用方法を明
+  確にし、具体的なファイルパスと参考コード例を提供することで、コンテ
+  クストがなくても効率的に作業できるようにしています。

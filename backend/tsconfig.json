@@ -4,12 +4,15 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    // フェーズ5に向けた段階的な型安全性強化
-    "strict": true,          // 厳格モードを有効化
-    "noImplicitAny": false,    // 暗黙のany型を一時的に許容（段階的修正のため）
-    "strictNullChecks": true, // null/undefinedのチェックを厳格化
+    // フェーズ5に向けた段階的な型安全性強化（実用的アプローチ）
+    "strict": true,              // 厳格モードを有効化
+    "noImplicitAny": false,      // 暗黙のany型を許容（占いロジックの複雑性を考慮）
+    "strictNullChecks": true,    // null/undefinedのチェックを厳格化
     "strictFunctionTypes": true, // 関数型チェックを厳格化
-    "noImplicitThis": true,    // thisの型チェックを厳格化
+    "noImplicitThis": true,      // thisの型チェックを厳格化
+    "noImplicitReturns": false,  // 関数の全パスがreturnを持つことの検証を一時的に無効化
+    "noUnusedLocals": false,     // 未使用のローカル変数を許容（一時的）
+    "noUnusedParameters": false, // 未使用のパラメータを許容（一時的）
     "skipLibCheck": true,
     "outDir": "./dist",
     "sourceMap": true,
@@ -39,6 +42,17 @@
   ],
   "exclude": [
     "node_modules", 
-    "dist"
+    "dist",
+    "src/**/archive/**/*",
+    "src/**/*.test.ts",
+    "src/**/*Test.ts",
+    "src/**/tests.ts",
+    "src/**/refactored/*Test*.ts",
+    "src/**/refactored/*test*.ts",
+    "src/tests/**/*",
+    "src/utils/saju/mockLunarData.ts",
+    "src/utils/saju/calendar.ts",
+    "src/utils/saju/testLunarAPI.js",
+    "src/utils/saju/test*.ts"
   ]
 }

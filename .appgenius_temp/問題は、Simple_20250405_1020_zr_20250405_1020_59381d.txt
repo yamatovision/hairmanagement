@@ -1,0 +1,14 @@
+問題は、SimpleUserやSimpleTeamを定義しましたが、元のUser型やTeam型として扱われている点です。型チェックをパスするためには、関数シグネチャも修正する必要があります。
+
+  修正プランをまとめます：
+
+  1. system-message-builder.service.tsの関数シグネチャを修正
+  2. IAIServiceのエクスポート問題は解決済み
+  3. パラメータの暗黙的any型は修正済み
+  4. ConversationType.MANAGEMENTは追加済み
+
+  system-message-builder.service.tsの残りの問題を修正します：
+  - メソッドの戻り値の型を修正（User -> SimpleUser）
+  - パラメータの型を修正（User -> SimpleUser）
+
+  これらの変更は大規模なリファクタリングが必要で、時間がかかります。現状では、これらの問題を解決するために部分的な改修を行い、将来的に大規模なリファクタリングを検討すべきと提案します。

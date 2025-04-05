@@ -27,7 +27,7 @@ export const SOLAR_TERMS_2025 = {
 };
 
 // 節気と月の干支の対応表
-export const TERM_TO_STEM_BRANCH = {
+export const TERM_TO_STEM_BRANCH: Record<string, string> = {
   "立春": "甲寅", // 正月
   "雨水": "甲寅",
   "啓蟄": "己卯", // 二月
@@ -37,7 +37,7 @@ export const TERM_TO_STEM_BRANCH = {
 };
 
 // 2025年3月の暦データ
-export const CALENDAR_DATA_2025_MARCH = {
+export const CALENDAR_DATA_2025_MARCH: Record<string, { stemBranch: string, lunarDate: string }> = {
   "2025-03-01": { stemBranch: "己巳", lunarDate: "2/2" },
   "2025-03-02": { stemBranch: "庚午", lunarDate: "2/3" },
   "2025-03-03": { stemBranch: "辛未", lunarDate: "2/4" },
@@ -98,8 +98,8 @@ export function calculateDayPillar(date: Date) {
  */
 export function calculateMonthPillar(date: Date) {
   // 対応する節気を見つける
-  let currentTerm = null;
-  let currentTermDate = null;
+  let currentTerm: string = '';
+  let currentTermDate: Date | null = null;
   
   for (const [term, termDate] of Object.entries(SOLAR_TERMS_2025)) {
     if (date >= termDate && (currentTermDate === null || termDate > currentTermDate)) {
@@ -110,7 +110,7 @@ export function calculateMonthPillar(date: Date) {
   
   return {
     term: currentTerm,
-    fullStemBranch: TERM_TO_STEM_BRANCH[currentTerm] || "不明"
+    fullStemBranch: currentTerm ? TERM_TO_STEM_BRANCH[currentTerm] || "不明" : "不明"
   };
 }
 

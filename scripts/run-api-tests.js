@@ -1,263 +1,298 @@
 /**
- * 経営者ダッシュボード関連エンドポイントの実テスト
+ * APIテスト実行スクリプト - フェーズ4 テストおよび検証
+ * 
+ * 主要なAPIエンドポイントのテストを順番に実行し、
+ * APIの動作状況を検証します。
  * 
  * 使用方法:
- * node scripts/run-api-tests.js
+ * node scripts/run-api-tests.js [test1,test2,...] [--verbose]
+ * 
+ * 例:
+ * node scripts/run-api-tests.js all              # すべてのテストを実行
+ * node scripts/run-api-tests.js auth,team        # 認証とチームのテストのみ実行
+ * node scripts/run-api-tests.js analytics --verbose  # 分析テストを詳細モードで実行
  */
 
-const axios = require('axios');
-const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 
-// 環境変数の読み込み
-dotenv.config();
-
-// APIのベースURL
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:5001/api/v1';
-
-// ANSI カラーコード
-const colors = {
-  reset: '\x1b[0m',
-  green: '\x1b[32m',
-  red: '\x1b[31m',
-  blue: '\x1b[34m',
-  yellow: '\x1b[33m',
-  cyan: '\x1b[36m',
+// 利用可能なテスト
+const AVAILABLE_TESTS = {
+  auth: {
+    script: 'test-auth-api.js',
+    description: '認証API（ログイン、ユーザー情報取得など）',
+    dependsOn: []
+  },
+  user: {
+    script: 'test-user-endpoints.js', 
+    description: 'ユーザーAPI（プロフィール取得・更新など）',
+    dependsOn: ['auth']
+  },
+  fortune: {
+    script: 'test-fortune-endpoints.js',
+    description: '運勢API（日次運勢、週間予報など）',
+    dependsOn: ['auth']
+  },
+  conversation: {
+    script: 'test-conversation-endpoints.js',
+    description: '会話API（メッセージ送信、履歴取得など）',
+    dependsOn: ['auth']
+  },
+  team: {
+    script: 'test-team-endpoints.js',
+    description: 'チームAPI（チーム作成、メンバー管理など）',
+    dependsOn: ['auth']
+  },
+  compatibility: {
+    script: 'test-team-compatibility.js',
+    description: 'チーム相性API（メンバー間の相性、五行バランスなど）',
+    dependsOn: ['auth', 'team']
+  },
+  analytics: {
+    script: 'test-analytics-endpoints.js',
+    description: '分析API（エンゲージメント、チーム分析など）',
+    dependsOn: ['auth']
+  }
 };
 
-// 成功したテストと失敗したテストをカウント
-let successCount = 0;
-let failureCount = 0;
-let startTime;
+// コマンドライン引数の解析
+const args = process.argv.slice(2);
+let testsToRun = [];
+let verbose = false;
 
-// APIトークン
-let authToken = null;
-
-/**
- * テスト結果をログに記録
- */
-function logTestResult(name, success, data = null, error = null) {
-  if (success) {
-    successCount++;
-    console.log(`${colors.green}✓ ${name}: 成功${colors.reset}`);
-    if (data) {
-      console.log(`  レスポンスタイプ: ${Array.isArray(data) ? '配列' : typeof data}`);
-      console.log(`  データ: ${JSON.stringify(data).substring(0, 100)}...`);
-    }
+// 引数を解析
+args.forEach(arg => {
+  if (arg === '--verbose' || arg === '-v') {
+    verbose = true;
+  } else if (arg === 'all') {
+    testsToRun = Object.keys(AVAILABLE_TESTS);
+  } else if (arg.includes(',')) {
+    testsToRun = [...testsToRun, ...arg.split(',')];
   } else {
-    failureCount++;
-    console.log(`${colors.red}✗ ${name}: 失敗${colors.reset}`);
-    if (error) {
-      console.log(`  エラー: ${error.message || JSON.stringify(error)}`);
-    }
+    testsToRun.push(arg);
   }
-  console.log(''); // 空行
+});
+
+// デフォルトですべてのテストを実行
+if (testsToRun.length === 0) {
+  testsToRun = Object.keys(AVAILABLE_TESTS);
 }
 
-/**
- * ログイン関数
- */
-async function login() {
-  try {
-    console.log(`${colors.blue}認証トークンを取得中...${colors.reset}`);
+// 無効なテスト名をフィルタリング
+const invalidTests = testsToRun.filter(test => !AVAILABLE_TESTS[test]);
+if (invalidTests.length > 0) {
+  console.log(`警告: 次のテストは存在しません: ${invalidTests.join(', ')}`);
+  testsToRun = testsToRun.filter(test => AVAILABLE_TESTS[test]);
+}
+
+// 依存関係を解決（必要な順序でテストを実行するため）
+function resolveDependencies(tests) {
+  const result = [];
+  const visited = new Set();
+  
+  function visitTest(test) {
+    if (visited.has(test)) return;
     
-    // 管理者ユーザーでログイン
-    const loginResponse = await axios.post(`${API_BASE_URL}/auth/login`, {
-      email: 'watanabe.takashi@example.com',
-      password: 'password123'
+    // 依存関係を先に訪問
+    if (AVAILABLE_TESTS[test].dependsOn) {
+      AVAILABLE_TESTS[test].dependsOn.forEach(dep => {
+        if (tests.includes(dep)) {
+          visitTest(dep);
+        }
+      });
+    }
+    
+    visited.add(test);
+    result.push(test);
+  }
+  
+  // すべてのテストに対して依存関係を解決
+  tests.forEach(test => visitTest(test));
+  
+  return result;
+}
+
+// 依存関係を考慮してテストを並べ替え
+testsToRun = resolveDependencies(testsToRun);
+
+// 実行するテストの一覧を表示
+console.log('===== APIテスト実行スクリプト - フェーズ4 テストおよび検証 =====');
+console.log(`実行するテスト: ${testsToRun.length}件`);
+testsToRun.forEach((test, index) => {
+  console.log(`${index + 1}. ${test} - ${AVAILABLE_TESTS[test].description}`);
+});
+console.log('');
+
+// テスト結果のサマリー
+const results = {
+  total: testsToRun.length,
+  success: 0,
+  failure: 0,
+  details: {}
+};
+
+// テストを一つずつ実行
+async function runTests() {
+  for (let i = 0; i < testsToRun.length; i++) {
+    const test = testsToRun[i];
+    const scriptPath = path.join(__dirname, AVAILABLE_TESTS[test].script);
+    
+    // テスト実行開始メッセージ
+    console.log(`\n----- テスト実行中 (${i + 1}/${testsToRun.length}): ${test} -----`);
+    console.log(`スクリプト: ${AVAILABLE_TESTS[test].script}`);
+    console.log(`説明: ${AVAILABLE_TESTS[test].description}`);
+    
+    // スクリプトが存在するか確認
+    if (!fs.existsSync(scriptPath)) {
+      console.error(`エラー: スクリプトファイルが見つかりません: ${scriptPath}`);
+      results.failure++;
+      results.details[test] = {
+        status: 'error',
+        message: 'スクリプトファイルが見つかりません'
+      };
+      continue;
+    }
+    
+    // テスト実行
+    try {
+      const result = await runScript(scriptPath, verbose);
+      
+      if (result.exitCode === 0) {
+        console.log(`\n✅ テスト成功: ${test}`);
+        results.success++;
+        results.details[test] = {
+          status: 'success',
+          output: result.output
+        };
+      } else {
+        console.log(`\n❌ テスト失敗: ${test} (終了コード: ${result.exitCode})`);
+        results.failure++;
+        results.details[test] = {
+          status: 'failure',
+          exitCode: result.exitCode,
+          output: result.output
+        };
+      }
+    } catch (error) {
+      console.error(`\n❌ テスト実行エラー: ${test}`, error);
+      results.failure++;
+      results.details[test] = {
+        status: 'error',
+        message: error.message
+      };
+    }
+  }
+  
+  // 結果サマリーを表示
+  console.log('\n===== テスト結果サマリー =====');
+  console.log(`合計: ${results.total}件`);
+  console.log(`成功: ${results.success}件`);
+  console.log(`失敗: ${results.failure}件`);
+  console.log('');
+  
+  // 失敗したテストがあれば詳細を表示
+  if (results.failure > 0) {
+    console.log('失敗したテスト:');
+    Object.keys(results.details).forEach(test => {
+      if (results.details[test].status !== 'success') {
+        console.log(`- ${test}: ${results.details[test].message || results.details[test].status}`);
+      }
     });
     
-    if (loginResponse.data && loginResponse.data.token) {
-      authToken = loginResponse.data.token;
-      console.log(`${colors.green}認証トークンを取得しました${colors.reset}\n`);
-      return true;
-    } else {
-      console.log(`${colors.red}認証トークンが取得できませんでした${colors.reset}\n`);
-      return false;
-    }
-  } catch (error) {
-    console.log(`${colors.red}ログインに失敗しました: ${error.message}${colors.reset}\n`);
-    return false;
-  }
-}
-
-/**
- * APIエンドポイントをテストする関数
- */
-async function testEndpoint(testName, endpoint, params = {}) {
-  try {
-    // URLクエリパラメータがある場合はURLに追加
-    let url = `${API_BASE_URL}${endpoint}`;
-    const queryParams = [];
-    
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined) {
-        queryParams.push(`${key}=${encodeURIComponent(value)}`);
-      }
-    }
-    
-    if (queryParams.length > 0) {
-      url += `?${queryParams.join('&')}`;
-    }
-    
-    // APIリクエスト（認証トークンを含める）
-    const headers = {};
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await axios.get(url, { headers });
-    
-    // データの検証
-    if (!response.data) {
-      throw new Error('データが返されませんでした');
-    }
-    
-    logTestResult(testName, true, response.data);
-    return { success: true, data: response.data };
-  } catch (error) {
-    logTestResult(testName, false, null, error);
-    return { success: false, error };
-  }
-}
-
-/**
- * テストを実行する関数
- */
-async function runTests() {
-  console.log(`${colors.blue}===== 経営者ダッシュボード関連エンドポイントのテスト開始 =====${colors.reset}\n`);
-  startTime = new Date();
-  
-  // ログインして認証トークンを取得
-  const isLoggedIn = await login();
-  if (!isLoggedIn) {
-    console.log(`${colors.yellow}認証なしでテストを続行します（失敗する可能性あり）${colors.reset}\n`);
-  }
-  
-  // テスト1: チーム分析データの取得
-  await testEndpoint(
-    'チーム分析データの取得',
-    '/test/team'
-  );
-  
-  // テスト2: 期間指定のチーム分析データの取得
-  await testEndpoint(
-    '期間指定のチーム分析データの取得',
-    '/test/team',
-    {
-      startDate: '2025-02-01T00:00:00.000Z',
-      endDate: '2025-03-27T23:59:59.999Z',
-    }
-  );
-  
-  // ユーザーID取得
-  let userResult;
-  try {
-    const headers = {};
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const response = await axios.get(`${API_BASE_URL}/users`, { headers });
-    if (response.data && response.data.length > 0) {
-      userResult = { success: true, userId: response.data[0]._id };
-      console.log(`${colors.cyan}テスト用ユーザーID: ${userResult.userId}${colors.reset}\n`);
-    } else {
-      userResult = { success: false, error: new Error('ユーザーが見つかりません') };
-      console.log(`${colors.yellow}警告: テスト用ユーザーが見つかりませんでした。ダミーIDを使用します${colors.reset}\n`);
-    }
-  } catch (error) {
-    userResult = { success: false, error };
-    console.log(`${colors.yellow}警告: ユーザー一覧の取得に失敗しました。ダミーIDを使用します${colors.reset}\n`);
-  }
-  
-  const userId = userResult.success ? userResult.userId : '67e4822648268fbf1469e389'; // 有効なユーザーID
-  
-  // テスト3: ユーザーエンゲージメント分析の取得
-  await testEndpoint(
-    'ユーザーエンゲージメント分析の取得',
-    `/test/users/${userId}/engagement`
-  );
-  
-  // テスト4: フォローアップ推奨の取得
-  await testEndpoint(
-    'フォローアップ推奨の取得',
-    '/test/follow-up-recommendations'
-  );
-  
-  // テスト5: 感情分析トレンドの取得
-  await testEndpoint(
-    '感情分析トレンドの取得',
-    '/test/sentiment-trend'
-  );
-  
-  // テスト6: ユーザー指定の感情分析トレンドの取得
-  await testEndpoint(
-    'ユーザー指定の感情分析トレンドの取得',
-    '/test/sentiment-trend',
-    { userId }
-  );
-  
-  // テスト7: 期間指定の感情分析トレンドの取得
-  await testEndpoint(
-    '期間・ユーザー指定の感情分析トレンドの取得',
-    '/test/sentiment-trend',
-    {
-      userId,
-      startDate: '2025-02-01T00:00:00.000Z',
-      endDate: '2025-03-27T23:59:59.999Z',
-    }
-  );
-  
-  // テスト8: 目標達成率の取得
-  await testEndpoint(
-    '目標達成率の取得',
-    '/test/goal-completion-rate'
-  );
-  
-  // テスト結果サマリー
-  const endTime = new Date();
-  const duration = (endTime - startTime) / 1000;
-  
-  console.log(`${colors.blue}===== テスト結果サマリー =====${colors.reset}`);
-  console.log(`実行時間: ${duration.toFixed(2)}秒`);
-  console.log(`テスト実行数: ${successCount + failureCount}`);
-  console.log(`${colors.green}成功: ${successCount}${colors.reset}`);
-  console.log(`${colors.red}失敗: ${failureCount}${colors.reset}`);
-  
-  if (failureCount === 0) {
-    console.log(`\n${colors.green}すべてのテストが成功しました！${colors.reset}`);
+    // 終了コードを非ゼロに設定（CIでの使用を想定）
+    process.exitCode = 1;
   } else {
-    console.log(`\n${colors.red}一部のテストが失敗しました。${colors.reset}`);
+    console.log('すべてのテストが成功しました！');
   }
   
-  // テスト結果をファイルに保存
-  const resultDir = path.join(__dirname, '../logs');
-  if (!fs.existsSync(resultDir)) {
-    fs.mkdirSync(resultDir, { recursive: true });
-  }
-  
+  // 結果をファイルに保存
   const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
-  const resultFile = path.join(resultDir, `api-test-${timestamp}.log`);
+  const resultFile = path.join(__dirname, '..', 'reports', 'tests', `api-test-summary-${timestamp}.json`);
   
-  const resultContent = `
-経営者ダッシュボード関連エンドポイントのテスト結果
-======================================
-実行日時: ${new Date().toLocaleString()}
-API URL: ${API_BASE_URL}
-認証状態: ${isLoggedIn ? '認証済み' : '未認証'}
-実行時間: ${duration.toFixed(2)}秒
-テスト実行数: ${successCount + failureCount}
-成功: ${successCount}
-失敗: ${failureCount}
-  `.trim();
+  // reports/testsディレクトリが存在することを確認
+  const reportsDir = path.join(__dirname, '..', 'reports');
+  const testsDir = path.join(reportsDir, 'tests');
   
-  fs.writeFileSync(resultFile, resultContent);
-  console.log(`\nテスト結果を保存しました: ${resultFile}`);
+  if (!fs.existsSync(reportsDir)) {
+    fs.mkdirSync(reportsDir);
+  }
+  
+  if (!fs.existsSync(testsDir)) {
+    fs.mkdirSync(testsDir);
+  }
+  
+  // 結果を保存
+  fs.writeFileSync(resultFile, JSON.stringify({
+    timestamp: new Date().toISOString(),
+    summary: {
+      total: results.total,
+      success: results.success,
+      failure: results.failure
+    },
+    tests: results.details
+  }, null, 2));
+  
+  console.log(`\n結果の詳細は以下に保存されました: ${resultFile}`);
 }
 
-// テストを実行
+/**
+ * スクリプトを実行して結果を返す
+ * @param {string} scriptPath - 実行するスクリプトのパス
+ * @param {boolean} verbose - 詳細出力するかどうか
+ * @returns {Promise<{exitCode: number, output: string}>} - 実行結果
+ */
+function runScript(scriptPath, verbose) {
+  return new Promise((resolve, reject) => {
+    // Nodeプロセスを起動
+    const child = spawn('node', [scriptPath]);
+    
+    let output = '';
+    
+    // 標準出力の処理
+    child.stdout.on('data', (data) => {
+      const text = data.toString();
+      if (verbose) {
+        process.stdout.write(text);
+      } else {
+        // 進捗表示のみ出力（詳細モードでない場合）
+        const lines = text.split('\n');
+        lines.forEach(line => {
+          if (line.includes('テスト') && (line.includes('開始') || line.includes('完了'))) {
+            console.log(line);
+          } else if (line.includes('成功') || line.includes('失敗')) {
+            console.log(line);
+          }
+        });
+      }
+      output += text;
+    });
+    
+    // 標準エラー出力の処理
+    child.stderr.on('data', (data) => {
+      const text = data.toString();
+      // エラーは常に表示
+      process.stderr.write(text);
+      output += text;
+    });
+    
+    // プロセス終了時の処理
+    child.on('close', (code) => {
+      resolve({
+        exitCode: code,
+        output
+      });
+    });
+    
+    // エラー処理
+    child.on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
+// テスト実行開始
 runTests().catch(error => {
-  console.error(`${colors.red}テスト実行中にエラーが発生しました:${colors.reset}`, error);
+  console.error('テスト実行中にエラーが発生しました:', error);
+  process.exitCode = 1;
 });

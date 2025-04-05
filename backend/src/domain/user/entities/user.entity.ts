@@ -301,7 +301,7 @@ export class User extends Entity<string> {
    * @param birthHour 新しい出生時間（0-23の時間）
    * @returns 更新されたユーザーエンティティ
    */
-  withUpdatedBirthHour(birthHour: number): User {
+  withUpdatedBirthHour(birthHour: number | null): User {
     return new User(
       this.id,
       this.email,
@@ -312,7 +312,7 @@ export class User extends Entity<string> {
       this.status,
       this.elementalProfile,
       this.sajuProfile,
-      birthHour,
+      birthHour === null ? undefined : birthHour, // nullをundefinedに変換
       this.birthLocation,
       this.profileImage,
       this.lastLoginAt,

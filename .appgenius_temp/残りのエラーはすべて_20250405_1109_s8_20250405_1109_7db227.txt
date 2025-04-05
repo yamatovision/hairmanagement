@@ -1,0 +1,21 @@
+残りのエラーはすべてデコレータやモジュール関連のものですが、Target
+  されていたSimpleUser/User型の互換性エラーについては解決しました。
+
+  元のファイルでどのように修正されたかを簡単にまとめると：
+
+  1. system-message-builder.service.ts：
+    - toSimpleUserとtoSimpleTeamメソッドを追加して、User/Team型とSimp
+  leUser/SimpleTeam型の互換性問題に対処
+    - 型アサーションと明示的な型変換を使用して、変数の型安全性を確保
+  2. saju-calculator.service.ts：
+    - FortuneMap型のキャストを追加して型変換の問題を解決
+    -
+  エラー処理の改善（unknown型のエラーに対する型安全なハンドリング）
+
+  デコレータに関するエラーは、tsconfig.jsonの設定に関連する問題であり
+  、今回のタスクの範囲外です。
+
+  まとめ：
+  1. システムメッセージビルダーサービスの型問題を解決
+  2. Saju計算機サービスの型変換問題を解決
+  3. エラー処理を型安全なアプローチで改善

@@ -490,9 +490,49 @@ function verifyLunarDateCalculator() {
   });
 }
 
+/**
+ * 指定された日付の節気を取得する
+ * @param date 日付
+ * @returns 節気情報 {name, date, isMonthChanging}
+ */
+function getSolarTerm(date: Date) {
+  // 無効な日付オブジェクトをチェック
+  if (!date || isNaN(date.getTime())) {
+    console.error('getSolarTerm: 無効な日付オブジェクト:', date);
+    return {
+      name: "無効な日付",
+      date: null,
+      isMonthChanging: false,
+      isError: true
+    };
+  }
+  
+  try {
+    // 節気期間を取得
+    const period = getSolarTermPeriod(date);
+    
+    // 節気期間から節気情報を返す
+    return {
+      name: period.name,
+      date: period.startDate,
+      isMonthChanging: period.isMonthChanging
+    };
+  } catch (error) {
+    console.error("節気取得エラー:", error);
+    // エラー時はデフォルト値
+    return {
+      name: "エラー",
+      date: null,
+      isMonthChanging: false,
+      isError: true
+    };
+  }
+}
+
 // TypeScriptエクスポート
 export {
   getLunarDate,
+  getSolarTerm,
   getSolarTermPeriod,
   getLocalTimeAdjustedDate,
   formatDateKey,

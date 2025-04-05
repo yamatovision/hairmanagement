@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 import { UserAuthenticationUseCase } from '../../../application/user/use-cases/user-authentication.use-case';
 import { UserRegistrationUseCase } from '../../../application/user/use-cases/user-registration.use-case';
+import { GetUserProfileUseCase } from '../../../application/user/use-cases/get-user-profile.use-case';
 
 /**
  * 認証コントローラー
@@ -16,7 +17,8 @@ export class AuthController {
    */
   constructor(
     @inject(UserAuthenticationUseCase) private authUseCase: UserAuthenticationUseCase,
-    @inject(UserRegistrationUseCase) private registrationUseCase: UserRegistrationUseCase
+    @inject(UserRegistrationUseCase) private registrationUseCase: UserRegistrationUseCase,
+    @inject(GetUserProfileUseCase) private getUserProfileUseCase: GetUserProfileUseCase
   ) {
     // JWT環境変数の確認をログ出力
     console.log('AuthController起動: JWT環境変数チェック');
@@ -110,5 +112,34 @@ export class AuthController {
    */
   async logout(req: Request, res: Response): Promise<void> {
     res.status(200).json({ message: 'ログアウトしました' });
+  }
+  
+  /**
+   * 現在のユーザー情報取得処理
+   * @param req リクエスト
+   * @param res レスポンス
+   */
+  async getCurrentUser(req: Request, res: Response): Promise<void> {
+    try {
+      const user = req.user as { userId: string };
+      
+      if (!user || !user.userId) {
+        res.status(401).json({
+          message: '認証されていません',
+          code: 'UNAUTHORIZED'
+        });
+        return;
+      }
+      
+      const profile = await this.getUserProfileUseCase.getCurrentUserProfile(user.userId);
+      res.status(200).json(profile);
+    } catch (error: any) {
+      console.error('ユーザー情報取得エラー:', error);
+      res.status(error.statusCode || 500).json({
+        message: error.message || 'ユーザー情報の取得に失敗しました',
+        code: error.code || 'INTERNAL_SERVER_ERROR',
+        details: error.details
+      });
+    }
   }
 }

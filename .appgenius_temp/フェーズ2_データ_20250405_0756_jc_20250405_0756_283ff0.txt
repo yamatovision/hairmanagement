@@ -1,0 +1,477 @@
+フェーズ2: データフロー強化計画
+
+  現状の課題
+
+  1. DailyCalendarInfoServiceが実装されていない
+  2. 日次カレンダー情報は現在スタブコードとしてのみ存在し、実際には「甲子」などの固定値が使われている
+  3. DailyFortuneServiceとSystemMessageBuilderServiceはDailyCalendarInfoを利用しているが、直接Mongooseモデルにアクセスしている
+  4. データフローが最適化されていないため、運勢情報が旧暦の日変わりに正確に更新されない
+
+  実装計画
+
+  1. DailyCalendarInfoService実装
+
+  /**
+   * 日次カレンダー情報サービス
+   * 日付に対応する干支情報を計算・管理する
+   */
+  @injectable()
+  export class DailyCalendarInfoService {
+    constructor(
+      @inject('IDailyCalendarInfoRepository') private dailyCalendarInfoRepository: IDailyCalendarInfoRepository,
+      @inject(SajuCalculatorService) private sajuCalculatorService: SajuCalculatorService
+    ) {}
+
+    /**
+     * 日付に対応する日次カレンダー情報を取得または作成
+     * @param date 日付
+     * @returns 日次カレンダー情報
+     */
+    async getOrCreateCalendarInfo(date: Date | string): Promise<any> {
+      // 日付を文字列形式に変換
+      const dateStr = typeof date === 'string'
+        ? date
+        : date.toISOString().split('T')[0]; // YYYY-MM-DD形式
+
+      // 既存の情報を検索
+      const existingInfo = await this.dailyCalendarInfoRepository.findByDate(dateStr);
+      if (existingInfo) {
+        return existingInfo;
+      }
+
+      // 存在しない場合は新規計算
+      return this.calculateAndSaveCalendarInfo(dateStr);
+    }
+
+    /**
+     * 今日の日次カレンダー情報を取得または作成
+     * @returns 今日の日次カレンダー情報
+     */
+    async getTodayCalendarInfo(): Promise<any> {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split('T')[0];
+
+      return this.getOrCreateCalendarInfo(todayStr);
+    }
+
+    /**
+     * 日次カレンダー情報を計算して保存
+     * @param dateStr 日付文字列 (YYYY-MM-DD形式)
+     * @returns 計算・保存された日次カレンダー情報
+     */
+    private async calculateAndSaveCalendarInfo(dateStr: string): Promise<any> {
+      const date = new Date(dateStr);
+
+      // 四柱計算
+      const fourPillars = this.sajuCalculatorService.calculateDayFourPillars(date);
+
+      // 天干から五行と陰陽を判定
+      const { mainElement, yinYang } = this.determineElementAndYinYang(fourPillars.dayPillar.stem);
+
+      // 旧暦情報の計算
+      const lunarDate = await this.calculateLunarDate(date);
+
+      // 節気情報の取得
+      const solarTerms = await this.calculateSolarTerms(date);
+
+      // 日次カレンダー情報を構築
+      const calendarInfo = {
+        date: dateStr,
+        yearPillar: fourPillars.yearPillar,
+        monthPillar: fourPillars.monthPillar,
+        dayPillar: fourPillars.dayPillar,
+        hourPillar: fourPillars.hourPillar,
+        mainElement,
+        dayYinYang: yinYang,
+        lunarDate,
+        solarTerms
+      };
+
+      // 情報を保存して返す
+      return this.dailyCalendarInfoRepository.create(calendarInfo);
+    }
+
+    /**
+     * 天干から五行と陰陽を判定
+     */
+    private determineElementAndYinYang(stem: string): { mainElement: string, yinYang: string } {
+      const stemToElement: Record<string, [string, string]> = {
+        '甲': ['木', '陽'], '乙': ['木', '陰'],
+        '丙': ['火', '陽'], '丁': ['火', '陰'],
+        '戊': ['土', '陽'], '己': ['土', '陰'],
+        '庚': ['金', '陽'], '辛': ['金', '陰'],
+        '壬': ['水', '陽'], '癸': ['水', '陰']
+      };
+
+      const [mainElement, yinYang] = stemToElement[stem] || ['木', '陽'];
+      return { mainElement, yinYang };
+    }
+
+    /**
+     * 旧暦情報の計算
+     */
+    private async calculateLunarDate(date: Date): Promise<any> {
+      // TODO: 実際の旧暦計算ロジックの実装
+      return {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        day: date.getDate(),
+        isLeapMonth: false
+      };
+    }
+
+    /**
+     * 節気情報の計算
+     */
+    private async calculateSolarTerms(date: Date): Promise<any> {
+      // TODO: 実際の節気計算ロジックの実装
+      return {
+        current: { name: '立春', date: new Date(date) },
+        previous: { name: '大寒', date: new Date(date.getTime() - 15 * 24 * 60 * 60 * 1000) },
+        next: { name: '雨水', date: new Date(date.getTime() + 15 * 24 * 60 * 60 * 1000) }
+      };
+    }
+
+    /**
+     * 日付範囲の日次カレンダー情報を取得
+     * @param startDate 開始日
+     * @param endDate 終了日
+     * @returns 日次カレンダー情報の配列
+     */
+    async getCalendarInfoRange(startDate: Date | string, endDate: Date | string): Promise<any[]> {
+      // 日付を文字列形式に変換
+      const startDateStr = typeof startDate === 'string'
+        ? startDate
+        : startDate.toISOString().split('T')[0];
+
+      const endDateStr = typeof endDate === 'string'
+        ? endDate
+        : endDate.toISOString().split('T')[0];
+
+      // リポジトリから日付範囲のデータを取得
+      const existingInfos = await this.dailyCalendarInfoRepository.findByDateRange(startDateStr, endDateStr);
+
+      // 存在しない日付を特定
+      const existingDates = new Set(existingInfos.map(info => info.date));
+
+      // 日付範囲内の全ての日付を生成
+      const allDates = this.generateDateRange(new Date(startDateStr), new Date(endDateStr));
+
+      // 存在しない日付のデータを作成
+      const newInfoPromises = allDates
+        .filter(dateStr => !existingDates.has(dateStr))
+        .map(dateStr => this.calculateAndSaveCalendarInfo(dateStr));
+
+      const newInfos = await Promise.all(newInfoPromises);
+
+      // 既存と新規のデータを結合して日付順にソート
+      return [...existingInfos, ...newInfos].sort((a, b) =>
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+    }
+
+    /**
+     * 日付範囲内の全ての日付を生成
+     * @param startDate 開始日
+     * @param endDate 終了日
+     * @returns 日付文字列の配列 (YYYY-MM-DD形式)
+     */
+    private generateDateRange(startDate: Date, endDate: Date): string[] {
+      const dates: string[] = [];
+      const currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        dates.push(currentDate.toISOString().split('T')[0]);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      return dates;
+    }
+  }
+
+  2. DailyFortuneServiceのリファクタリング
+
+  1. DailyCalendarInfoServiceを活用するようにリファクタリング
+  2. 日次カレンダー情報と運勢情報の連携を強化
+  3. AIアドバイス生成時に日次カレンダー情報を活用
+
+  // DailyFortuneService内に追加するコード
+  @inject(DailyCalendarInfoService) private dailyCalendarInfoService: DailyCalendarInfoService
+
+  // getDailyFortune内で修正するコード
+  const todayCalendarInfo = await this.dailyCalendarInfoService.getTodayCalendarInfo();
+  // 今日の四柱情報をSajuCalculatorServiceから取得する代わりに
+  // dailyCalendarInfoServiceから取得した情報を使用
+
+  3. データ変換層の導入
+
+  SajuCalculatorService、DailyCalendarInfoService、DailyFortuneServiceの間で一貫したデータ変換を行うためのユーティリティークラスを作成：
+
+  /**
+   * 四柱推命データ変換ユーティリティー
+   * 様々なサービス間でのデータ変換を担当
+   */
+  @injectable()
+  export class SajuDataTransformer {
+    /**
+     * 四柱情報から五行と陰陽を抽出
+     */
+    extractElementalInfo(fourPillars: any): { mainElement: string, yinYang: string } {
+      // 日柱の天干から五行と陰陽を判定
+      const stemToElement: Record<string, [string, string]> = {
+        '甲': ['木', '陽'], '乙': ['木', '陰'],
+        '丙': ['火', '陽'], '丁': ['火', '陰'],
+        '戊': ['土', '陽'], '己': ['土', '陰'],
+        '庚': ['金', '陽'], '辛': ['金', '陰'],
+        '壬': ['水', '陽'], '癸': ['水', '陰']
+      };
+
+      const dayPillarStem = fourPillars.dayPillar.stem;
+      const [mainElement, yinYang] = stemToElement[dayPillarStem] || ['木', '陽'];
+
+      return { mainElement, yinYang };
+    }
+
+    /**
+     * 日次カレンダー情報から運勢データを生成
+     */
+    transformToFortuneData(calendarInfo: any, userId: string): any {
+      return {
+        userId,
+        date: new Date(calendarInfo.date),
+        dailyCalendarInfoId: calendarInfo.id,
+        mainElement: calendarInfo.mainElement,
+        yinYang: calendarInfo.dayYinYang,
+        sajuData: {
+          yearPillar: calendarInfo.yearPillar,
+          monthPillar: calendarInfo.monthPillar,
+          dayPillar: calendarInfo.dayPillar,
+          hourPillar: calendarInfo.hourPillar
+        }
+      };
+    }
+
+    /**
+     * 運勢データと日次カレンダー情報を結合
+     */
+    combineFortuneWithCalendarInfo(fortune: any, calendarInfo: any): any {
+      return {
+        ...fortune,
+        dailyCalendarInfo: calendarInfo,
+        mainElement: calendarInfo.mainElement,
+        yinYang: calendarInfo.dayYinYang,
+        sajuData: {
+          ...fortune.sajuData,
+          lunarDate: calendarInfo.lunarDate,
+          solarTerms: calendarInfo.solarTerms
+        }
+      };
+    }
+  }
+
+  4. データモデル間の関連強化
+
+  Fortune モデルの改良：
+
+  1. DailyCalendarInfoへの参照をより明確に
+  2. ドキュメントの自動生成・変換処理を強化
+  3. カレンダー情報と運勢情報の一貫性確保
+
+  // fortune.model.ts 内の修正例
+  const fortuneSchema = new Schema({
+    // 既存フィールド
+    dailyCalendarInfoId: {
+      type: Schema.Types.ObjectId,
+      ref: 'DailyCalendarInfo',
+      required: true
+    },
+    // ...その他のフィールド
+  });
+
+  // 日次カレンダー情報IDによる検索メソッド
+  fortuneSchema.statics.findByDailyCalendarInfoId = function(dailyCalendarInfoId: string): Promise<any> {
+    return this.findOne({ dailyCalendarInfoId }).exec();
+  };
+
+  5. バッチ処理の強化
+
+  旧暦の日変わりに自動処理を行うためのバッチ処理システムを実装：
+
+  /**
+   * 日次運勢生成バッチサービス
+   * 旧暦の日変わりに運勢情報を自動生成する
+   */
+  @injectable()
+  export class DailyFortuneBatchService {
+    constructor(
+      @inject(DailyCalendarInfoService) private dailyCalendarInfoService: DailyCalendarInfoService,
+      @inject(DailyFortuneService) private dailyFortuneService: DailyFortuneService,
+      @inject('IUserRepository') private userRepository: IUserRepository
+    ) {}
+
+    /**
+     * すべてのユーザーの日次運勢を生成
+     * @returns 生成された運勢の数
+     */
+    async generateAllUsersFortunes(): Promise<number> {
+      try {
+        // 今日の日次カレンダー情報を取得
+        const todayCalendarInfo = await this.dailyCalendarInfoService.getTodayCalendarInfo();
+
+        // すべてのアクティブユーザーを取得
+        const users = await this.userRepository.findActiveUsers();
+
+        let successCount = 0;
+
+        // 各ユーザーの運勢を生成
+        for (const user of users) {
+          try {
+            await this.dailyFortuneService.getDailyFortune(user.id);
+            successCount++;
+          } catch (userError) {
+            console.error(`ユーザー ${user.id} の運勢生成に失敗:`, userError);
+          }
+        }
+
+        console.log(`${users.length}人中${successCount}人の運勢を生成しました`);
+        return successCount;
+
+      } catch (error) {
+        console.error('日次運勢バッチ処理エラー:', error);
+        throw error;
+      }
+    }
+
+    /**
+     * 旧暦の日変わりをチェックし、必要に応じて運勢生成を実行
+     * @returns 処理結果
+     */
+    async checkAndGenerateDailyFortunes(): Promise<string> {
+      // 現在の日次カレンダー情報を取得
+      const currentInfo = await this.dailyCalendarInfoService.getTodayCalendarInfo();
+
+      // 前日の日付を計算
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      // 前日の日次カレンダー情報を取得
+      const yesterdayInfo = await this.dailyCalendarInfoService.getOrCreateCalendarInfo(yesterdayStr);
+
+      // 旧暦日付の比較
+      const isNewLunarDay =
+        currentInfo.lunarDate.year !== yesterdayInfo.lunarDate.year ||
+        currentInfo.lunarDate.month !== yesterdayInfo.lunarDate.month ||
+        currentInfo.lunarDate.day !== yesterdayInfo.lunarDate.day;
+
+      // 旧暦の日が変わった場合、すべてのユーザーの運勢を生成
+      if (isNewLunarDay) {
+        const count = await this.generateAllUsersFortunes();
+        return `旧暦の日が変わりました。${count}人分の運勢を生成しました。`;
+      }
+
+      return '旧暦の日は変わっていません。処理はスキップされました。';
+    }
+  }
+
+  6. コントローラーとルーティングの更新
+
+  日次カレンダー情報を直接取得するためのエンドポイントを追加：
+
+  // DailyCalendarInfoController
+  @injectable()
+  export class DailyCalendarInfoController {
+    constructor(
+      @inject(DailyCalendarInfoService) private dailyCalendarInfoService: DailyCalendarInfoService
+    ) {}
+
+    async getTodayCalendarInfo(req: Request, res: Response, next: NextFunction): Promise<void> {
+      try {
+        const info = await this.dailyCalendarInfoService.getTodayCalendarInfo();
+        res.json(info);
+      } catch (error) {
+        next(error);
+      }
+    }
+
+    async getCalendarInfoByDate(req: Request, res: Response, next: NextFunction): Promise<void> {
+      try {
+        const { date } = req.params;
+        const info = await this.dailyCalendarInfoService.getOrCreateCalendarInfo(date);
+        res.json(info);
+      } catch (error) {
+        next(error);
+      }
+    }
+
+    async getCalendarInfoRange(req: Request, res: Response, next: NextFunction): Promise<void> {
+      try {
+        const { startDate, endDate } = req.query as { startDate: string, endDate: string };
+        if (!startDate || !endDate) {
+          res.status(400).json({ message: '開始日と終了日が必要です' });
+          return;
+        }
+
+        const infos = await this.dailyCalendarInfoService.getCalendarInfoRange(startDate, endDate);
+        res.json(infos);
+      } catch (error) {
+        next(error);
+      }
+    }
+  }
+
+  // calendar-info.routes.ts
+  export const calendarInfoRouter = express.Router();
+
+  calendarInfoRouter.get('/today',
+    (req, res, next) => container.resolve(DailyCalendarInfoController).getTodayCalendarInfo(req, res, next));
+
+  calendarInfoRouter.get('/date/:date',
+    (req, res, next) => container.resolve(DailyCalendarInfoController).getCalendarInfoByDate(req, res, next));
+
+  calendarInfoRouter.get('/range',
+    (req, res, next) => container.resolve(DailyCalendarInfoController).getCalendarInfoRange(req, res, next));
+
+  実装スケジュール
+
+  1. DailyCalendarInfoService実装（Day 1-2）
+    - コアロジックの実装
+    - リポジトリ連携
+    - テスト
+  2. サービス間の連携強化（Day 3-4）
+    - DailyFortuneServiceのリファクタリング
+    - SystemMessageBuilderServiceとの連携
+    - データ変換層の実装
+  3. バッチ処理の実装（Day 5）
+    - 日次運勢生成処理
+    - 旧暦の日変わり判定
+  4. APIエンドポイントの拡張（Day 6）
+    - コントローラー実装
+    - ルーティング設定
+    - API文書更新
+  5. テストと検証（Day 7-8）
+    - 単体テスト
+    - 統合テスト
+    - パフォーマンステスト
+  6. 最終調整とドキュメント更新（Day 9）
+    - コードリファクタリング
+    - CURRENT_STATUS.md更新
+    - 関連ドキュメント更新
+
+  リスクと対策
+
+  1. 四柱推命計算の複雑性
+    - リスク: 旧暦や節気計算の正確性が低下
+    - 対策: 細部まで検証された既存のSajuEngineを活用、単体テストを徹底
+  2. データ一貫性の確保
+    - リスク: 複数サービス間でのデータ不整合
+    - 対策: 集中的なデータ変換層を導入、厳格なタイプチェック
+  3. パフォーマンス問題
+    - リスク: 日次カレンダー情報の計算負荷が高い
+    - 対策: 事前計算とキャッシュ戦略の導入、必要時のみ再計算
+  4. バッチ処理の信頼性
+    - リスク: バッチ処理の失敗がシステム全体に影響
+    - 対策: エラーハンドリングの強化、部分的な成功の許容、再試行メカニズム
+
+  この計画に基づいて実装を進めることで、DailyCalendarInfoServiceの完全な実装と、それを活用した強固なデータフローが構築できます。

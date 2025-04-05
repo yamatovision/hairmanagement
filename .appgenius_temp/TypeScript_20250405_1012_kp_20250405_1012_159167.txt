@@ -1,0 +1,123 @@
+TypeScriptエラー修正プラン
+
+  1. Userエンティティ関連のエラー修正
+
+  system-message-builder.service.tsで最も多く発生しているエラーは、プレーンオブジェクトをUserエンティティとして扱おうとしている箇所です。このエラーを修正するには以下の方法があります：
+
+  修正対象ファイル: /Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/backend/src/application/services/system-message-builder.service.ts
+
+  エラー例:
+  Type '{ ... }' is missing the following properties from type 'User': password, verifyPassword, getPasswordHash, isActive, and 16 more.
+
+  修正方法:
+  1. インターフェース定義を追加（SystemMessageContextのuser型を明確に定義）
+  2. 実装箇所で型アサーションを使用
+
+  // ファイルの先頭で型定義を追加
+  interface SimpleUser {
+    _id?: string;
+    id?: string;
+    email: string;
+    name: string;
+    birthDate: Date;
+    birthHour?: number;
+    birthLocation?: string;
+    role: UserRole;
+    status: UserStatus;
+    elementalProfile: ElementalProfile;
+    sajuProfile?: SajuProfile;
+    personalGoal?: string;
+    profileImage?: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }
+
+  // 修正箇所で適切に型アサーションを使用
+  user = {
+    ...user,
+    sajuProfile: enhancedSajuProfile
+  } as SimpleUser;
+
+  2. Teamエンティティのエラー修正
+
+  同様にTeamエンティティに関するエラーも発生しています。
+
+  エラー例:
+  Type '{ ... }' is missing the following properties from type 'Team': addAdmin, removeAdmin, addMember, removeMember, and 9 more.
+
+  修正方法:
+  1. 単純なチームオブジェクト用のインターフェース定義
+  2. 修正箇所での型アサーション
+
+  // ファイルの先頭で型定義を追加
+  interface SimpleTeam {
+    id: string;
+    name: string;
+    description: string;
+    ownerId: string;
+    isActive: boolean;
+    admins: string[];
+    members: TeamMember[];
+    goal: string;
+    createdAt: Date;
+    updatedAt?: Date;
+  }
+
+  // 修正箇所での型アサーション
+  team = {
+    ...team,
+    // 修正内容
+  } as SimpleTeam;
+
+  3. SajuProfile関連のエラー修正
+
+  修正方法:
+  1. ファクトリ関数のインポートを確認
+  2. ファクトリ関数の使用確認
+
+  // 既存のインポート確認
+  import { createSajuProfile } from '../../domain/user/factories/saju-profile.factory';
+
+  // createSajuProfile使用例
+  const enhancedSajuProfile = createSajuProfile({
+    ...user.sajuProfile,
+    branchTenGods
+  });
+
+  4. IAIService関連のエラー修正
+
+  修正ファイル: /Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/backend/src/infrastructure/external/ClaudeAIService.ts
+
+  エラー:
+  Module '"../../infrastructure/external/ClaudeAIService"' declares 'IAIService' locally, but it is not exported.
+
+  修正方法:
+  IAIServiceインターフェースを別ファイルに移動するか、エクスポートするように修正
+
+  5. 暗黙的any型の修正
+
+  修正方法:
+  明示的な型アノテーションを追加
+
+  // 修正前
+  function handleMessage(msg) {
+    // ...
+  }
+
+  // 修正後
+  function handleMessage(msg: Message) {
+    // ...
+  }
+
+  実装計画
+
+  1. system-message-builder.service.tsの修正（優先度:高）
+    - SimpleUser, SimpleTeamインターフェース追加
+    - 必要な型アサーション追加
+  2. unified-conversation.service.tsの修正（優先度:中）
+    - IAIServiceエクスポート問題の解決
+    - 暗黙的any型の修正
+  3. 残りのエラー修正（優先度:低）
+    - 各ファイルのエラーを個別に確認して修正
+
+  この修正プランに従って進めれば、段階的にTypeScriptエラーを解消できます。まずは主要なエラーから修正していきましょう。

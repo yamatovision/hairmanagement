@@ -227,7 +227,7 @@ function testTwelveFortuneCalculator(): void {
     console.log(`${stem}日の十二運星の分布:`, fortuneCounts);
     
     // 特殊なパターンの検出（複数出現する運星や欠落している運星）
-    const specialPatterns = [];
+    const specialPatterns: string[] = [];
     TWELVE_FORTUNE_ORDER.forEach(fortune => {
       const count = fortuneCounts[fortune] || 0;
       if (count > 1) {

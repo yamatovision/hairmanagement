@@ -243,3 +243,29 @@ npx tsc --noEmit 2>&1 | grep "error TS" | cut -d":" -f2-3 | sort | uniq -c | sor
 - テスト実行に影響が出ないよう、修正作業中は既存のテストを継続的に実行する
 - 大規模な型定義の変更は、一度に行わず段階的に適用する
 - 既存のバグを修正する際には型安全性も同時に向上させる
+
+## 進捗状況（2025/04/05追加）
+
+### 本日実装した項目
+
+1. **共通型定義の強化**
+   - shared/types/saju/core.tsに型ガード関数を追加
+   - 五行・陰陽・柱種類の定数リストを追加（ELEMENTS, YIN_YANG, PILLAR_TYPES）
+   - safeAccessヘルパー関数の追加
+
+2. **型安全なユーティリティ関数の実装**
+   - src/utils/type-safety.util.tsを新規作成
+   - safeObjectAccess - オブジェクトプロパティの安全なアクセス
+   - validateBeforeAssertion - 型アサーション前の値検証
+   - safeAddToRecord - レコードへの安全なキー追加
+   - その他の型安全なコレクション操作関数
+
+3. **インデックスアクセスエラーの修正開始**
+   - system-message-builder.service.ts の五行分布集計部分を修正
+   - saju-data-transformer.service.optimized.ts の天干・地支十神関連メソッドの型アサーション追加
+
+### 次のステップ
+
+1. ✅ system-message-builder.service.tsのインデックスアクセスエラー修正完了（2025/04/05）を続行
+2. saju-data-transformer.service.optimized.ts の他の箇所の型エラー修正
+3. 共通的な型アサーションパターンの発見と自動修正の検討

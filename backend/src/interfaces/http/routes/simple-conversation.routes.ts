@@ -288,7 +288,8 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
               todayCalendarInfo = await DailyCalendarInfoModel.findOne({ date: today });
               console.log('当日の干支情報:', todayCalendarInfo ? '取得成功' : '未取得');
             } catch (calendarError) {
-              console.warn('当日の干支情報取得エラー:', calendarError.message);
+              const err = calendarError as Error;
+              console.warn('当日の干支情報取得エラー:', err.message);
             }
             
             // SystemMessageBuilderServiceを使用して初期メッセージを構築
@@ -329,7 +330,13 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
       // 初期メッセージの生成機能はSystemMessageBuilderServiceに移行しました
       
       // Claude APIに送信するメッセージを準備
-      let apiMessages = [];
+      // メッセージの型定義
+      interface ApiMessage {
+        role: 'system' | 'user' | 'assistant';
+        content: string;
+      }
+      
+      let apiMessages: ApiMessage[] = [];
       
       // 1. 最初にシステムメッセージを準備
       if (type === 'fortune' && userId) {
@@ -377,11 +384,13 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         if (hasSystemMessage) {
           // システムメッセージを保持しつつ、会話メッセージを追加
           const systemMessages = apiMessages.filter(msg => msg.role === 'system');
-          apiMessages = [...systemMessages, ...conversationMessages];
+          // 型安全な変換で会話メッセージを追加
+          const typedConversationMessages = conversationMessages as ApiMessage[];
+          apiMessages = [...systemMessages, ...typedConversationMessages];
           console.log(`システムメッセージを保持しつつ、会話からのメッセージ ${conversationMessages.length}件を追加しました`);
         } else {
           // システムメッセージがなければ単に会話メッセージを使用
-          apiMessages = conversationMessages;
+          apiMessages = conversationMessages as ApiMessage[];
           console.log(`会話からのメッセージ ${conversationMessages.length}件を会話履歴に追加します`);
         }
       }
@@ -399,11 +408,13 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         if (hasSystemMessage) {
           // システムメッセージを保持しつつ、前のメッセージを追加
           const systemMessages = apiMessages.filter(msg => msg.role === 'system');
-          apiMessages = [...systemMessages, ...prevMessages];
+          // 型安全な変換で前のメッセージを追加
+          const typedPrevMessages = prevMessages as ApiMessage[];
+          apiMessages = [...systemMessages, ...typedPrevMessages];
           console.log(`システムメッセージを保持しつつ、前のメッセージ ${prevMessages.length}件を追加しました`);
         } else {
           // システムメッセージがなければ単に前のメッセージを使用
-          apiMessages = prevMessages;
+          apiMessages = prevMessages as ApiMessage[];
           console.log(`前のメッセージ ${prevMessages.length}件を会話履歴に追加します`);
         }
       }
@@ -438,7 +449,8 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
         }
         
         // フロントエンドから送信されたメッセージを追加
-        apiMessages.push({ role: 'user', content: message });
+        const userMessage: ApiMessage = { role: 'user', content: message };
+        apiMessages.push(userMessage);
         
         // APIに送信されるメッセージ構成のデバッグログ
         console.log('===== APIに送信されるメッセージ構成 =====');
@@ -606,39 +618,41 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
             });
             
           } catch (streamError) {
-            console.error('ストリーミングリクエストエラー:', streamError);
+            const err = streamError as Error & { response?: any };
+            console.error('ストリーミングリクエストエラー:', err);
             
             // エラーの詳細を取得して表示
             let errorDetails = 'APIリクエスト中にエラーが発生しました';
-            if (streamError.response) {
-              console.error('エラーステータス:', streamError.response.status);
-              console.error('エラーデータ:', streamError.response.data);
+            if (err.response) {
+              console.error('エラーステータス:', err.response.status);
+              console.error('エラーデータ:', err.response.data);
               
               // レスポンスボディの安全な読み取り
-              if (streamError.response.data) {
+              if (err.response.data) {
                 try {
                   let responseBody = '';
                   
                   // ストリーム形式かどうかをチェック
-                  if (typeof streamError.response.data.read === 'function') {
-                    const chunk = streamError.response.data.read();
+                  if (typeof err.response.data.read === 'function') {
+                    const chunk = err.response.data.read();
                     if (chunk !== null) {
                       responseBody = chunk.toString();
                     } else {
                       responseBody = '(空のレスポンスボディ)';
                     }
-                  } else if (typeof streamError.response.data === 'object') {
+                  } else if (typeof err.response.data === 'object') {
                     // オブジェクト形式の場合はJSONに変換
-                    responseBody = JSON.stringify(streamError.response.data);
+                    responseBody = JSON.stringify(err.response.data);
                   } else {
                     // その他のケース
-                    responseBody = String(streamError.response.data);
+                    responseBody = String(err.response.data);
                   }
                   
                   console.error('エラーレスポンスボディ:', responseBody);
-                  errorDetails += ` (${streamError.response.status}: ${responseBody})`;
+                  errorDetails += ` (${err.response.status}: ${responseBody})`;
                 } catch (readError) {
-                  console.error('レスポンスボディの読み取りエラー:', readError);
+                  const readErr = readError as Error;
+                  console.error('レスポンスボディの読み取りエラー:', readErr.message);
                 }
               }
             }
@@ -722,7 +736,13 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
           // メッセージIDは会話からの実際のIDを使用するため、ここでの宣言は不要
           
           // 会話履歴と新しいメッセージを結合
-          const allMessages = [];
+          interface MessageInterface {
+            id: string;
+            sender: string;
+            content: string;
+            timestamp: Date;
+          }
+          const allMessages: MessageInterface[] = [];
           
           // 会話からメッセージを取得してフロントエンド形式に変換
           conversation.messages.forEach(msg => {

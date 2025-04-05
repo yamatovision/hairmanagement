@@ -630,11 +630,11 @@ function testSpecificDate(date, yearStem) {
   console.log(`×2ルール: ${yearStem}(${yearStemIndex})×2 = ${monthStemBase} → 基準干=${STEMS[monthStemBase]}`);
   
   // 使用された月の情報
-  let usedMonth;
-  if (algorithmResult.method === "solar_term_algorithm") {
+  let usedMonth: number | undefined;
+  if (algorithmResult.method === "solar_term_algorithm" && solarTerm) {
     usedMonth = MAJOR_SOLAR_TERMS_TO_MONTH[solarTerm];
     console.log(`使用された月: 節気月=${usedMonth}`);
-  } else if (algorithmResult.method === "lunar_month_algorithm") {
+  } else if (algorithmResult.method === "lunar_month_algorithm" && lunarInfo) {
     usedMonth = lunarInfo.lunarMonth;
     console.log(`使用された月: 旧暦月=${usedMonth}`);
   } else if (algorithmResult.method === "x2_rule_algorithm") {
@@ -642,6 +642,7 @@ function testSpecificDate(date, yearStem) {
     console.log(`使用された月: 新暦月=${usedMonth}`);
   } else {
     console.log(`使用された月: 特殊ルール適用`);
+    usedMonth = date.getMonth() + 1; // フォールバック
   }
   
   return {

@@ -10,11 +10,16 @@
     "dev:debug": "node dev-server.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
+    "typecheck:summary": "node ../scripts/type-check-fix.js",
+    "typecheck:report": "node ../scripts/type-check-fix.js > ../reports/typecheck-report.md",
+    "typecheck:ci": "tsc --noEmit || (echo 'TypeScript errors found' && exit 1)",
     "test": "jest",
     "test:coverage": "jest --coverage",
+    "test:data-flow": "node ../scripts/run-data-flow-tests.js",
     "lint": "eslint src/**/*.ts",
     "test:subscription": "ts-node -r tsconfig-paths/register src/tests/subscription.test.ts",
-    "test:api-endpoints": "node src/tests/api-endpoint-tests.js"
+    "test:api-endpoints": "node src/tests/api-endpoint-tests.js",
+    "ci": "npm run typecheck:ci && npm run lint && npm test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

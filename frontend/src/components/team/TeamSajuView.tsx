@@ -5,6 +5,7 @@
  * 
  * 変更履歴:
  * - 2025/04/02: 初期実装 (Claude)
+ * - 2025/04/05: 型定義の強化と相互関係の表示改善 (Claude)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -92,6 +93,45 @@ const tenGodColors = {
   '印綬': '#CE93D8', // 薄紫（知識）
 };
 
+/**
+ * メンバーの型定義
+ */
+interface Member {
+  userId: string;
+  name: string;
+  role: string;
+  mainElement: string;
+  yinYang: string;
+  dayPillar: string;
+}
+
+/**
+ * 相互関係情報の型定義
+ */
+interface Relationship {
+  fromUserId: string;
+  fromUserName: string;
+  toUserId: string;
+  toUserName: string;
+  tenGod: string | null;
+  branchTenGod: string | null;
+  compatibilityScore: number;
+  compatibilityRating: string;
+}
+
+/**
+ * 十神関係情報の型定義
+ */
+interface TenGodRelationships {
+  teamId: string;
+  teamName: string;
+  members: Member[];
+  relationships: Relationship[];
+}
+
+/**
+ * コンポーネントのプロパティ型定義
+ */
 interface TeamSajuViewProps {
   teamId: string;
 }
@@ -102,19 +142,25 @@ interface TeamSajuViewProps {
 const TeamSajuView: React.FC<TeamSajuViewProps> = ({ teamId }) => {
   // 状態管理
   const [team, setTeam] = useState<ITeam | null>(null);
+  const [tenGodRelationships, setTenGodRelationships] = useState<TenGodRelationships | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // チームデータの取得
   useEffect(() => {
-    const fetchTeamData = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
-        // チーム情報の取得
-        const teamData = await teamService.getTeam(teamId);
+        // 複数のデータ取得を並行して行う
+        const [teamData, relationshipsData] = await Promise.all([
+          teamService.getTeam(teamId),
+          teamService.getTeamTenGodRelationships(teamId)
+        ]);
+        
         setTeam(teamData);
+        setTenGodRelationships(relationshipsData);
         
         setIsLoading(false);
       } catch (err) {
@@ -124,7 +170,7 @@ const TeamSajuView: React.FC<TeamSajuViewProps> = ({ teamId }) => {
       }
     };
     
-    fetchTeamData();
+    fetchData();
   }, [teamId]);
   
   // ユーザーのイニシャルを取得する関数
@@ -217,7 +263,7 @@ const TeamSajuView: React.FC<TeamSajuViewProps> = ({ teamId }) => {
                     四柱推命情報
                   </Typography>
                   
-                  {/* 干支表示 - モックデータ（実際には各メンバーの四柱情報を取得） */}
+                  {/* 干支表示 - 実際のデータ */}
                   <TableContainer component={Box} sx={{ my: 1 }}>
                     <Table size="small">
                       <TableHead>
@@ -228,133 +274,170 @@ const TeamSajuView: React.FC<TeamSajuViewProps> = ({ teamId }) => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {['年柱', '月柱', '日柱', '時柱'].map((pillar, index) => {
-                          // モックデータ（実際にはバックエンドからの情報を使用）
-                          const stems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-                          const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-                          const randomStem = stems[Math.floor(Math.random() * stems.length)];
-                          const randomBranch = branches[Math.floor(Math.random() * branches.length)];
-                          
-                          // 五行属性のマッピング（実際には正確な計算を使用）
-                          const stemElements: Record<string, string> = {
-                            '甲': '木', '乙': '木',
-                            '丙': '火', '丁': '火',
-                            '戊': '土', '己': '土',
-                            '庚': '金', '辛': '金',
-                            '壬': '水', '癸': '水'
-                          };
-                          
-                          const branchElements: Record<string, string> = {
-                            '子': '水', '丑': '土',
-                            '寅': '木', '卯': '木',
-                            '辰': '土', '巳': '火',
-                            '午': '火', '未': '土',
-                            '申': '金', '酉': '金',
-                            '戌': '土', '亥': '水'
-                          };
-                          
-                          return (
-                            <TableRow key={pillar}>
-                              <TableCell>{pillar}</TableCell>
-                              <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                  <Box
-                                    component="span"
-                                    sx={{
-                                      display: 'inline-block',
-                                      width: 24,
-                                      height: 24,
-                                      borderRadius: '50%',
-                                      bgcolor: stemBranchColors[randomStem as keyof typeof stemBranchColors],
-                                      color: 'white',
-                                      textAlign: 'center',
-                                      lineHeight: '24px',
-                                      fontSize: '0.75rem',
-                                      mr: 0.5
-                                    }}
-                                  >
-                                    {randomStem}
+                        {/* メンバーの四柱情報が存在する場合のみ表示 */}
+                        {tenGodRelationships?.members
+                          .filter((m: any) => m.userId === member.userId)
+                          .map((memberData: any) => {
+                            // 対応するユーザーデータを取得
+                            const userData = team.members?.find(m => m.userId === memberData.userId);
+                            
+                            // 五行属性のマッピング
+                            const stemElements: Record<string, string> = {
+                              '甲': '木', '乙': '木',
+                              '丙': '火', '丁': '火',
+                              '戊': '土', '己': '土',
+                              '庚': '金', '辛': '金',
+                              '壬': '水', '癸': '水'
+                            };
+                            
+                            const branchElements: Record<string, string> = {
+                              '子': '水', '丑': '土',
+                              '寅': '木', '卯': '木',
+                              '辰': '土', '巳': '火',
+                              '午': '火', '未': '土',
+                              '申': '金', '酉': '金',
+                              '戌': '土', '亥': '水'
+                            };
+                            
+                            // サンプルの四柱表示（APIから取得できる場合は実データを使用）
+                            // サンプルまたは実データを使って柱情報を生成
+                            const pillars = [
+                              { 
+                                name: '年柱', 
+                                stem: userData?.sajuProfile?.fourPillars?.yearPillar?.stem || '甲', 
+                                branch: userData?.sajuProfile?.fourPillars?.yearPillar?.branch || '子' 
+                              },
+                              { 
+                                name: '月柱', 
+                                stem: userData?.sajuProfile?.fourPillars?.monthPillar?.stem || '乙', 
+                                branch: userData?.sajuProfile?.fourPillars?.monthPillar?.branch || '丑' 
+                              },
+                              { 
+                                name: '日柱', 
+                                stem: userData?.sajuProfile?.fourPillars?.dayPillar?.stem || '丙', 
+                                branch: userData?.sajuProfile?.fourPillars?.dayPillar?.branch || '午' 
+                              },
+                              { 
+                                name: '時柱', 
+                                stem: userData?.sajuProfile?.fourPillars?.hourPillar?.stem || '丁', 
+                                branch: userData?.sajuProfile?.fourPillars?.hourPillar?.branch || '未' 
+                              }
+                            ];
+                            
+                            return pillars.map((pillar) => (
+                              <TableRow key={pillar.name}>
+                                <TableCell>{pillar.name}</TableCell>
+                                <TableCell>
+                                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <Box
+                                      component="span"
+                                      sx={{
+                                        display: 'inline-block',
+                                        width: 24,
+                                        height: 24,
+                                        borderRadius: '50%',
+                                        bgcolor: stemBranchColors[pillar.stem as keyof typeof stemBranchColors],
+                                        color: 'white',
+                                        textAlign: 'center',
+                                        lineHeight: '24px',
+                                        fontSize: '0.75rem',
+                                        mr: 0.5
+                                      }}
+                                    >
+                                      {pillar.stem}
+                                    </Box>
+                                    <Box
+                                      component="span"
+                                      sx={{
+                                        display: 'inline-block',
+                                        width: 24,
+                                        height: 24,
+                                        borderRadius: '50%',
+                                        bgcolor: stemBranchColors[pillar.branch as keyof typeof stemBranchColors],
+                                        color: 'white',
+                                        textAlign: 'center',
+                                        lineHeight: '24px',
+                                        fontSize: '0.75rem'
+                                      }}
+                                    >
+                                      {pillar.branch}
+                                    </Box>
                                   </Box>
-                                  <Box
-                                    component="span"
-                                    sx={{
-                                      display: 'inline-block',
-                                      width: 24,
-                                      height: 24,
-                                      borderRadius: '50%',
-                                      bgcolor: stemBranchColors[randomBranch as keyof typeof stemBranchColors],
-                                      color: 'white',
-                                      textAlign: 'center',
-                                      lineHeight: '24px',
-                                      fontSize: '0.75rem'
-                                    }}
-                                  >
-                                    {randomBranch}
-                                  </Box>
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Box sx={{ display: 'flex' }}>
-                                  <ElementTag
-                                    element={stemElements[randomStem] as ElementType}
-                                    size="sm"
-                                  />
-                                  <Box style={{ marginLeft: 4 }}>
+                                </TableCell>
+                                <TableCell>
+                                  <Box sx={{ display: 'flex' }}>
                                     <ElementTag
-                                      element={branchElements[randomBranch] as ElementType}
+                                      element={stemElements[pillar.stem] as ElementType}
                                       size="sm"
                                     />
+                                    <Box style={{ marginLeft: 4 }}>
+                                      <ElementTag
+                                        element={branchElements[pillar.branch] as ElementType}
+                                        size="sm"
+                                      />
+                                    </Box>
                                   </Box>
-                                </Box>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
+                                </TableCell>
+                              </TableRow>
+                            ));
+                          })}
                       </TableBody>
                     </Table>
                   </TableContainer>
                   
-                  {/* 十神関係（モック） */}
+                  {/* 十神関係（実際のデータ） */}
                   <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
                     他メンバーとの相互関係
                   </Typography>
                   
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                    {/* 他のメンバーとの関係をモックデータで表示 */}
-                    {team.members
-                      ?.filter(m => m.userId !== member.userId)
+                    {/* 他のメンバーとの関係を実際のデータで表示 */}
+                    {tenGodRelationships?.relationships
+                      .filter((rel: Relationship) => rel.fromUserId === member.userId)
                       .slice(0, 3) // 表示数を制限
-                      .map((otherMember) => {
-                        // 十神関係（モックデータ）
-                        const tenGods = [
-                          '比肩', '劫財', '食神', '傷官', '偏財',
-                          '正財', '偏官', '正官', '偏印', '印綬'
-                        ];
-                        const randomTenGod = tenGods[Math.floor(Math.random() * tenGods.length)];
+                      .map((relationship: Relationship) => {
+                        if (!relationship.tenGod) return null;
+                        
+                        const tenGod = relationship.tenGod;
+                        const otherMemberName = relationship.toUserName;
+                        const compatibilityScore = relationship.compatibilityScore;
+                        const branchTenGod = relationship.branchTenGod;
                         
                         return (
                           <Tooltip
-                            key={otherMember.userId}
-                            title={`${otherMember.name || 'ユーザー'}との関係: ${randomTenGod}`}
+                            key={relationship.toUserId}
+                            title={
+                              <React.Fragment>
+                                <Typography variant="body2">{otherMemberName}との関係: {tenGod}</Typography>
+                                {branchTenGod && (
+                                  <Typography variant="caption" display="block">
+                                    地支十神: {branchTenGod}
+                                  </Typography>
+                                )}
+                                <Typography variant="caption" display="block">
+                                  相性スコア: {compatibilityScore}/100 ({relationship.compatibilityRating})
+                                </Typography>
+                              </React.Fragment>
+                            }
                             arrow
                           >
                             <Chip
                               avatar={
                                 <Avatar
                                   sx={{
-                                    bgcolor: tenGodColors[randomTenGod as keyof typeof tenGodColors],
+                                    bgcolor: tenGodColors[tenGod as keyof typeof tenGodColors],
                                     width: 24,
                                     height: 24,
                                     fontSize: '0.75rem'
                                   }}
                                 >
-                                  {otherMember.name ? getInitials(otherMember.name) : '?'}
+                                  {otherMemberName ? getInitials(otherMemberName) : '?'}
                                 </Avatar>
                               }
-                              label={randomTenGod}
+                              label={tenGod}
                               size="small"
                               sx={{
-                                borderColor: tenGodColors[randomTenGod as keyof typeof tenGodColors],
+                                borderColor: tenGodColors[tenGod as keyof typeof tenGodColors],
                                 bgcolor: 'transparent'
                               }}
                               variant="outlined"
@@ -363,10 +446,12 @@ const TeamSajuView: React.FC<TeamSajuViewProps> = ({ teamId }) => {
                         );
                       })}
                     
-                    {team.members.length > 4 && (
+                    {/* 表示しきれない関係がある場合は「+」表示 */}
+                    {tenGodRelationships?.relationships
+                      .filter((rel: Relationship) => rel.fromUserId === member.userId).length > 3 && (
                       <Tooltip title="他のメンバーとの関係を表示" arrow>
                         <Chip
-                          label={`+${team.members.length - 4}`}
+                          label={`+${tenGodRelationships.relationships.filter((rel: Relationship) => rel.fromUserId === member.userId).length - 3}`}
                           size="small"
                           variant="outlined"
                         />
@@ -398,7 +483,7 @@ const TeamSajuView: React.FC<TeamSajuViewProps> = ({ teamId }) => {
             <TableHead>
               <TableRow>
                 <TableCell>メンバー</TableCell>
-                {team.members?.map((member) => (
+                {tenGodRelationships?.members.map((member: Member) => (
                   <TableCell key={member.userId} align="center">
                     {member.name ? getInitials(member.name) : '?'}
                   </TableCell>
@@ -406,10 +491,11 @@ const TeamSajuView: React.FC<TeamSajuViewProps> = ({ teamId }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {team.members?.map((member) => (
+              {tenGodRelationships?.members.map((member: Member) => (
                 <TableRow key={member.userId}>
                   <TableCell>{member.name}</TableCell>
-                  {team.members?.map((otherMember) => {
+                  {tenGodRelationships.members.map((otherMember: Member) => {
+                    // 自分自身との関係の場合
                     if (member.userId === otherMember.userId) {
                       return (
                         <TableCell key={otherMember.userId} align="center">
@@ -418,30 +504,71 @@ const TeamSajuView: React.FC<TeamSajuViewProps> = ({ teamId }) => {
                       );
                     }
                     
-                    // 十神関係（モックデータ）
-                    const tenGods = [
-                      '比肩', '劫財', '食神', '傷官', '偏財',
-                      '正財', '偏官', '正官', '偏印', '印綬'
-                    ];
-                    const randomTenGod = tenGods[Math.floor(Math.random() * tenGods.length)];
+                    // 相互関係データから対応するデータを検索
+                    const relationship = tenGodRelationships.relationships.find(
+                      (rel: any) => rel.fromUserId === member.userId && rel.toUserId === otherMember.userId
+                    );
+                    
+                    // 対応するデータがない場合
+                    if (!relationship || !relationship.tenGod) {
+                      return (
+                        <TableCell key={otherMember.userId} align="center">
+                          ?
+                        </TableCell>
+                      );
+                    }
+                    
+                    // 十神関係を表示
+                    const tenGod = relationship.tenGod;
+                    const compatibilityScore = relationship.compatibilityScore;
+                    
+                    // 相性スコアに基づいて境界線の太さを調整
+                    const borderWidth = 
+                      compatibilityScore >= 80 ? 3 :
+                      compatibilityScore >= 60 ? 2 : 1;
                     
                     return (
                       <TableCell key={otherMember.userId} align="center">
-                        <Tooltip title={`${randomTenGod} - ${otherMember.name}に対する${member.name}の関係`} arrow>
+                        <Tooltip
+                          title={
+                            <React.Fragment>
+                              <Typography variant="body2" fontWeight="bold">{tenGod}</Typography>
+                              <Typography variant="caption" display="block">
+                                {member.name}から{otherMember.name}への関係
+                              </Typography>
+                              <Typography variant="caption" display="block">
+                                相性スコア: {compatibilityScore}/100 ({relationship.compatibilityRating})
+                              </Typography>
+                              {relationship.branchTenGod && (
+                                <Typography variant="caption" display="block">
+                                  地支十神: {relationship.branchTenGod}
+                                </Typography>
+                              )}
+                            </React.Fragment>
+                          }
+                          arrow
+                        >
                           <Box
                             sx={{
                               display: 'inline-block',
                               width: 32,
                               height: 32,
                               borderRadius: '50%',
-                              bgcolor: tenGodColors[randomTenGod as keyof typeof tenGodColors] + '33', // 透明度を追加
-                              border: `2px solid ${tenGodColors[randomTenGod as keyof typeof tenGodColors]}`,
-                              lineHeight: '28px', // borderの分を考慮
+                              bgcolor: tenGodColors[tenGod as keyof typeof tenGodColors] + '33', // 透明度を追加
+                              border: `${borderWidth}px solid ${tenGodColors[tenGod as keyof typeof tenGodColors]}`,
+                              lineHeight: `${32 - borderWidth * 2}px`, // borderの分を考慮
                               fontSize: '0.6rem',
-                              fontWeight: 'bold'
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                              transition: 'transform 0.2s, box-shadow 0.2s',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                              }
                             }}
                           >
-                            {randomTenGod.substring(0, 1)}
+                            {tenGod.substring(0, 1)}
                           </Box>
                         </Tooltip>
                       </TableCell>

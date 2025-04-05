@@ -57,7 +57,8 @@ export function documentToInterface<T>(doc: Document | null | any): T | null {
  */
 export function documentsToInterfaces<T>(docs: Document[] | null | any[]): T[] {
   if (!docs) return [];
-  return docs.map(doc => documentToInterface<T>(doc));
+  // nullの可能性があるアイテムをフィルタリングして確実にT型の配列を返す
+  return docs.map(doc => documentToInterface<T>(doc)).filter((item): item is T => item !== null);
 }
 
 // 型別変換関数

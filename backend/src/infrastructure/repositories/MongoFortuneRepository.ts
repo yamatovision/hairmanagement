@@ -284,7 +284,8 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
           adviceText = parsedAdvice.summary || parsedAdvice.advice || entity.advice;
         }
       } catch (error) {
-        console.log('[MongoFortuneRepository] adviceのJSON解析に失敗しました:', error.message);
+        console.log('[MongoFortuneRepository] adviceのJSON解析に失敗しました:', 
+          error instanceof Error ? error.message : 'Unknown error');
       }
     }
     
@@ -411,7 +412,10 @@ export class MongoFortuneRepository extends BaseRepository<Fortune, string> impl
       userId: entity.userId,
       date: dateStr,
       dailyElement: this.determineDailyElement(entity.date),
-      yinYang: entity.yinYangBalance?.yin > entity.yinYangBalance?.yang ? '陰' : '陽',
+      yinYang: entity.yinYangBalance && 
+        typeof entity.yinYangBalance.yin === 'number' && 
+        typeof entity.yinYangBalance.yang === 'number' && 
+        entity.yinYangBalance.yin > entity.yinYangBalance.yang ? '陰' : '陽',
       overallLuck: entity.overallScore,
       // カテゴリスコアは最小値1が必要
       careerLuck: entity.careerLuck || Math.floor(Math.random() * 100) + 1, // 既存値または1-100のランダム値

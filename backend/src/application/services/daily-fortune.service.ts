@@ -21,7 +21,9 @@ export class DailyFortuneService {
     @inject(SajuCalculatorService) private sajuCalculatorService: SajuCalculatorService,
     @inject(ElementalCalculatorService) private elementalCalculatorService: ElementalCalculatorService,
     @inject(AiModelSelectorService) private aiModelSelectorService: AiModelSelectorService,
-    @inject('IAIService') private aiService: any
+    @inject('IAIService') private aiService: any,
+    @inject('SajuDataTransformer') private sajuDataTransformer: any,
+    @inject('DailyCalendarInfoService') private dailyCalendarInfoService: any
   ) {}
 
   /**
@@ -779,7 +781,7 @@ export class DailyFortuneService {
       },
       createdAt: fortune.createdAt instanceof Date 
         ? fortune.createdAt.toISOString()
-        : new Date(fortune.createdAt).toISOString()
+        : fortune.createdAt ? new Date(fortune.createdAt).toISOString() : new Date().toISOString()
     };
     
     // 最終結果の構造をログ出力

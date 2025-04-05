@@ -1,0 +1,33 @@
+{
+  "timestamp": "20250405T12-19-46",
+  "success": false,
+  "results": [
+    {
+      "file": "saju-data-transformer.test.ts",
+      "success": false,
+      "error": "Command failed: npx jest src/tests/saju/saju-data-transformer.test.ts --json --outputFile=/Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/backend/reports/tests/data-flow-saju-data-transformer-20250405T12-19-46.json"
+    },
+    {
+      "file": "daily-calendar-info-data-flow.test.ts",
+      "success": false,
+      "error": "Command failed: npx jest src/tests/saju/daily-calendar-info-data-flow.test.ts --json --outputFile=/Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/backend/reports/tests/data-flow-daily-calendar-info-data-flow-20250405T12-19-46.json"
+    },
+    {
+      "file": "daily-fortune-data-flow.test.ts",
+      "success": false,
+      "error": "Command failed: npx jest src/tests/saju/daily-fortune-data-flow.test.ts --json --outputFile=/Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/backend/reports/tests/data-flow-daily-fortune-data-flow-20250405T12-19-46.json"
+    },
+    {
+      "file": "integrated-data-flow.test.ts",
+      "success": false,
+      "error": "Command failed: npx jest src/tests/saju/integrated-data-flow.test.ts --json --outputFile=/Users/tatsuya/Desktop/システム開発/AppGenius2/patrolmanagement/backend/reports/tests/data-flow-integrated-data-flow-20250405T12-19-46.json"
+    }
+  ],
+  "summary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 0
+  }
+}
