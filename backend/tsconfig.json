@@ -2,24 +2,43 @@
   "compilerOptions": {
     "target": "es2016",
     "module": "commonjs",
-    "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": false,
+    // フェーズ5に向けた段階的な型安全性強化
+    "strict": true,          // 厳格モードを有効化
+    "noImplicitAny": false,    // 暗黙のany型を一時的に許容（段階的修正のため）
+    "strictNullChecks": true, // null/undefinedのチェックを厳格化
+    "strictFunctionTypes": true, // 関数型チェックを厳格化
+    "noImplicitThis": true,    // thisの型チェックを厳格化
     "skipLibCheck": true,
+    "outDir": "./dist",
+    "sourceMap": true,
+    "declaration": true,
     "resolveJsonModule": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"],
     "baseUrl": ".",
-    "paths": {
-      "@shared": ["../shared"],
-      "@shared/*": ["../shared/*"]
-    },
-    "moduleResolution": "node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "noEmitOnError": false
+    // ビルド設定
+    "ignoreDeprecations": "5.0",
+    "noEmitOnError": true,     // エラーがあればビルドしない
+    "paths": {
+      "@shared/*": ["src/shared/*"],
+      "@domain/*": ["src/domain/*"],
+      "@application/*": ["src/application/*"],
+      "@infrastructure/*": ["src/infrastructure/*"],
+      "@interfaces/*": ["src/interfaces/*"],
+      "@utils/*": ["src/utils/*"],
+      "@config/*": ["src/config/*"],
+      "@shared": ["src/shared"]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["node", "jest", "express"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/utils/saju/refactored/test*.ts", "src/utils/saju/refactored/*Test*.ts", "src/utils/saju/refactored/*test*.ts"],
-  "files": ["src/types/express/index.d.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules", 
+    "dist"
+  ]
 }
