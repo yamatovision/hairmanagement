@@ -131,8 +131,8 @@ export function configureContainer(): void {
     const DailyCalendarInfoModel = mongoose.model('DailyCalendarInfo');
     container.register('DailyCalendarInfoModel', { useValue: DailyCalendarInfoModel });
     
-    const { MongoDailyCalendarInfoRepository, IDailyCalendarInfoRepository } = require('../repositories/MongoDailyCalendarInfoRepository');
-    container.register<IDailyCalendarInfoRepository>('IDailyCalendarInfoRepository', { 
+    const { MongoDailyCalendarInfoRepository } = require('../repositories/MongoDailyCalendarInfoRepository');
+    container.register('IDailyCalendarInfoRepository', { 
       useClass: MongoDailyCalendarInfoRepository 
     });
     console.log('DailyCalendarInfoRepositoryが正常に登録されました');

@@ -7,8 +7,9 @@
  * - 2025/04/02: 初期実装 (Claude)
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { injectable, inject } from 'tsyringe';
+import { AuthenticatedRequest } from '../../../types/express';
 import { TeamCompatibilityService } from '../../../application/services/team-compatibility.service';
 import { ITeamRepository } from '../../../domain/repositories/ITeamRepository';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
@@ -30,7 +31,7 @@ export class TeamController {
   /**
    * ユーザーが所属するチーム一覧を取得
    */
-  async getUserTeams(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getUserTeams(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user.id;
       
@@ -55,7 +56,7 @@ export class TeamController {
   /**
    * チーム詳細を取得
    */
-  async getTeam(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getTeam(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { teamId } = req.params;
       const userId = req.user.id;
@@ -79,7 +80,7 @@ export class TeamController {
   /**
    * 新しいチームを作成
    */
-  async createTeam(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async createTeam(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { name, description, goal } = req.body;
       const userId = req.user.id;
@@ -115,7 +116,7 @@ export class TeamController {
   /**
    * チーム情報を更新
    */
-  async updateTeam(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async updateTeam(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { teamId } = req.params;
       const { name, description, goal, isActive } = req.body;
@@ -162,7 +163,7 @@ export class TeamController {
   /**
    * チームを削除
    */
-  async deleteTeam(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async deleteTeam(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { teamId } = req.params;
       const userId = req.user.id;
@@ -190,7 +191,7 @@ export class TeamController {
   /**
    * チームにメンバーを追加
    */
-  async addMember(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async addMember(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { teamId } = req.params;
       const { userId, role } = req.body;
@@ -219,7 +220,7 @@ export class TeamController {
   /**
    * チームからメンバーを削除
    */
-  async removeMember(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async removeMember(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { teamId, memberId } = req.params;
       const userId = req.user.id;
@@ -247,7 +248,7 @@ export class TeamController {
   /**
    * メンバーの役割を更新
    */
-  async updateMemberRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async updateMemberRole(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { teamId, memberId } = req.params;
       const { role } = req.body;
@@ -276,7 +277,7 @@ export class TeamController {
   /**
    * チームメンバー間の相性を分析
    */
-  async getTeamCompatibility(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getTeamCompatibility(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { teamId } = req.params;
       const userId = req.user.id;
@@ -304,7 +305,7 @@ export class TeamController {
   /**
    * メンバー招待を送信
    */
-  async inviteMember(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async inviteMember(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { teamId } = req.params;
       const { email, role, message } = req.body;

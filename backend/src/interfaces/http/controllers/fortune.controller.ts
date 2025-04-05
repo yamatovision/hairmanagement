@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 import { IFortuneRepository } from '../../../domain/repositories/IFortuneRepository';
 import { ElementalCalculatorService } from '../../../application/services/elemental-calculator.service';
 import { SajuCalculatorService } from '../../../application/services/saju-calculator.service';
+import { AuthenticatedRequest } from '../../../types/express';
 import { ElementType, YinYangType } from '../../../shared';
 import { SajuFortune } from '../../../shared/utils/saju-types';
 
@@ -29,7 +30,7 @@ export class FortuneController {
    * @param req リクエスト
    * @param res レスポンス
    */
-  async getDailyFortune(req: Request, res: Response): Promise<void> {
+  async getDailyFortune(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       // ユーザーIDを取得（認証ミドルウェアから）
       const userId = req.user?.id;
@@ -103,7 +104,7 @@ export class FortuneController {
    * @param req リクエスト
    * @param res レスポンス
    */
-  async getFortuneByDate(req: Request, res: Response): Promise<void> {
+  async getFortuneByDate(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       // ユーザーIDを取得（認証ミドルウェアから）
       const userId = req.user?.id;
@@ -192,7 +193,7 @@ export class FortuneController {
    * @param req リクエスト
    * @param res レスポンス
    */
-  async getFortuneRange(req: Request, res: Response): Promise<void> {
+  async getFortuneRange(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       console.log('[FortuneController] getFortuneRange 呼び出し, リクエスト:', {
         path: req.path,
@@ -277,7 +278,7 @@ export class FortuneController {
    * @param req リクエスト
    * @param res レスポンス
    */
-  async getTeamCompatibility(req: Request, res: Response): Promise<void> {
+  async getTeamCompatibility(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       // ユーザーIDを取得（認証ミドルウェアから）
       const userId = req.user?.id;
@@ -463,7 +464,7 @@ export class FortuneController {
    * @param req リクエスト
    * @param res レスポンス
    */
-  async getSajuInfo(req: Request, res: Response): Promise<void> {
+  async getSajuInfo(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       // ユーザーIDを取得（認証ミドルウェアから）
       const userId = req.user?.id;

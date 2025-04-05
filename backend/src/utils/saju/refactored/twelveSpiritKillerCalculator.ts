@@ -178,9 +178,9 @@ export function isWealthSpirit(
   // 日柱を中心とした財関係を確認（日柱の地支に対する財の地支が他の柱に存在するか）
   if (WEALTH_RELATIONSHIPS[dayBranch]) {
     const wealthBranches = WEALTH_RELATIONSHIPS[dayBranch];
-    if (wealthBranches.includes(yearBranch) || 
-        wealthBranches.includes(monthBranch) || 
-        wealthBranches.includes(hourBranch)) {
+    if (wealthBranches.includes(yearBranch as any) || 
+        wealthBranches.includes(monthBranch as any) || 
+        wealthBranches.includes(hourBranch as any)) {
       return true;
     }
   }

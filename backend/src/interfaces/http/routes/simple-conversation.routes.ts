@@ -489,7 +489,13 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
             const userAssistantMessages = apiMessages.filter(msg => msg.role !== 'system');
             
             // API V2に合わせたリクエスト形式に変換
-            const requestBody = {
+            const requestBody: {
+              model: string;
+              max_tokens: number;
+              stream: boolean;
+              messages: any[];
+              system?: string;
+            } = {
               model: CLAUDE_MODEL,
               max_tokens: 1000,
               stream: true, // ストリーミングを有効化
@@ -654,7 +660,12 @@ export const registerSimpleConversationRoutes = (router: Router): void => {
           const userAssistantMessages = apiMessages.filter(msg => msg.role !== 'system');
           
           // API V2に合わせたリクエスト形式に変換
-          const requestBody = {
+          const requestBody: {
+            model: string;
+            max_tokens: number;
+            messages: any[];
+            system?: string;
+          } = {
             model: CLAUDE_MODEL,
             max_tokens: 1000,
             messages: userAssistantMessages
